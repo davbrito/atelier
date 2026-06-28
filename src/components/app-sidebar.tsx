@@ -1,5 +1,13 @@
+import { useSession } from "@better-auth-ui/react";
 import { createLink } from "@tanstack/react-router";
-import { Calculator, ClipboardList, LayoutDashboard, Package, Scissors } from "lucide-react";
+import {
+  Calculator,
+  ClipboardList,
+  LayoutDashboard,
+  Package,
+  Scissors,
+  Shield,
+} from "lucide-react";
 import { OrganizationSwitcher } from "#/components/auth/organization/organization-switcher";
 import {
   Sidebar,
@@ -13,6 +21,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "#/components/ui/sidebar";
+import { authClient } from "#/lib/auth/client";
 
 const navItems = [
   {
@@ -39,6 +48,9 @@ const navItems = [
 const SidebarLink = createLink(SidebarMenuButton);
 
 export function AppSidebar() {
+  const { data: session } = useSession<typeof authClient>(authClient);
+  const isAdmin = session?.user?.role === "admin";
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -66,6 +78,25 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administración</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarLink
+                    to="/app/admin/whitelist"
+                    activeOptions={{ exact: true }}
+                    activeProps={{ isActive: true }}
+                  >
+                    <Shield className="size-4" />
+                    <span>Lista blanca</span>
+                  </SidebarLink>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter />
     </Sidebar>

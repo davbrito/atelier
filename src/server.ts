@@ -38,3 +38,9 @@ export default {
     return withContext(context)(() => handler.fetch(request, { context }));
   },
 } satisfies ExportedHandler<Cloudflare.Env>;
+
+declare global {
+  interface Env {
+    BETTER_AUTH_URL: string;
+  }
+}

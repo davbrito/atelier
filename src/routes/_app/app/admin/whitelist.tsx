@@ -1,0 +1,175 @@
+import { Field } from "@base-ui/react/field";
+import { Form } from "@base-ui/react/form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { Loader2Icon, MailIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "#/components/ui/alert-dialog";
+import { Button } from "#/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import * as StyledField from "#/components/ui/field";
+import { Input } from "#/components/ui/input";
+import { queryKeys, whitelistEmailsQueryOptions } from "#/lib/query-options";
+import { addWhitelistedEmail, removeWhitelistedEmail } from "#/lib/server/whitelist";
+
+export const Route = createFileRoute("/_app/app/admin/whitelist")({
+  component: WhitelistPage,
+  loader: ({ context: { queryClient } }) =>
+    void queryClient.prefetchQuery(whitelistEmailsQueryOptions),
+});
+
+function WhitelistPage() {
+  const queryClient = useQueryClient();
+  const addFn = useServerFn(addWhitelistedEmail);
+  const removeFn = useServerFn(removeWhitelistedEmail);
+
+  const [formKey, setFormKey] = useState(0);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { data: entries, isLoading } = useQuery(whitelistEmailsQueryOptions);
+  const entryToDelete = deletingId ? (entries?.find((e) => e.id === deletingId) ?? null) : null;
+
+  const addMutation = useMutation({
+    mutationFn: addFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.whitelistEmails });
+      toast.success("Correo agregado a la lista blanca.");
+      setFormKey((k) => k + 1);
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : "Error al agregar el correo.";
+      toast.error(message);
+    },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: removeFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.whitelistEmails });
+      toast.success("Correo eliminado de la lista blanca.");
+      setDeletingId(null);
+    },
+    onError: () => toast.error("Error al eliminar el correo."),
+  });
+
+  return (
+    <div className="flex flex-col gap-6 p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-heading text-2xl">Lista blanca de correos</h1>
+          <p className="mt-1 text-muted-foreground">
+            Solo los correos en esta lista pueden iniciar sesión en la aplicación.
+          </p>
+        </div>
+      </div>
+
+      {/* Add form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Agregar correo autorizado</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form
+            key={formKey}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const email = formData.get("email") as string;
+              if (email) addMutation.mutate({ data: { email } });
+            }}
+            className="flex gap-3"
+          >
+            <Field.Root name="email" render={<StyledField.Field />}>
+              <Field.Control
+                name="email"
+                type="email"
+                placeholder="correo@ejemplo.com"
+                required
+                render={<Input />}
+              />
+            </Field.Root>
+            <Button type="submit" disabled={addMutation.isPending}>
+              {addMutation.isPending ? (
+                <Loader2Icon className="mr-2 size-4 animate-spin" />
+              ) : (
+                <PlusIcon className="mr-2 size-4" />
+              )}
+              Agregar
+            </Button>
+          </Form>
+        </CardContent>
+      </Card>
+
+      {/* Email list */}
+      {isLoading ? (
+        <div className="flex h-64 items-center justify-center">
+          <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
+        </div>
+      ) : entries?.length === 0 ? (
+        <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
+          <MailIcon className="mb-4 size-12 text-muted-foreground/20" />
+          <h3 className="font-medium text-lg">No hay correos en la lista blanca</h3>
+          <p className="max-w-xs text-muted-foreground">
+            Agrega correos electrónicos para permitir el acceso a la aplicación.
+          </p>
+        </Card>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {entries?.map((entry) => (
+            <Card key={entry.id}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="font-medium text-sm">{entry.email}</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setDeletingId(entry.id)}
+                >
+                  <Trash2Icon className="size-3" />
+                </Button>
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar correo de la lista blanca</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro? <span className="font-medium">{entryToDelete?.email}</span> ya no podrá
+              iniciar sesión. Esta acción no elimina la cuenta del usuario.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingId) removeMutation.mutate({ data: { id: deletingId } });
+              }}
+            >
+              {removeMutation.isPending ? (
+                <Loader2Icon className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Trash2Icon className="mr-2 size-4" />
+              )}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

@@ -4,6 +4,12 @@ import * as schema from "./schema";
 
 export const relations = {
   ...defineRelations(schema, (r) => ({
+    whitelistEmail: {
+      addedBy: r.one.user({
+        from: r.whitelistEmail.addedById,
+        to: r.user.id,
+      }),
+    },
     organization: {
       materials: r.many.material({
         from: r.organization.id,

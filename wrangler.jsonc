@@ -42,20 +42,6 @@
    * Note: Use secrets to store sensitive data.
    * https://developers.cloudflare.com/workers/configuration/secrets/
    */
-  "vars": {
-    "STORAGE_BUCKET": "atelier-storage",
-    "BETTER_AUTH_URL": "https://atelier.davbrito.dev"
-  },
-  "secrets": {
-    "required": [
-      "BETTER_AUTH_SECRET",
-      "PUBLIC_GOOGLE_CLIENT_ID",
-      "GOOGLE_CLIENT_SECRET",
-      "STORAGE_URL",
-      "STORAGE_ACCESS_KEY_ID",
-      "STORAGE_SECRET_ACCESS_KEY"
-    ]
-  },
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",

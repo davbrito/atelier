@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { decimal, integer, snakeCase, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
-import { organization } from "./auth.gen";
+import { organization, user } from "./auth.gen";
 
 export {
   account,
@@ -12,8 +12,6 @@ export {
   user,
   verification,
 } from "./auth.gen";
-
-// ── Catalog ──────────────────────────────────────────────
 
 export const material = snakeCase.table("materials", {
   id: uuid().primaryKey().default(sql`uuidv7()`),
@@ -127,4 +125,15 @@ export const quotationOperation = snakeCase.table("quotation_operations", {
     .references(() => operation.id, { onDelete: "cascade" }),
   durationMinutes: integer().notNull(),
   frozenHourlyRate: decimal({ precision: 10, scale: 2 }).notNull(),
+});
+
+// ── Whitelist ────────────────────────────────────────────
+
+export const whitelistEmail = snakeCase.table("whitelist_emails", {
+  id: uuid().primaryKey().default(sql`uuidv7()`),
+  email: varchar({ length: 255 }).notNull().unique(),
+  addedById: text()
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });

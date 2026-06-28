@@ -49,3 +49,11 @@ export const authenticatedMiddleware = createMiddleware().server(
     return next({ context: { ...session } });
   },
 );
+
+export const roleMiddleware = (role: "admin" | "user") =>
+  createMiddleware()
+    .middleware([authenticatedMiddleware])
+    .server(async ({ next, context: { user } }) => {
+      if (user.role !== role) return Response.json({ message: "Forbidden" }, { status: 403 });
+      return next();
+    });

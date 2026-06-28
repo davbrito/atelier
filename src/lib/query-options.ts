@@ -4,6 +4,7 @@ import { getDashboardStats } from "./server/dashboard";
 import { listMaterials } from "./server/materials";
 import { listOperations } from "./server/operations";
 import { getUserOrganizationCount } from "./server/organizations";
+import { listWhitelistedEmails } from "./server/whitelist";
 
 export const queryKeys = {
   budgets: ["budgets"],
@@ -12,41 +13,47 @@ export const queryKeys = {
   operations: ["operations"],
   dashboard: ["dashboard"],
   userOrganizationCount: ["userOrganizationCount"],
+  whitelistEmails: ["whitelist-emails"],
 };
 
 export const budgetsListQueryOptions = queryOptions({
   queryKey: queryKeys.budgets,
-  queryFn: () => listBudgets(),
+  queryFn: ({ signal }) => listBudgets({ signal }),
 });
 
 export const budgetBySlugQueryOptions = (slug: string) =>
   queryOptions({
     queryKey: queryKeys.budget(slug),
-    queryFn: () => getBudgetBySlug({ data: { slug } }),
+    queryFn: ({ signal }) => getBudgetBySlug({ data: { slug }, signal }),
   });
 
 export const budgetByIdQueryOptions = (id: string) =>
   queryOptions({
     queryKey: queryKeys.budget(id),
-    queryFn: () => getBudgetById({ data: { id } }),
+    queryFn: ({ signal }) => getBudgetById({ data: { id }, signal }),
   });
 
 export const materialsListQueryOptions = queryOptions({
   queryKey: queryKeys.materials,
-  queryFn: () => listMaterials(),
+  queryFn: ({ signal }) => listMaterials({ signal }),
 });
 
 export const operationsListQueryOptions = queryOptions({
   queryKey: queryKeys.operations,
-  queryFn: () => listOperations(),
+  queryFn: ({ signal }) => listOperations({ signal }),
 });
 
 export const dashboardStatsQueryOptions = queryOptions({
   queryKey: queryKeys.dashboard,
-  queryFn: () => getDashboardStats(),
+  queryFn: ({ signal }) => getDashboardStats({ signal }),
 });
 
 export const userOrganizationCountQueryOptions = queryOptions({
   queryKey: queryKeys.userOrganizationCount,
-  queryFn: () => getUserOrganizationCount(),
+  queryFn: ({ signal }) => getUserOrganizationCount({ signal }),
+});
+
+export const whitelistEmailsQueryOptions = queryOptions({
+  queryKey: queryKeys.whitelistEmails,
+  queryFn: ({ signal }) => listWhitelistedEmails({ signal }),
 });

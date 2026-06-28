@@ -23,6 +23,7 @@ export function createAuth(db: Db, env: Env) {
   return betterAuth({
     appName: "Atelier",
     baseURL: env.BETTER_AUTH_URL,
+    secret: env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(db, { provider: "pg", transaction: true, schema }),
     plugins: [
       admin({ ac, roles }),
@@ -33,8 +34,9 @@ export function createAuth(db: Db, env: Env) {
       tanstackStartCookies(),
     ],
     user: {
-      validateUserInfo(data) {
-        if (!isWhitelistedEmail(data.user.email)) {
+      async validateUserInfo(data) {
+        const allowed = await isWhitelistedEmail(db, data.user.email);
+        if (!allowed) {
           return {
             error: "Email no autorizado.",
             errorDescription:
@@ -48,7 +50,6 @@ export function createAuth(db: Db, env: Env) {
         clientId: env.PUBLIC_GOOGLE_CLIENT_ID,
         clientSecret: env.GOOGLE_CLIENT_SECRET,
         async mapProfileToUser(profile) {
-          console.log("Google profile:", profile);
           // Download the Google profile picture and store it in our own S3 bucket
           // so we don't depend on Google's URL staying valid forever.
           try {
