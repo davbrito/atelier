@@ -90,7 +90,7 @@ export function AppSidebar() {
                     activeProps={{ isActive: true }}
                   >
                     <Shield className="size-4" />
-                    <span>Lista blanca</span>
+                    <span>Usuarios Permitidos</span>
                   </SidebarLink>
                 </SidebarMenuItem>
               </SidebarMenu>

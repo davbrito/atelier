@@ -43,7 +43,7 @@ function WhitelistPage() {
     mutationFn: addFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.whitelistEmails });
-      toast.success("Correo agregado a la lista blanca.");
+      toast.success("Correo agregado a la lista de usuarios permitidos.");
       setFormKey((k) => k + 1);
     },
     onError: (err) => {
@@ -56,7 +56,7 @@ function WhitelistPage() {
     mutationFn: removeFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.whitelistEmails });
-      toast.success("Correo eliminado de la lista blanca.");
+      toast.success("Correo eliminado de la lista de usuarios permitidos.");
       setDeletingId(null);
     },
     onError: () => toast.error("Error al eliminar el correo."),
@@ -66,7 +66,7 @@ function WhitelistPage() {
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-2xl">Lista blanca de correos</h1>
+          <h1 className="font-heading text-2xl">Usuarios Permitidos</h1>
           <p className="mt-1 text-muted-foreground">
             Solo los correos en esta lista pueden iniciar sesión en la aplicación.
           </p>
@@ -118,7 +118,7 @@ function WhitelistPage() {
       ) : entries?.length === 0 ? (
         <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
           <MailIcon className="mb-4 size-12 text-muted-foreground/20" />
-          <h3 className="font-medium text-lg">No hay correos en la lista blanca</h3>
+          <h3 className="font-medium text-lg">No hay usuarios permitidos</h3>
           <p className="max-w-xs text-muted-foreground">
             Agrega correos electrónicos para permitir el acceso a la aplicación.
           </p>
@@ -147,7 +147,7 @@ function WhitelistPage() {
       <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar correo de la lista blanca</AlertDialogTitle>
+            <AlertDialogTitle>Eliminar usuario permitido</AlertDialogTitle>
             <AlertDialogDescription>
               ¿Estás seguro? <span className="font-medium">{entryToDelete?.email}</span> ya no podrá
               iniciar sesión. Esta acción no elimina la cuenta del usuario.
