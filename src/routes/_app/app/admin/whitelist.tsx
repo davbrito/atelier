@@ -20,6 +20,14 @@ import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import * as StyledField from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from "#/components/ui/item";
 import { queryKeys, whitelistEmailsQueryOptions } from "#/lib/query-options";
 import { addWhitelistedEmail, removeWhitelistedEmail } from "#/lib/server/whitelist";
 
@@ -31,8 +39,6 @@ export const Route = createFileRoute("/_app/app/admin/whitelist")({
 
 function WhitelistPage() {
   const queryClient = useQueryClient();
-  const addFn = useServerFn(addWhitelistedEmail);
-  const removeFn = useServerFn(removeWhitelistedEmail);
 
   const [formKey, setFormKey] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -40,7 +46,7 @@ function WhitelistPage() {
   const entryToDelete = deletingId ? (entries?.find((e) => e.id === deletingId) ?? null) : null;
 
   const addMutation = useMutation({
-    mutationFn: addFn,
+    mutationFn: addWhitelistedEmail,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.whitelistEmails });
       toast.success("Correo agregado a la lista de usuarios permitidos.");
@@ -53,7 +59,7 @@ function WhitelistPage() {
   });
 
   const removeMutation = useMutation({
-    mutationFn: removeFn,
+    mutationFn: removeWhitelistedEmail,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.whitelistEmails });
       toast.success("Correo eliminado de la lista de usuarios permitidos.");
@@ -126,19 +132,19 @@ function WhitelistPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {entries?.map((entry) => (
-            <Card key={entry.id}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="font-medium text-sm">{entry.email}</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => setDeletingId(entry.id)}
-                >
-                  <Trash2Icon className="size-3" />
+            <Item key={entry.id} variant="outline" className="bg-card">
+              <ItemMedia variant="icon">
+                <MailIcon />
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle className="font-heading text-sm">{entry.email}</ItemTitle>
+              </ItemContent>
+              <ItemActions>
+                <Button variant="destructive" size="icon" onClick={() => setDeletingId(entry.id)}>
+                  <Trash2Icon />
                 </Button>
-              </CardHeader>
-            </Card>
+              </ItemActions>
+            </Item>
           ))}
         </div>
       )}
