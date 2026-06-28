@@ -1,0 +1,153 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { CalculatorIcon, EyeIcon, Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { BudgetCreateSheet } from "#/components/budget-create-sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "#/components/ui/alert-dialog";
+import { Button } from "#/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { budgetsListQueryOptions } from "#/lib/query-options";
+import { deleteBudget } from "#/lib/server/budgets";
+
+export const Route = createFileRoute("/_app/app/_workspace/budgets/")({
+  component: BudgetsPage,
+  loader: ({ context: { queryClient } }) => void queryClient.prefetchQuery(budgetsListQueryOptions),
+});
+
+function BudgetsPage() {
+  const queryClient = useQueryClient();
+  const deleteFn = useServerFn(deleteBudget);
+  const navigate = useNavigate();
+
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const { data: budgets, isLoading } = useQuery(budgetsListQueryOptions);
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["budgets"] });
+      toast.success("Presupuesto eliminado");
+      setDeletingId(null);
+    },
+    onError: () => toast.error("Error al eliminar el presupuesto"),
+  });
+
+  return (
+    <div className="flex flex-col gap-6 p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-heading text-2xl">Presupuestos</h1>
+          <p className="mt-1 text-muted-foreground">Plantillas reusables de presupuestos.</p>
+        </div>
+        <Button onClick={() => setIsCreateOpen(true)}>
+          <PlusIcon className="mr-2 size-4" />
+          Nuevo presupuesto
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex h-64 items-center justify-center">
+          <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
+        </div>
+      ) : budgets?.length === 0 ? (
+        <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
+          <CalculatorIcon className="mb-4 size-12 text-muted-foreground/20" />
+          <h3 className="font-medium text-lg">No hay presupuestos</h3>
+          <p className="max-w-xs text-muted-foreground">
+            Crea plantillas reusables para tus prendas con materiales y mano de obra.
+          </p>
+          <Button variant="outline" className="mt-4" onClick={() => setIsCreateOpen(true)}>
+            Crear mi primer presupuesto
+          </Button>
+        </Card>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {budgets?.map((budget) => (
+            <Card key={budget.id} className="relative overflow-hidden pt-0">
+              <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
+              {budget.image ? (
+                <img
+                  src={`/api/images?key=${encodeURIComponent(budget.image)}`}
+                  alt={budget.name}
+                  className="relative z-20 aspect-video w-full object-cover brightness-60 dark:brightness-40"
+                />
+              ) : (
+                <div className="relative z-20 aspect-video w-full bg-gray-100" />
+              )}
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="font-medium text-sm">{budget.name}</CardTitle>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      navigate({
+                        to: "/app/budgets/$slug",
+                        params: { slug: budget.slug },
+                      })
+                    }
+                  >
+                    <EyeIcon className="size-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setDeletingId(budget.id)}
+                  >
+                    <Trash2Icon className="size-3" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-muted-foreground text-xs">
+                  Mano de obra: ${budget.hourlyRate}/hora
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <BudgetCreateSheet open={isCreateOpen} onOpenChange={setIsCreateOpen} />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente el presupuesto y todos
+              sus materiales y operaciones asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              <Button variant="outline">Cancelar</Button>
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingId && deleteMutation.mutate({ data: { id: deletingId } })}
+            >
+              <Button variant="destructive" disabled={deleteMutation.isPending}>
+                {deleteMutation.isPending ? "Eliminando..." : "Eliminar presupuesto"}
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

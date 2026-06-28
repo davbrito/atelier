@@ -1,0 +1,29 @@
+allowBuilds:
+  esbuild: false
+  sharp: false
+  workerd: false
+# minimumReleaseAge: 1440
+minimumReleaseAge: 0
+
+blockExoticSubdeps: false
+
+catalogs:
+  drizzle:
+    drizzle-orm: 1.0.0-rc.4
+    drizzle-kit: 1.0.0-rc.4
+
+  auth:
+    "@better-auth-ui/core": ^1.6.27
+    "@better-auth-ui/react": ^1.6.27
+
+    "auth": 1.7.0-rc.0
+    "better-auth": 1.7.0-rc.0
+    "@better-auth/api-key": 1.7.0-rc.0
+    "@better-auth/drizzle-adapter": 1.7.0-rc.0
+    "@better-auth/kysely-adapter": 1.7.0-rc.0
+    "@better-auth/passkey": 1.7.0-rc.0
+
+overrides:
+  drizzle-orm: catalog:drizzle
+  "@better-auth/api-key": catalog:auth
+  kysely: ^0.28.17 # https://github.com/better-auth/better-auth/issues/9901
