@@ -14,7 +14,7 @@
     "lint": "biome lint src",
     "check": "biome check src",
     "typecheck": "tsc --noEmit",
-    "auth:generate": "auth generate --config ./src/lib/auth/server.ts --output ./src/db/auth.gen.ts",
+    "auth:generate": "auth generate --config ./src/lib/auth/config.ts --output ./src/db/auth.gen.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:prod": "DOTENV_CONFIG_PATH=\".env.production\" node --run db:migrate",

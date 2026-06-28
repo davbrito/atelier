@@ -1,14 +1,11 @@
 import crypto from "node:crypto";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
-import { passkey } from "@better-auth/passkey";
 import { betterAuth, type SecondaryStorage } from "better-auth";
-import { admin, lastLoginMethod, oneTap, organization } from "better-auth/plugins";
-import { tanstackStartCookies } from "better-auth/tanstack-start";
 import type { Db } from "#/db/client";
 import * as schema from "#/db/schema";
 import { getStorage } from "#/lib/storage";
 import { isWhitelistedEmail } from "#/lib/whitelist";
-import { ac, roles } from "./permissions";
+import { baseConfig } from "./base-config.server";
 
 export type AppAuth = ReturnType<typeof createAuth>;
 
@@ -21,18 +18,10 @@ function googleAvatarKey(sub: string): string {
 
 export function createAuth(db: Db, env: Env) {
   return betterAuth({
-    appName: "Atelier",
+    ...baseConfig,
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(db, { provider: "pg", transaction: true, schema }),
-    plugins: [
-      admin({ ac, roles }),
-      organization(),
-      passkey(),
-      oneTap(),
-      lastLoginMethod(),
-      tanstackStartCookies(),
-    ],
     user: {
       async validateUserInfo(data) {
         const allowed = await isWhitelistedEmail(db, data.user.email);
@@ -98,9 +87,6 @@ export function createAuth(db: Db, env: Env) {
           };
         },
       },
-    },
-    telemetry: {
-      enabled: false,
     },
   });
 }
