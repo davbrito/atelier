@@ -11,11 +11,21 @@ const dbErrorMiddleware = createMiddleware({ type: "function" }).server(async ({
     return await next();
   } catch (error) {
     if (error instanceof DrizzleError) {
-      console.error("Database error:", error);
+      console.error({
+        message: "Database error:",
+        error: error.message,
+        cause: error.cause,
+        stack: error.stack,
+      });
       throw new Error("Database error");
     }
     if (error instanceof DrizzleQueryError) {
-      console.error("Database query error:", error);
+      console.error({
+        message: "Database query error:",
+        error: error.message,
+        cause: error.cause,
+        stack: error.stack,
+      });
       throw new Error("Database query error");
     }
 
