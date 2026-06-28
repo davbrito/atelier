@@ -47,6 +47,12 @@
       "binding": "HYPERDRIVE",
       "id": "0bdd87ffb5734b3291ecc1033df70875"
     }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "5485bbfbf81547278e78e6c7c8c19e9a"
+    }
   ]
   /**
    * Static Assets
