@@ -1,0 +1,33 @@
+name: Migrate Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Entorno objetivo"
+        type: choice
+        options:
+          - production
+          - development
+        default: production
+        required: true
+
+jobs:
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm db:migrate
+        env:
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
