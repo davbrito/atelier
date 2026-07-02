@@ -50,6 +50,18 @@ export const authenticatedMiddleware = createMiddleware().server(
   },
 );
 
+export const organizationMiddleware = createMiddleware()
+  .middleware([authenticatedMiddleware])
+  .server(async ({ next, context: { session } }) => {
+    const activeOrganizationId = session.activeOrganizationId;
+    if (!activeOrganizationId) {
+      throw new Error(
+        "No hay organización activa. Por favor, selecciona una organización para continuar.",
+      );
+    }
+    return next({ context: { activeOrganizationId } });
+  });
+
 export const roleMiddleware = (role: "admin" | "user") =>
   createMiddleware()
     .middleware([authenticatedMiddleware])

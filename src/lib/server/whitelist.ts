@@ -32,7 +32,7 @@ export const addWhitelistedEmail = createServerFn({ method: "POST" })
 
 export const removeWhitelistedEmail = createServerFn({ method: "POST" })
   .middleware([roleMiddleware("admin")])
-  .validator(z.object({ id: z.string() }))
+  .validator(z.object({ id: z.uuid() }))
   .handler(async ({ data, context: { db } }) => {
     await db.delete(schema.whitelistEmail).where(eq(schema.whitelistEmail.id, data.id));
     return { success: true };

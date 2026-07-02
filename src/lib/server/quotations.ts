@@ -1,37 +1,36 @@
 import slugify from "@sindresorhus/slugify";
 import { createServerFn } from "@tanstack/react-start";
 import { generateRandomString } from "better-auth/crypto";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
-import { authenticatedMiddleware } from "../auth/functions";
+import { organizationMiddleware } from "../auth/functions";
 
 // ── Queries ──────────────────────────────────────────────
 
 export const listQuotations = createServerFn({ method: "GET" })
-  .middleware([authenticatedMiddleware])
-  .handler(async ({ context: { session, db } }) => {
-    if (!session.activeOrganizationId) {
-      throw new Error(
-        "No hay organización activa. Por favor, selecciona una organización para continuar.",
-      );
-    }
-
+  .middleware([organizationMiddleware])
+  .handler(async ({ context: { activeOrganizationId, db } }) => {
     return await db
       .select()
       .from(schema.quotation)
-      .where(eq(schema.quotation.organizationId, session.activeOrganizationId))
+      .where(eq(schema.quotation.organizationId, activeOrganizationId))
       .orderBy(asc(schema.quotation.createdAt));
   });
 
 export const getQuotation = createServerFn({ method: "GET" })
-  .middleware([authenticatedMiddleware])
-  .validator(z.object({ id: z.string() }))
-  .handler(async ({ data, context: { db } }) => {
+  .middleware([organizationMiddleware])
+  .validator(z.object({ id: z.uuid() }))
+  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
     const [quotation] = await db
       .select()
       .from(schema.quotation)
-      .where(eq(schema.quotation.id, data.id));
+      .where(
+        and(
+          eq(schema.quotation.id, data.id),
+          eq(schema.quotation.organizationId, activeOrganizationId),
+        ),
+      );
 
     if (!quotation) throw new Error("Cotización no encontrada");
 
@@ -53,22 +52,16 @@ export const getQuotation = createServerFn({ method: "GET" })
 export const createQuotation = createServerFn({ method: "POST" })
   .validator(
     z.object({
-      budgetId: z.string(),
+      budgetId: z.uuid(),
       clientTitle: z.string().min(1),
     }),
   )
-  .middleware([authenticatedMiddleware])
-  .handler(async ({ data, context: { session, db } }) => {
-    const organizationId = session.activeOrganizationId;
-    if (!organizationId) {
-      throw new Error(
-        "No hay organización activa. Por favor, selecciona una organización para continuar.",
-      );
-    }
+  .middleware([organizationMiddleware])
+  .handler(async ({ data, context: { activeOrganizationId: organizationId, db } }) => {
     return await db.transaction(async (tx) => {
       // Load budget with its materials and operations
       const budget = await tx.query.budget.findFirst({
-        where: { id: data.budgetId },
+        where: { id: data.budgetId, organizationId },
       });
 
       if (!budget) throw new Error("Presupuesto no encontrado");
@@ -146,9 +139,13 @@ export const createQuotation = createServerFn({ method: "POST" })
   });
 
 export const deleteQuotation = createServerFn({ method: "POST" })
-  .middleware([authenticatedMiddleware])
-  .validator(z.object({ id: z.string() }))
-  .handler(async ({ data: { id }, context: { db } }) => {
-    await db.delete(schema.quotation).where(eq(schema.quotation.id, id));
+  .middleware([organizationMiddleware])
+  .validator(z.object({ id: z.uuid() }))
+  .handler(async ({ data: { id }, context: { activeOrganizationId, db } }) => {
+    await db
+      .delete(schema.quotation)
+      .where(
+        and(eq(schema.quotation.id, id), eq(schema.quotation.organizationId, activeOrganizationId)),
+      );
     return { success: true };
   });

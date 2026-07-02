@@ -1,20 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import * as z from "zod";
 import { transactionMiddleware } from "#/db/middleware";
 import { material, materialPriceHistory } from "#/db/schema";
 import { createEntityPresignedUrl, deleteObject } from "#/lib/storage";
-import { authenticatedMiddleware } from "../auth/functions";
+import { organizationMiddleware } from "../auth/functions";
 
 export const listMaterials = createServerFn({ method: "GET" })
-  .middleware([authenticatedMiddleware])
-  .handler(async ({ context: { session, db } }) => {
-    const activeOrganizationId = session.activeOrganizationId;
-    if (!activeOrganizationId) {
-      throw new Error(
-        "No hay organización activa. Por favor, selecciona una organización para continuar.",
-      );
-    }
+  .middleware([organizationMiddleware])
+  .handler(async ({ context: { activeOrganizationId, db } }) => {
     return await db
       .select()
       .from(material)
@@ -32,14 +26,8 @@ export const createMaterial = createServerFn({ method: "POST" })
       imageContentType: z.string().optional(),
     }),
   )
-  .middleware([authenticatedMiddleware])
-  .handler(async ({ data, context: { session, db } }) => {
-    const activeOrganizationId = session.activeOrganizationId;
-    if (!activeOrganizationId) {
-      throw new Error(
-        "No hay organización activa. Por favor, selecciona una organización para continuar.",
-      );
-    }
+  .middleware([organizationMiddleware])
+  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
     const [newMaterial] = await db
       .insert(material)
       .values({
@@ -71,10 +59,10 @@ export const createMaterial = createServerFn({ method: "POST" })
   });
 
 export const updateMaterial = createServerFn({ method: "POST" })
-  .middleware([authenticatedMiddleware, transactionMiddleware])
+  .middleware([organizationMiddleware, transactionMiddleware])
   .validator(
     z.object({
-      id: z.string(),
+      id: z.uuid(),
       name: z.string(),
       unit: z.string(),
       currentPrice: z.string(),
@@ -84,7 +72,7 @@ export const updateMaterial = createServerFn({ method: "POST" })
       imageContentType: z.string().optional(),
     }),
   )
-  .handler(async ({ data, context: { trx } }) => {
+  .handler(async ({ data, context: { activeOrganizationId, trx } }) => {
     const { id, imageContentType, deleteImage, ...updateData } = data;
     const prevPrice = updateData.currentPrice;
 
@@ -92,10 +80,12 @@ export const updateMaterial = createServerFn({ method: "POST" })
     const [existing] = await trx
       .select({ currentPrice: material.currentPrice, image: material.image })
       .from(material)
-      .where(eq(material.id, id));
+      .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)));
+
+    if (!existing) throw new Error("Material no encontrado");
 
     // Delete image from storage when the user explicitly removes it
-    if (deleteImage && existing?.image) {
+    if (deleteImage && existing.image) {
       await deleteObject(existing.image);
     }
 
@@ -105,7 +95,7 @@ export const updateMaterial = createServerFn({ method: "POST" })
         ...updateData,
         image: deleteImage ? null : undefined,
       })
-      .where(eq(material.id, id))
+      .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)))
       .returning();
 
     if (existing && existing.currentPrice !== prevPrice) {
@@ -128,18 +118,23 @@ export const updateMaterial = createServerFn({ method: "POST" })
   });
 
 export const deleteMaterial = createServerFn({ method: "POST" })
-  .middleware([authenticatedMiddleware])
-  .validator(z.object({ id: z.string() }))
-  .handler(async ({ data: { id }, context: { db } }) => {
+  .middleware([organizationMiddleware])
+  .validator(z.object({ id: z.uuid() }))
+  .handler(async ({ data: { id }, context: { activeOrganizationId, db } }) => {
     // Delete the image from storage before removing the record
     const [existing] = await db
       .select({ image: material.image })
       .from(material)
-      .where(eq(material.id, id));
-    if (existing?.image) {
+      .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)));
+
+    if (!existing) throw new Error("Material no encontrado");
+
+    if (existing.image) {
       await deleteObject(existing.image);
     }
 
-    await db.delete(material).where(eq(material.id, id));
+    await db
+      .delete(material)
+      .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)));
     return { success: true };
   });

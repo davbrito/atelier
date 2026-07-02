@@ -1,18 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { desc, eq, sql } from "drizzle-orm";
 import * as schema from "#/db/schema";
-import { authenticatedMiddleware } from "../auth/functions";
+import { organizationMiddleware } from "../auth/functions";
 
 export const getDashboardStats = createServerFn({ method: "GET" })
-  .middleware([authenticatedMiddleware])
-  .handler(async ({ context: { session, db } }) => {
-    const orgId = session.activeOrganizationId;
-    if (!orgId) {
-      throw new Error(
-        "No hay organización activa. Por favor, selecciona una organización para continuar. {DashboardStats}",
-      );
-    }
-
+  .middleware([organizationMiddleware])
+  .handler(async ({ context: { activeOrganizationId: orgId, db } }) => {
     const {
       rows: [data],
     } = await db.execute(sql`SELECT
