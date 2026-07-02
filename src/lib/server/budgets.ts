@@ -1,11 +1,11 @@
 import slugify from "@sindresorhus/slugify";
 import { createServerFn } from "@tanstack/react-start";
 import { generateRandomString } from "better-auth/crypto";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
 import { createEntityPresignedUrl, deleteObject } from "#/lib/storage";
-import { authenticatedMiddleware } from "../auth/functions";
+import { organizationMiddleware } from "../auth/functions";
 
 // ── Types ────────────────────────────────────────────────
 
@@ -34,14 +34,8 @@ export const budgetFormSchema = z.object({
 // ── Queries ──────────────────────────────────────────────
 
 export const listBudgets = createServerFn({ method: "GET" })
-  .middleware([authenticatedMiddleware])
-  .handler(async ({ context: { session, db } }) => {
-    const activeOrganizationId = session.activeOrganizationId;
-    if (!activeOrganizationId) {
-      throw new Error(
-        "No hay organización activa. Por favor, selecciona una organización para continuar.",
-      );
-    }
+  .middleware([organizationMiddleware])
+  .handler(async ({ context: { activeOrganizationId, db } }) => {
     return await db
       .select()
       .from(schema.budget)
@@ -50,10 +44,18 @@ export const listBudgets = createServerFn({ method: "GET" })
   });
 
 export const getBudgetBySlug = createServerFn({ method: "GET" })
-  .middleware([authenticatedMiddleware])
+  .middleware([organizationMiddleware])
   .validator(z.object({ slug: z.string() }))
-  .handler(async ({ data, context: { db } }) => {
-    const [budget] = await db.select().from(schema.budget).where(eq(schema.budget.slug, data.slug));
+  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
+    const [budget] = await db
+      .select()
+      .from(schema.budget)
+      .where(
+        and(
+          eq(schema.budget.slug, data.slug),
+          eq(schema.budget.organizationId, activeOrganizationId),
+        ),
+      );
 
     if (!budget) throw new Error("Presupuesto no encontrado");
 
@@ -71,10 +73,15 @@ export const getBudgetBySlug = createServerFn({ method: "GET" })
   });
 
 export const getBudgetById = createServerFn({ method: "GET" })
-  .middleware([authenticatedMiddleware])
-  .validator(z.object({ id: z.string() }))
-  .handler(async ({ data, context: { db } }) => {
-    const [budget] = await db.select().from(schema.budget).where(eq(schema.budget.id, data.id));
+  .middleware([organizationMiddleware])
+  .validator(z.object({ id: z.uuid() }))
+  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
+    const [budget] = await db
+      .select()
+      .from(schema.budget)
+      .where(
+        and(eq(schema.budget.id, data.id), eq(schema.budget.organizationId, activeOrganizationId)),
+      );
 
     if (!budget) throw new Error("Presupuesto no encontrado");
 
@@ -95,15 +102,8 @@ export const getBudgetById = createServerFn({ method: "GET" })
 
 export const createBudget = createServerFn({ method: "POST" })
   .validator(budgetFormSchema)
-  .middleware([authenticatedMiddleware])
-  .handler(async ({ data, context: { session, db } }) => {
-    const activeOrganizationId = session.activeOrganizationId;
-    if (!activeOrganizationId) {
-      throw new Error(
-        "No hay organización activa. Por favor, selecciona una organización para continuar.",
-      );
-    }
-
+  .middleware([organizationMiddleware])
+  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
     const newBudget = await db.transaction(async (tx) => {
       const nameSlug = slugify(data.name);
       let slug = nameSlug;
@@ -167,13 +167,13 @@ export const createBudget = createServerFn({ method: "POST" })
   });
 
 export const updateBudget = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string(), data: budgetFormSchema }))
-  .middleware([authenticatedMiddleware])
-  .handler(async ({ data: { id, data }, context: { db } }) => {
+  .validator(z.object({ id: z.uuid(), data: budgetFormSchema }))
+  .middleware([organizationMiddleware])
+  .handler(async ({ data: { id, data }, context: { activeOrganizationId, db } }) => {
     const [existing] = await db
       .select({ image: schema.budget.image })
       .from(schema.budget)
-      .where(eq(schema.budget.id, id));
+      .where(and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)));
 
     if (!existing) {
       throw new Error("Presupuesto no encontrado");
@@ -189,7 +189,9 @@ export const updateBudget = createServerFn({ method: "POST" })
           hourlyRate: data.hourlyRate,
           image: data.deleteImage ? null : existing.image,
         })
-        .where(eq(schema.budget.id, id));
+        .where(
+          and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)),
+        );
 
       // Replace materials
       await tx.delete(schema.budgetMaterial).where(eq(schema.budgetMaterial.budgetId, id));
@@ -237,18 +239,23 @@ export const updateBudget = createServerFn({ method: "POST" })
   });
 
 export const deleteBudget = createServerFn({ method: "POST" })
-  .middleware([authenticatedMiddleware])
-  .validator(z.object({ id: z.string() }))
-  .handler(async ({ data: { id }, context: { db } }) => {
+  .middleware([organizationMiddleware])
+  .validator(z.object({ id: z.uuid() }))
+  .handler(async ({ data: { id }, context: { activeOrganizationId, db } }) => {
     // Delete the image from storage before removing the record
     const [existing] = await db
       .select({ image: schema.budget.image })
       .from(schema.budget)
-      .where(eq(schema.budget.id, id));
-    if (existing?.image) {
+      .where(and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)));
+
+    if (!existing) throw new Error("Presupuesto no encontrado");
+
+    if (existing.image) {
       await deleteObject(existing.image);
     }
 
-    await db.delete(schema.budget).where(eq(schema.budget.id, id));
+    await db
+      .delete(schema.budget)
+      .where(and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)));
     return { success: true };
   });

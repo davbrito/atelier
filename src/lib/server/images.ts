@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 import { budget, material } from "#/db/schema";
 import { moveObject } from "#/lib/storage";
-import { authenticatedMiddleware } from "../auth/functions";
+import { organizationMiddleware } from "../auth/functions";
 
 const entityTypesTableMap = {
   budgets: budget,
@@ -17,26 +17,45 @@ const entityTypesTableMap = {
  * 2. Persist the permanent key on the entity.
  */
 export const setEntityImage = createServerFn({ method: "POST" })
-  .middleware([authenticatedMiddleware])
+  .middleware([organizationMiddleware])
   .validator(
     z.object({
       entityType: z.enum(["materials", "budgets"]),
-      entityId: z.string(),
+      entityId: z.uuid(),
       imageKey: z.string(),
     }),
   )
-  .handler(async ({ data, context: { db } }) => {
+  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
     const table = entityTypesTableMap[data.entityType];
 
-    // Derive the permanent key from the temp key
-    const permanentKey = data.imageKey.replace("/tmp/", "/");
+    // The key must match what createEntityPresignedUrl generates for this
+    // exact entity — never move arbitrary objects around the bucket.
+    const expectedPrefix = `uploads/tmp/${data.entityType}/${data.entityId}.`;
+    const ext = data.imageKey.slice(expectedPrefix.length);
+    if (!data.imageKey.startsWith(expectedPrefix) || !/^[a-z0-9]+$/.test(ext)) {
+      throw new Error("Clave de imagen inválida");
+    }
+
+    // The entity must belong to the active organization.
+    const [entity] = await db
+      .select({ id: table.id })
+      .from(table)
+      .where(and(eq(table.id, data.entityId), eq(table.organizationId, activeOrganizationId)));
+    if (!entity) {
+      throw new Error("Entidad no encontrada");
+    }
+
+    const permanentKey = `uploads/${data.entityType}/${data.entityId}.${ext}`;
 
     // Move the object from temp to permanent in the bucket via unstorage.
     // If this fails, do not update the DB so we don't point at a missing object.
     await moveObject(data.imageKey, permanentKey);
 
     // Persist the permanent key in the database only after the object exists there.
-    await db.update(table).set({ image: permanentKey }).where(eq(table.id, data.entityId));
+    await db
+      .update(table)
+      .set({ image: permanentKey })
+      .where(and(eq(table.id, data.entityId), eq(table.organizationId, activeOrganizationId)));
 
     return { success: true, permanentKey };
   });
