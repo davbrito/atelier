@@ -95,6 +95,7 @@ function QuotationsPage() {
   });
 
   async function viewDetails(id: string) {
+    setDetailData(null);
     setIsDetailOpen(true);
     const detail = await getFn({ data: { id } });
     setDetailData(detail);
@@ -254,10 +255,15 @@ function QuotationsPage() {
                 <div className="space-y-2">
                   {detailData.materials.map((m) => (
                     <div key={m.id} className="flex justify-between rounded-lg border p-3 text-sm">
-                      <span className="text-muted-foreground">
-                        {m.quantity} {m.frozenUnit}
+                      <div className="flex-1">
+                        <span className="font-medium">{m.frozenName}</span>
+                        <span className="ml-2 text-muted-foreground text-xs">
+                          {m.quantity} {m.frozenUnit} × ${Number(m.frozenPrice).toFixed(2)}
+                        </span>
+                      </div>
+                      <span className="font-medium">
+                        ${(Number(m.frozenPrice) * Number(m.quantity)).toFixed(2)}
                       </span>
-                      <span className="font-medium">${m.frozenPrice}</span>
                     </div>
                   ))}
                 </div>
@@ -276,7 +282,12 @@ function QuotationsPage() {
                         key={o.id}
                         className="flex justify-between rounded-lg border p-3 text-sm"
                       >
-                        <span className="text-muted-foreground">{o.durationMinutes} min</span>
+                        <div className="flex-1">
+                          <span className="font-medium">{o.frozenName}</span>
+                          <span className="ml-2 text-muted-foreground text-xs">
+                            {o.durationMinutes} min × ${Number(o.frozenHourlyRate).toFixed(2)}/h
+                          </span>
+                        </div>
                         <span className="font-medium">${cost.toFixed(2)}</span>
                       </div>
                     );

@@ -97,40 +97,62 @@ export const createQuotation = createServerFn({ method: "POST" })
         })
         .returning();
 
-      // Freeze materials with current prices
+      // Freeze materials with current name, price and unit. A budget line
+      // pointing at a material that is gone from the catalog would produce a
+      // wrong quote, so fail (and roll back) instead of freezing bad data.
       if (budgetMats.length > 0) {
         const catalogMats = await tx
           .select()
           .from(schema.material)
           .where(eq(schema.material.organizationId, organizationId));
 
-        const materialMap = new Map(
-          catalogMats.map((m) => [m.id, { price: m.currentPrice, unit: m.unit }]),
-        );
+        const materialMap = new Map(catalogMats.map((m) => [m.id, m]));
 
         await tx.insert(schema.quotationMaterial).values(
           budgetMats.map((bm) => {
             const catalog = materialMap.get(bm.materialId);
+            if (!catalog) {
+              throw new Error(
+                "El presupuesto referencia un material que ya no existe en el catálogo. Edita el presupuesto antes de generar la cotización.",
+              );
+            }
             return {
               quotationId: quotation.id,
               materialId: bm.materialId,
               quantity: bm.quantity,
-              frozenPrice: catalog?.price ?? "0",
-              frozenUnit: catalog?.unit ?? "unit",
+              frozenName: catalog.name,
+              frozenPrice: catalog.currentPrice,
+              frozenUnit: catalog.unit,
             };
           }),
         );
       }
 
-      // Freeze operations with current hourly rate
+      // Freeze operations with current name and hourly rate
       if (budgetOps.length > 0) {
+        const catalogOps = await tx
+          .select()
+          .from(schema.operation)
+          .where(eq(schema.operation.organizationId, organizationId));
+
+        const operationMap = new Map(catalogOps.map((o) => [o.id, o]));
+
         await tx.insert(schema.quotationOperation).values(
-          budgetOps.map((bo) => ({
-            quotationId: quotation.id,
-            operationId: bo.operationId,
-            durationMinutes: bo.durationMinutes,
-            frozenHourlyRate: budget.hourlyRate,
-          })),
+          budgetOps.map((bo) => {
+            const catalog = operationMap.get(bo.operationId);
+            if (!catalog) {
+              throw new Error(
+                "El presupuesto referencia una operación que ya no existe en el catálogo. Edita el presupuesto antes de generar la cotización.",
+              );
+            }
+            return {
+              quotationId: quotation.id,
+              operationId: bo.operationId,
+              durationMinutes: bo.durationMinutes,
+              frozenName: catalog.name,
+              frozenHourlyRate: budget.hourlyRate,
+            };
+          }),
         );
       }
 

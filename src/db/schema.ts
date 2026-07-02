@@ -102,15 +102,17 @@ export const quotation = snakeCase.table("quotations", {
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
 
+// Quotation lines are frozen: they must survive catalog changes, so the
+// catalog references are informational only (set null on delete) and the
+// name/price/unit are copied at creation time.
 export const quotationMaterial = snakeCase.table("quotation_materials", {
   id: uuid().primaryKey().default(sql`uuidv7()`),
   quotationId: uuid()
     .notNull()
     .references(() => quotation.id, { onDelete: "cascade" }),
-  materialId: uuid()
-    .notNull()
-    .references(() => material.id, { onDelete: "cascade" }),
+  materialId: uuid().references(() => material.id, { onDelete: "set null" }),
   quantity: decimal({ precision: 12, scale: 4 }).notNull(),
+  frozenName: varchar({ length: 255 }).notNull(),
   frozenPrice: decimal({ precision: 12, scale: 2 }).notNull(),
   frozenUnit: varchar({ length: 50 }).notNull(),
 });
@@ -120,10 +122,9 @@ export const quotationOperation = snakeCase.table("quotation_operations", {
   quotationId: uuid()
     .notNull()
     .references(() => quotation.id, { onDelete: "cascade" }),
-  operationId: uuid()
-    .notNull()
-    .references(() => operation.id, { onDelete: "cascade" }),
+  operationId: uuid().references(() => operation.id, { onDelete: "set null" }),
   durationMinutes: integer().notNull(),
+  frozenName: varchar({ length: 255 }).notNull(),
   frozenHourlyRate: decimal({ precision: 10, scale: 2 }).notNull(),
 });
 
