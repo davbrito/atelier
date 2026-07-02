@@ -1,5 +1,14 @@
 import { sql } from "drizzle-orm";
-import { decimal, integer, snakeCase, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+  decimal,
+  integer,
+  pgPolicy,
+  snakeCase,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { organization, user } from "./auth.gen";
 
 export {
@@ -91,42 +100,70 @@ export const budgetOperation = snakeCase.table("budget_operations", {
 
 // ── Quotations (frozen instances) ────────────────────────
 
-export const quotation = snakeCase.table("quotations", {
-  id: uuid().primaryKey().default(sql`uuidv7()`),
-  slug: varchar({ length: 255 }).notNull().unique(),
-  organizationId: text()
-    .notNull()
-    .references(() => organization.id, { onDelete: "cascade" }),
-  budgetId: uuid().references(() => budget.id, { onDelete: "set null" }),
-  clientTitle: varchar({ length: 255 }).notNull(),
-  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
-});
+// Quotations are immutable once emitted (see CONTEXT.md). RLS enforces this
+// at the database level: only the operations the app legitimately performs
+// have a policy, so no UPDATE can ever mutate a quotation. Adding a policy
+// auto-enables RLS; the migration additionally sets FORCE ROW LEVEL SECURITY
+// because the app connects as the table owner, which otherwise bypasses RLS.
+export const quotation = snakeCase.table(
+  "quotations",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    slug: varchar({ length: 255 }).notNull().unique(),
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    budgetId: uuid().references(() => budget.id, { onDelete: "set null" }),
+    clientTitle: varchar({ length: 255 }).notNull(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  () => [
+    pgPolicy("quotations_select", { for: "select", using: sql`true` }),
+    pgPolicy("quotations_insert", { for: "insert", withCheck: sql`true` }),
+    pgPolicy("quotations_delete", { for: "delete", using: sql`true` }),
+  ],
+);
 
 // Quotation lines are frozen: they must survive catalog changes, so the
 // catalog references are informational only (set null on delete) and the
-// name/price/unit are copied at creation time.
-export const quotationMaterial = snakeCase.table("quotation_materials", {
-  id: uuid().primaryKey().default(sql`uuidv7()`),
-  quotationId: uuid()
-    .notNull()
-    .references(() => quotation.id, { onDelete: "cascade" }),
-  materialId: uuid().references(() => material.id, { onDelete: "set null" }),
-  quantity: decimal({ precision: 12, scale: 4 }).notNull(),
-  frozenName: varchar({ length: 255 }).notNull(),
-  frozenPrice: decimal({ precision: 12, scale: 2 }).notNull(),
-  frozenUnit: varchar({ length: 50 }).notNull(),
-});
+// name/price/unit are copied at creation time. No UPDATE or DELETE policy,
+// so lines can never be mutated or removed except by cascade from the parent.
+export const quotationMaterial = snakeCase.table(
+  "quotation_materials",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    quotationId: uuid()
+      .notNull()
+      .references(() => quotation.id, { onDelete: "cascade" }),
+    materialId: uuid().references(() => material.id, { onDelete: "set null" }),
+    quantity: decimal({ precision: 12, scale: 4 }).notNull(),
+    frozenName: varchar({ length: 255 }).notNull(),
+    frozenPrice: decimal({ precision: 12, scale: 2 }).notNull(),
+    frozenUnit: varchar({ length: 50 }).notNull(),
+  },
+  () => [
+    pgPolicy("quotation_materials_select", { for: "select", using: sql`true` }),
+    pgPolicy("quotation_materials_insert", { for: "insert", withCheck: sql`true` }),
+  ],
+);
 
-export const quotationOperation = snakeCase.table("quotation_operations", {
-  id: uuid().primaryKey().default(sql`uuidv7()`),
-  quotationId: uuid()
-    .notNull()
-    .references(() => quotation.id, { onDelete: "cascade" }),
-  operationId: uuid().references(() => operation.id, { onDelete: "set null" }),
-  durationMinutes: integer().notNull(),
-  frozenName: varchar({ length: 255 }).notNull(),
-  frozenHourlyRate: decimal({ precision: 10, scale: 2 }).notNull(),
-});
+export const quotationOperation = snakeCase.table(
+  "quotation_operations",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    quotationId: uuid()
+      .notNull()
+      .references(() => quotation.id, { onDelete: "cascade" }),
+    operationId: uuid().references(() => operation.id, { onDelete: "set null" }),
+    durationMinutes: integer().notNull(),
+    frozenName: varchar({ length: 255 }).notNull(),
+    frozenHourlyRate: decimal({ precision: 10, scale: 2 }).notNull(),
+  },
+  () => [
+    pgPolicy("quotation_operations_select", { for: "select", using: sql`true` }),
+    pgPolicy("quotation_operations_insert", { for: "insert", withCheck: sql`true` }),
+  ],
+);
 
 // ── Whitelist ────────────────────────────────────────────
 

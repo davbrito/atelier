@@ -1,10 +1,10 @@
 {
-  "id": "ab1f368d-0e9a-44fe-9bad-532b0691be96",
+  "version": "8",
+  "dialect": "postgres",
+  "id": "e8f2122e-4b33-4023-b8cb-c9a6903cb291",
   "prevIds": [
     "6e835579-08f4-4dba-ba54-ad79b6bbc14a"
   ],
-  "version": "8",
-  "dialect": "postgres",
   "ddl": [
     {
       "isRlsEnabled": false,
@@ -73,19 +73,19 @@
       "schema": "public"
     },
     {
-      "isRlsEnabled": false,
+      "isRlsEnabled": true,
       "name": "quotations",
       "entityType": "tables",
       "schema": "public"
     },
     {
-      "isRlsEnabled": false,
+      "isRlsEnabled": true,
       "name": "quotation_materials",
       "entityType": "tables",
       "schema": "public"
     },
     {
-      "isRlsEnabled": false,
+      "isRlsEnabled": true,
       "name": "quotation_operations",
       "entityType": "tables",
       "schema": "public"
@@ -2594,6 +2594,97 @@
       "schema": "public",
       "table": "whitelist_emails",
       "entityType": "uniques"
+    },
+    {
+      "as": "PERMISSIVE",
+      "for": "SELECT",
+      "roles": [
+        "public"
+      ],
+      "using": "true",
+      "withCheck": null,
+      "name": "quotations_select",
+      "entityType": "policies",
+      "schema": "public",
+      "table": "quotations"
+    },
+    {
+      "as": "PERMISSIVE",
+      "for": "INSERT",
+      "roles": [
+        "public"
+      ],
+      "using": null,
+      "withCheck": "true",
+      "name": "quotations_insert",
+      "entityType": "policies",
+      "schema": "public",
+      "table": "quotations"
+    },
+    {
+      "as": "PERMISSIVE",
+      "for": "DELETE",
+      "roles": [
+        "public"
+      ],
+      "using": "true",
+      "withCheck": null,
+      "name": "quotations_delete",
+      "entityType": "policies",
+      "schema": "public",
+      "table": "quotations"
+    },
+    {
+      "as": "PERMISSIVE",
+      "for": "SELECT",
+      "roles": [
+        "public"
+      ],
+      "using": "true",
+      "withCheck": null,
+      "name": "quotation_materials_select",
+      "entityType": "policies",
+      "schema": "public",
+      "table": "quotation_materials"
+    },
+    {
+      "as": "PERMISSIVE",
+      "for": "INSERT",
+      "roles": [
+        "public"
+      ],
+      "using": null,
+      "withCheck": "true",
+      "name": "quotation_materials_insert",
+      "entityType": "policies",
+      "schema": "public",
+      "table": "quotation_materials"
+    },
+    {
+      "as": "PERMISSIVE",
+      "for": "SELECT",
+      "roles": [
+        "public"
+      ],
+      "using": "true",
+      "withCheck": null,
+      "name": "quotation_operations_select",
+      "entityType": "policies",
+      "schema": "public",
+      "table": "quotation_operations"
+    },
+    {
+      "as": "PERMISSIVE",
+      "for": "INSERT",
+      "roles": [
+        "public"
+      ],
+      "using": null,
+      "withCheck": "true",
+      "name": "quotation_operations_insert",
+      "entityType": "policies",
+      "schema": "public",
+      "table": "quotation_operations"
     }
   ],
   "renames": []
