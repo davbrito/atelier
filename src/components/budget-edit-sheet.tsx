@@ -35,33 +35,30 @@ export function BudgetEditSheet({ budgetId, open, onOpenChange }: BudgetEditShee
     enabled: open && !!budgetId,
   });
 
+  // Use `values` (not `defaultValues`) so the form re-syncs when budgetData
+  // arrives from the query — defaultValues only runs on the first render, so
+  // the form used to instantiate blank and never update.
   const form = useForm({
     resolver: zodResolver(
       budgetFormSchema.extend({
         file: z.instanceof(File).nullable().optional(),
       }),
     ),
-    defaultValues: {
-      name: "",
-      description: "",
-      hourlyRate: "",
-      materials: [],
-      operations: [],
+    values: {
+      name: budgetData?.name ?? "",
+      description: budgetData?.description ?? "",
+      hourlyRate: budgetData?.hourlyRate ?? "",
+      materials:
+        budgetData?.materials.map((m) => ({
+          materialId: m.materialId,
+          quantity: m.quantity,
+        })) ?? [],
+      operations:
+        budgetData?.operations.map((o) => ({
+          operationId: o.operationId,
+          durationMinutes: o.durationMinutes,
+        })) ?? [],
       deleteImage: false,
-      ...(budgetData &&
-        open && {
-          name: budgetData.name,
-          description: budgetData.description ?? "",
-          hourlyRate: budgetData.hourlyRate,
-          materials: budgetData.materials.map((m) => ({
-            materialId: m.materialId,
-            quantity: m.quantity,
-          })),
-          operations: budgetData.operations.map((o) => ({
-            operationId: o.operationId,
-            durationMinutes: o.durationMinutes,
-          })),
-        }),
     },
   });
   const deleteImage = useWatch({ control: form.control, name: "deleteImage" });

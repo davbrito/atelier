@@ -28,15 +28,26 @@ export const createMaterial = createServerFn({ method: "POST" })
   )
   .middleware([organizationMiddleware])
   .handler(async ({ data, context: { activeOrganizationId, db } }) => {
-    const [newMaterial] = await db
-      .insert(material)
-      .values({
-        organizationId: activeOrganizationId,
-        name: data.name,
-        unit: data.unit,
-        currentPrice: data.currentPrice,
-      })
-      .returning();
+    const newMaterial = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(material)
+        .values({
+          organizationId: activeOrganizationId,
+          name: data.name,
+          unit: data.unit,
+          currentPrice: data.currentPrice,
+        })
+        .returning();
+
+      // Seed the history with the initial price so the timeline is complete
+      // from creation (each row = the price value from that moment on).
+      await tx.insert(materialPriceHistory).values({
+        materialId: created.id,
+        price: data.currentPrice,
+      });
+
+      return created;
+    });
 
     if (data.imageContentType) {
       const presigned = await createEntityPresignedUrl(
@@ -74,9 +85,7 @@ export const updateMaterial = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context: { activeOrganizationId, trx } }) => {
     const { id, imageContentType, deleteImage, ...updateData } = data;
-    const prevPrice = updateData.currentPrice;
 
-    // Check if price changed to record history
     const [existing] = await trx
       .select({ currentPrice: material.currentPrice, image: material.image })
       .from(material)
@@ -98,10 +107,15 @@ export const updateMaterial = createServerFn({ method: "POST" })
       .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)))
       .returning();
 
-    if (existing && existing.currentPrice !== prevPrice) {
+    // Record the new price when it actually changed. Compare numerically so
+    // "10.00" and "10" aren't considered different, and skip inputs that
+    // couldn't be parsed as a price.
+    const prevPriceNum = Number(existing.currentPrice);
+    const newPriceNum = Number(updateData.currentPrice);
+    if (Number.isFinite(newPriceNum) && newPriceNum !== prevPriceNum) {
       await trx.insert(materialPriceHistory).values({
         materialId: id,
-        price: prevPrice,
+        price: updateData.currentPrice,
       });
     }
 
