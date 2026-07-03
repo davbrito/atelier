@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getBudgetById, getBudgetBySlug, listBudgets } from "./server/budgets";
 import { getDashboardStats } from "./server/dashboard";
+import { getMaterialInventory } from "./server/inventory";
 import { listMaterials } from "./server/materials";
 import { listOperations } from "./server/operations";
 import { getUserOrganizationCount } from "./server/organizations";
@@ -10,6 +11,7 @@ export const queryKeys = {
   budgets: ["budgets"],
   budget: (idOrSlug: string) => ["budget", idOrSlug],
   materials: ["materials"],
+  materialInventory: (materialId: string) => ["materials", "inventory", materialId],
   operations: ["operations"],
   dashboard: ["dashboard"],
   userOrganizationCount: ["userOrganizationCount"],
@@ -37,6 +39,12 @@ export const materialsListQueryOptions = queryOptions({
   queryKey: queryKeys.materials,
   queryFn: ({ signal }) => listMaterials({ signal }),
 });
+
+export const materialInventoryQueryOptions = (materialId: string) =>
+  queryOptions({
+    queryKey: queryKeys.materialInventory(materialId),
+    queryFn: ({ signal }) => getMaterialInventory({ data: { materialId }, signal }),
+  });
 
 export const operationsListQueryOptions = queryOptions({
   queryKey: queryKeys.operations,

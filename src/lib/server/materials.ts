@@ -1,17 +1,30 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, sql } from "drizzle-orm";
 import * as z from "zod";
 import { transactionMiddleware } from "#/db/middleware";
-import { material, materialPriceHistory } from "#/db/schema";
+import { material, materialInventoryMovement, materialPriceHistory } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import { storageMiddleware } from "../storage";
 
 export const listMaterials = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .handler(async ({ context: { activeOrganizationId, db } }) => {
+    const stockSq = db
+      .select({
+        materialId: materialInventoryMovement.materialId,
+        stock: sql<string>`COALESCE(SUM(${materialInventoryMovement.delta}), '0')`.as("stock"),
+      })
+      .from(materialInventoryMovement)
+      .groupBy(materialInventoryMovement.materialId)
+      .as("stock_sq");
+
     return await db
-      .select()
+      .select({
+        ...getTableColumns(material),
+        currentStock: sql<string>`COALESCE(${stockSq.stock}, '0')`,
+      })
       .from(material)
+      .leftJoin(stockSq, eq(material.id, stockSq.materialId))
       .where(eq(material.organizationId, activeOrganizationId))
       .orderBy(asc(material.name));
   });
