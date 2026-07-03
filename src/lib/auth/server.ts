@@ -77,7 +77,11 @@ export function createAuth(db: Db, env: Env) {
               const buffer = await response.arrayBuffer();
               const key = googleAvatarKey(profile.sub);
               await getStorage().setItemRaw(key, buffer);
-              return { image: `/${key}` };
+              // Persist the storage key as-is (no leading slash) so
+              // resolveImageSrc detects the `avatars/` prefix and proxies via
+              // /api/images. A leading slash makes it look like a plain URL
+              // and would render as a broken `<img src="/avatars/…">`.
+              return { image: key };
             }
           } catch {
             // Fall through to store the Google URL as a fallback

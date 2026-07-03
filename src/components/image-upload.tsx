@@ -4,6 +4,7 @@ import { ImageIcon, TrashIcon, UploadIcon } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "#/components/ui/button";
+import { resolveImageSrc } from "#/lib/utils";
 
 type ImageUploadProps = {
   initialImage: string | null | undefined;
@@ -24,10 +25,6 @@ const ACCEPT = {
 };
 
 const ALLOWED_EXTENSIONS = ".jpg, .jpeg, .png, .webp, .gif, .avif";
-
-function imageSrc(key: string) {
-  return `/api/images?key=${encodeURIComponent(key)}`;
-}
 
 export function ImageUpload({
   initialImage,
@@ -88,7 +85,7 @@ export function ImageUpload({
     return (
       <div className="relative overflow-hidden rounded-lg border">
         <img
-          src={imageSrc(initialImage)}
+          src={resolveImageSrc(initialImage)}
           alt="Preview"
           className="aspect-square w-full object-cover"
         />

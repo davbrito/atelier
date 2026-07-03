@@ -171,7 +171,7 @@ export const updateBudget = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
   .handler(async ({ data: { id, data }, context: { activeOrganizationId, db } }) => {
     const [existing] = await db
-      .select({ image: schema.budget.image })
+      .select({ image: schema.budget.image, slug: schema.budget.slug })
       .from(schema.budget)
       .where(and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)));
 
@@ -180,10 +180,25 @@ export const updateBudget = createServerFn({ method: "POST" })
     }
 
     const updated = await db.transaction(async (tx) => {
+      // Regenerate the slug from the (possibly new) name, dedup against
+      // other budgets — the current one is allowed to keep its own slug.
+      // Without this, renaming to a name that collides with another budget
+      // would break with a UNIQUE constraint violation.
+      const nameSlug = slugify(data.name);
+      let slug = nameSlug;
+      while (
+        slug !== existing.slug &&
+        (await tx.$count(
+          tx.select().from(schema.budget).where(eq(schema.budget.slug, slug)).limit(1),
+        ))
+      ) {
+        slug = `${nameSlug}_${generateRandomString(4)}`;
+      }
+
       await tx
         .update(schema.budget)
         .set({
-          slug: slugify(data.name),
+          slug,
           name: data.name,
           description: data.description ?? null,
           hourlyRate: data.hourlyRate,

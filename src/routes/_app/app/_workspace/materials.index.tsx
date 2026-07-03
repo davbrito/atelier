@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { materialsListQueryOptions } from "#/lib/query-options";
 import { deleteMaterial, type listMaterials } from "#/lib/server/materials";
 import { UNIT_OPTIONS } from "#/lib/units";
+import { resolveImageSrc } from "#/lib/utils";
 
 export const Route = createFileRoute("/_app/app/_workspace/materials/")({
   component: MaterialsPage,
@@ -96,7 +97,7 @@ function MaterialsPage() {
                 <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
                 {material.image ? (
                   <img
-                    src={`/api/images?key=${encodeURIComponent(material.image)}`}
+                    src={resolveImageSrc(material.image)}
                     alt={material.name}
                     className="relative z-20 aspect-video w-full object-cover brightness-60 grayscale-25 dark:brightness-40"
                   />
