@@ -3,17 +3,16 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { betterAuth, type SecondaryStorage } from "better-auth";
 import type { Db } from "#/db/client";
 import * as schema from "#/db/schema";
-import { getStorage } from "#/lib/storage";
 import { isWhitelistedEmail } from "#/lib/whitelist";
 import { baseConfig } from "./base-config.server";
 
 export type AppAuth = ReturnType<typeof createAuth>;
 
-// Derive a deterministic storage key from the Google sub (unique user ID).
+// Derive a deterministic avatar URL from the Google sub (unique user ID).
 // Re-sign-ins with the same Google account overwrite the old avatar.
-function googleAvatarKey(sub: string): string {
+function googleAvatarUrl(sub: string): string {
   const hash = crypto.createHash("sha256").update(sub).digest("hex");
-  return `avatars/${hash}.jpg`;
+  return `/uploads/avatars/${hash}.jpg`;
 }
 
 export function createAuth(db: Db, env: Env) {
@@ -75,13 +74,14 @@ export function createAuth(db: Db, env: Env) {
             const response = await fetch(profile.picture);
             if (response.ok) {
               const buffer = await response.arrayBuffer();
-              const key = googleAvatarKey(profile.sub);
-              await getStorage().setItemRaw(key, buffer);
-              // Persist the storage key as-is (no leading slash) so
-              // resolveImageSrc detects the `avatars/` prefix and proxies via
-              // /api/images. A leading slash makes it look like a plain URL
-              // and would render as a broken `<img src="/avatars/…">`.
-              return { image: key };
+              const url = googleAvatarUrl(profile.sub);
+              const storageKey = url.slice(1); // Remove leading slash for storage
+              await env.STORAGE.put(storageKey, buffer, {
+                httpMetadata: { contentType: "image/jpeg" },
+                customMetadata: { source: "google-avatar" },
+              });
+              // Save the full URL directly for use in img src
+              return { image: url };
             }
           } catch {
             // Fall through to store the Google URL as a fallback

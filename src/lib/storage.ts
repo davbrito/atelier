@@ -1,4 +1,4 @@
-import { env } from "cloudflare:workers";
+import { createMiddleware } from "@tanstack/react-start";
 import { AwsClient } from "aws4fetch";
 import { createStorage } from "unstorage";
 import s3Driver from "unstorage/drivers/cloudflare-r2-binding";
@@ -21,16 +21,79 @@ export type PresignedError = { error: true; code: "CONFIG_ERROR"; message: strin
 
 let _storage: ReturnType<typeof createStorage> | null = null;
 
-export function getStorage() {
+export const storageMiddleware = createMiddleware().server(async ({ next, context }) => {
+  const { env } = context;
   _storage ??= createStorage({ driver: s3Driver({ binding: env.STORAGE }) });
-  return _storage;
-}
+  const storage = _storage;
+  return next({ context: { storage, moveObject, createEntityPresignedUrl } });
+
+  /**
+   * Moves an object from sourceKey to destKey within the same bucket
+   * (read → write → delete) via unstorage.
+   * Content-Type is inferred from the key extension on read,
+   * so we do not need to preserve S3 metadata.
+   */
+  async function moveObject(sourceKey: string, destKey: string): Promise<void> {
+    const data = await storage.getItemRaw(sourceKey);
+    if (data === null || data === undefined) {
+      throw new Error(`Source object not found: ${sourceKey}`);
+    }
+    await storage.setItemRaw(destKey, data);
+    await storage.removeItem(sourceKey);
+  }
+
+  // ── Presigned URL ────────────────────────────────────────
+
+  /**
+   * Generates a pre-signed URL scoped to an existing entity.
+   * The key is deterministic: `{entityType}/{entityId}.{ext}`.
+   * Subsequent uploads overwrite the same object.
+   */
+  async function createEntityPresignedUrl(
+    entityType: EntityType,
+    entityId: string,
+    contentType: string,
+  ): Promise<PresignedResult | PresignedError> {
+    if (!ALLOWED_TYPES.includes(contentType)) {
+      return { error: true, code: "CONFIG_ERROR", message: `Invalid content type: ${contentType}` };
+    }
+
+    let s3: ReturnType<typeof getS3Client>;
+
+    try {
+      s3 = getS3Client(env);
+    } catch (err) {
+      return { error: true, code: "CONFIG_ERROR", message: (err as Error).message };
+    }
+
+    const ext = contentType.split("/")[1] ?? "jpg";
+    // Uploads go to a temp prefix. When the entity is committed via setEntityImage,
+    // the object is moved to the permanent location.
+    const key = `uploads/tmp/${encodeURI(entityType)}/${encodeURIComponent(entityId)}.${encodeURIComponent(ext)}`;
+
+    const url = `${env.STORAGE_URL}/${env.STORAGE_BUCKET}/${key}?X-Amz-Expires=300`;
+
+    const uploadUrl = (
+      await s3.sign(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType,
+        },
+        aws: {
+          signQuery: true,
+        },
+      })
+    ).url.toString();
+
+    return { uploadUrl, key };
+  }
+});
 
 // ── S3 client (kept only for presigned URLs) ─────────────
 
 let _s3Client: AwsClient | null = null;
 
-function getS3Client() {
+function getS3Client(env: Env) {
   _s3Client ??= new AwsClient({
     region: "auto",
     accessKeyId: env.STORAGE_ACCESS_KEY_ID,
@@ -55,86 +118,4 @@ const EXT_TO_CONTENT_TYPE: Record<string, string> = {
 export function contentTypeFromKey(key: string): string {
   const ext = key.split(".").pop()?.toLowerCase() ?? "";
   return EXT_TO_CONTENT_TYPE[ext] ?? "application/octet-stream";
-}
-
-// ── Presigned URL ────────────────────────────────────────
-
-/**
- * Generates a pre-signed URL scoped to an existing entity.
- * The key is deterministic: `{entityType}/{entityId}.{ext}`.
- * Subsequent uploads overwrite the same object.
- */
-export async function createEntityPresignedUrl(
-  entityType: EntityType,
-  entityId: string,
-  contentType: string,
-): Promise<PresignedResult | PresignedError> {
-  if (!ALLOWED_TYPES.includes(contentType)) {
-    return { error: true, code: "CONFIG_ERROR", message: `Invalid content type: ${contentType}` };
-  }
-
-  let s3: ReturnType<typeof getS3Client>;
-
-  try {
-    s3 = getS3Client();
-  } catch (err) {
-    return { error: true, code: "CONFIG_ERROR", message: (err as Error).message };
-  }
-
-  const ext = contentType.split("/")[1] ?? "jpg";
-  // Uploads go to a temp prefix. When the entity is committed via setEntityImage,
-  // the object is moved to the permanent location.
-  const key = `uploads/tmp/${encodeURI(entityType)}/${encodeURIComponent(entityId)}.${encodeURIComponent(ext)}`;
-
-  const url = `${env.STORAGE_URL}/${env.STORAGE_BUCKET}/${key}?X-Amz-Expires=300`;
-
-  const uploadUrl = (
-    await s3.sign(url, {
-      method: "PUT",
-      headers: {
-        "Content-Type": contentType,
-      },
-      aws: {
-        signQuery: true,
-      },
-    })
-  ).url.toString();
-
-  return { uploadUrl, key };
-}
-
-// ── Object operations via unstorage ──────────────────────
-
-/**
- * Moves an object from sourceKey to destKey within the same bucket
- * (read → write → delete) via unstorage.
- * Content-Type is inferred from the key extension on read,
- * so we do not need to preserve S3 metadata.
- */
-export async function moveObject(sourceKey: string, destKey: string): Promise<void> {
-  const storage = getStorage();
-  const data = await storage.getItemRaw(sourceKey);
-  if (data === null || data === undefined) {
-    throw new Error(`Source object not found: ${sourceKey}`);
-  }
-  await storage.setItemRaw(destKey, data);
-  await storage.removeItem(sourceKey);
-}
-
-/**
- * Writes raw data to storage at the given key.
- * Content-Type is inferred from the key extension for future reads.
- */
-export async function putObject(key: string, data: ArrayBuffer | Uint8Array): Promise<void> {
-  const storage = getStorage();
-  await storage.setItemRaw(key, data);
-}
-
-/**
- * Deletes an object from storage.
- * Silently succeeds if the key does not exist.
- */
-export async function deleteObject(key: string): Promise<void> {
-  const storage = getStorage();
-  await storage.removeItem(key);
 }

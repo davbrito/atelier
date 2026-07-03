@@ -4,8 +4,8 @@ import { generateRandomString } from "better-auth/crypto";
 import { and, asc, eq } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
-import { createEntityPresignedUrl, deleteObject } from "#/lib/storage";
 import { organizationMiddleware } from "../auth/functions";
+import { storageMiddleware } from "../storage";
 
 // ── Types ────────────────────────────────────────────────
 
@@ -102,8 +102,8 @@ export const getBudgetById = createServerFn({ method: "GET" })
 
 export const createBudget = createServerFn({ method: "POST" })
   .validator(budgetFormSchema)
-  .middleware([organizationMiddleware])
-  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
+  .middleware([organizationMiddleware, storageMiddleware])
+  .handler(async ({ data, context: { activeOrganizationId, db, createEntityPresignedUrl } }) => {
     const newBudget = await db.transaction(async (tx) => {
       const nameSlug = slugify(data.name);
       let slug = nameSlug;
@@ -168,95 +168,102 @@ export const createBudget = createServerFn({ method: "POST" })
 
 export const updateBudget = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.uuid(), data: budgetFormSchema }))
-  .middleware([organizationMiddleware])
-  .handler(async ({ data: { id, data }, context: { activeOrganizationId, db } }) => {
-    const [existing] = await db
-      .select({ image: schema.budget.image, slug: schema.budget.slug })
-      .from(schema.budget)
-      .where(and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)));
-
-    if (!existing) {
-      throw new Error("Presupuesto no encontrado");
-    }
-
-    const updated = await db.transaction(async (tx) => {
-      // Regenerate the slug from the (possibly new) name, dedup against
-      // other budgets — the current one is allowed to keep its own slug.
-      // Without this, renaming to a name that collides with another budget
-      // would break with a UNIQUE constraint violation.
-      const nameSlug = slugify(data.name);
-      let slug = nameSlug;
-      while (
-        slug !== existing.slug &&
-        (await tx.$count(
-          tx.select().from(schema.budget).where(eq(schema.budget.slug, slug)).limit(1),
-        ))
-      ) {
-        slug = `${nameSlug}_${generateRandomString(4)}`;
-      }
-
-      await tx
-        .update(schema.budget)
-        .set({
-          slug,
-          name: data.name,
-          description: data.description ?? null,
-          hourlyRate: data.hourlyRate,
-          image: data.deleteImage ? null : existing.image,
-        })
+  .middleware([organizationMiddleware, storageMiddleware])
+  .handler(
+    async ({
+      data: { id, data },
+      context: { activeOrganizationId, db, storage, createEntityPresignedUrl },
+    }) => {
+      const [existing] = await db
+        .select({ image: schema.budget.image, slug: schema.budget.slug })
+        .from(schema.budget)
         .where(
           and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)),
         );
 
-      // Replace materials
-      await tx.delete(schema.budgetMaterial).where(eq(schema.budgetMaterial.budgetId, id));
-      if (data.materials.length > 0) {
-        await tx.insert(schema.budgetMaterial).values(
-          data.materials.map((m) => ({
-            budgetId: id,
-            materialId: m.materialId,
-            quantity: m.quantity,
-          })),
-        );
+      if (!existing) {
+        throw new Error("Presupuesto no encontrado");
       }
 
-      // Replace operations
-      await tx.delete(schema.budgetOperation).where(eq(schema.budgetOperation.budgetId, id));
-      if (data.operations.length > 0) {
-        await tx.insert(schema.budgetOperation).values(
-          data.operations.map((o) => ({
-            budgetId: id,
-            operationId: o.operationId,
-            durationMinutes: o.durationMinutes,
-          })),
-        );
+      const updated = await db.transaction(async (tx) => {
+        // Regenerate the slug from the (possibly new) name, dedup against
+        // other budgets — the current one is allowed to keep its own slug.
+        // Without this, renaming to a name that collides with another budget
+        // would break with a UNIQUE constraint violation.
+        const nameSlug = slugify(data.name);
+        let slug = nameSlug;
+        while (
+          slug !== existing.slug &&
+          (await tx.$count(
+            tx.select().from(schema.budget).where(eq(schema.budget.slug, slug)).limit(1),
+          ))
+        ) {
+          slug = `${nameSlug}_${generateRandomString(4)}`;
+        }
+
+        await tx
+          .update(schema.budget)
+          .set({
+            slug,
+            name: data.name,
+            description: data.description ?? null,
+            hourlyRate: data.hourlyRate,
+            image: data.deleteImage ? null : existing.image,
+          })
+          .where(
+            and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)),
+          );
+
+        // Replace materials
+        await tx.delete(schema.budgetMaterial).where(eq(schema.budgetMaterial.budgetId, id));
+        if (data.materials.length > 0) {
+          await tx.insert(schema.budgetMaterial).values(
+            data.materials.map((m) => ({
+              budgetId: id,
+              materialId: m.materialId,
+              quantity: m.quantity,
+            })),
+          );
+        }
+
+        // Replace operations
+        await tx.delete(schema.budgetOperation).where(eq(schema.budgetOperation.budgetId, id));
+        if (data.operations.length > 0) {
+          await tx.insert(schema.budgetOperation).values(
+            data.operations.map((o) => ({
+              budgetId: id,
+              operationId: o.operationId,
+              durationMinutes: o.durationMinutes,
+            })),
+          );
+        }
+
+        const [row] = await tx.select().from(schema.budget).where(eq(schema.budget.id, id));
+        return row;
+      });
+
+      // Delete old image from storage after successful DB update
+      if (existing?.image && (data.deleteImage || data.imageContentType)) {
+        await storage.removeItem(existing.image);
       }
 
-      const [row] = await tx.select().from(schema.budget).where(eq(schema.budget.id, id));
-      return row;
-    });
+      if (data.imageContentType) {
+        const presigned = await createEntityPresignedUrl("budgets", id, data.imageContentType);
+        if ("code" in presigned) {
+          throw new Error(presigned.message);
+        }
 
-    // Delete old image from storage after successful DB update
-    if (existing?.image && (data.deleteImage || data.imageContentType)) {
-      await deleteObject(existing.image);
-    }
-
-    if (data.imageContentType) {
-      const presigned = await createEntityPresignedUrl("budgets", id, data.imageContentType);
-      if ("code" in presigned) {
-        throw new Error(presigned.message);
+        return { ...updated, presignedImageUrl: presigned.uploadUrl, imageKey: presigned.key };
       }
 
-      return { ...updated, presignedImageUrl: presigned.uploadUrl, imageKey: presigned.key };
-    }
-
-    return updated;
-  });
+      return updated;
+    },
+  );
 
 export const deleteBudget = createServerFn({ method: "POST" })
-  .middleware([organizationMiddleware])
+  .middleware([organizationMiddleware, storageMiddleware])
   .validator(z.object({ id: z.uuid() }))
-  .handler(async ({ data: { id }, context: { activeOrganizationId, db } }) => {
+  .handler(async ({ data: { id }, context: { activeOrganizationId, db, storage } }) => {
     // Delete the image from storage before removing the record
     const [existing] = await db
       .select({ image: schema.budget.image })
@@ -266,7 +273,7 @@ export const deleteBudget = createServerFn({ method: "POST" })
     if (!existing) throw new Error("Presupuesto no encontrado");
 
     if (existing.image) {
-      await deleteObject(existing.image);
+      await storage.removeItem(existing.image);
     }
 
     await db
