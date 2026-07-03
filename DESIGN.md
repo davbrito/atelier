@@ -103,7 +103,7 @@ spacing:
 
 ## Brand & Style
 
-The design system is rooted in the concepts of **Modern Minimalism** and **Artisanal Craft**. It is designed for "Lelia Brito - Modistería y Costura," targeting a high-end clientele that values bespoke quality, attention to detail, and a sophisticated aesthetic. 
+The design system is rooted in the concepts of **Modern Minimalism** and **Artisanal Craft**. It targets a high-end clientele that values bespoke quality, attention to detail, and a sophisticated aesthetic.
 
 The visual direction avoids corporate rigidity in favor of an editorial, "lifestyle" feel. It balances expansive whitespace (the "breathing room" of a luxury atelier) with delicate, intentional accents. The emotional response should be one of calm reliability, timeless elegance, and premium approachability.
 

@@ -1,6 +1,6 @@
 {
-  "short_name": "Lelia Brito",
-  "name": "Lelia Brito - Modistería y Costura",
+  "short_name": "Atelier",
+  "name": "Atelier de Modistería y Costura",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +20,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#72564c",
+  "background_color": "#fdf9f6"
 }
