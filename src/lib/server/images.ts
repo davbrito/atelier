@@ -2,8 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 import { budget, material } from "#/db/schema";
-import { moveObject } from "#/lib/storage";
 import { organizationMiddleware } from "../auth/functions";
+import { storageMiddleware } from "../storage";
 
 const entityTypesTableMap = {
   budgets: budget,
@@ -25,7 +25,8 @@ export const setEntityImage = createServerFn({ method: "POST" })
       imageKey: z.string(),
     }),
   )
-  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
+  .middleware([storageMiddleware])
+  .handler(async ({ data, context: { activeOrganizationId, db, moveObject } }) => {
     const table = entityTypesTableMap[data.entityType];
 
     // The key must match what createEntityPresignedUrl generates for this

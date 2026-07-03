@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar.tsx";
 import { Skeleton } from "#/components/ui/skeleton.tsx";
-import { cn, resolveImageSrc } from "#/lib/utils.ts";
+import { cn } from "#/lib/utils.ts";
 
 export type UserAvatarProps = {
   className?: string;
@@ -48,7 +48,7 @@ export function UserAvatar({ className, user, isPending, fallback }: UserAvatarP
   return (
     <Avatar className={cn("size-8 rounded-full bg-muted text-foreground text-sm", className)}>
       <AvatarImage
-        src={resolveImageSrc(resolvedUser?.image)}
+        src={resolvedUser?.image ?? undefined}
         alt={resolvedUser?.displayUsername || resolvedUser?.name || resolvedUser?.email}
       />
 

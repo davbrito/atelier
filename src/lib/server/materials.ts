@@ -3,8 +3,8 @@ import { and, asc, eq } from "drizzle-orm";
 import * as z from "zod";
 import { transactionMiddleware } from "#/db/middleware";
 import { material, materialPriceHistory } from "#/db/schema";
-import { createEntityPresignedUrl, deleteObject } from "#/lib/storage";
 import { organizationMiddleware } from "../auth/functions";
+import { storageMiddleware } from "../storage";
 
 export const listMaterials = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
@@ -26,8 +26,8 @@ export const createMaterial = createServerFn({ method: "POST" })
       imageContentType: z.string().optional(),
     }),
   )
-  .middleware([organizationMiddleware])
-  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
+  .middleware([organizationMiddleware, storageMiddleware])
+  .handler(async ({ data, context: { activeOrganizationId, db, createEntityPresignedUrl } }) => {
     const newMaterial = await db.transaction(async (tx) => {
       const [created] = await tx
         .insert(material)
@@ -83,58 +83,61 @@ export const updateMaterial = createServerFn({ method: "POST" })
       imageContentType: z.string().optional(),
     }),
   )
-  .handler(async ({ data, context: { activeOrganizationId, trx } }) => {
-    const { id, imageContentType, deleteImage, ...updateData } = data;
+  .middleware([storageMiddleware])
+  .handler(
+    async ({ data, context: { activeOrganizationId, trx, createEntityPresignedUrl, storage } }) => {
+      const { id, imageContentType, deleteImage, ...updateData } = data;
 
-    const [existing] = await trx
-      .select({ currentPrice: material.currentPrice, image: material.image })
-      .from(material)
-      .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)));
+      const [existing] = await trx
+        .select({ currentPrice: material.currentPrice, image: material.image })
+        .from(material)
+        .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)));
 
-    if (!existing) throw new Error("Material no encontrado");
+      if (!existing) throw new Error("Material no encontrado");
 
-    // Delete image from storage when the user explicitly removes it
-    if (deleteImage && existing.image) {
-      await deleteObject(existing.image);
-    }
-
-    const [updated] = await trx
-      .update(material)
-      .set({
-        ...updateData,
-        image: deleteImage ? null : undefined,
-      })
-      .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)))
-      .returning();
-
-    // Record the new price when it actually changed. Compare numerically so
-    // "10.00" and "10" aren't considered different, and skip inputs that
-    // couldn't be parsed as a price.
-    const prevPriceNum = Number(existing.currentPrice);
-    const newPriceNum = Number(updateData.currentPrice);
-    if (Number.isFinite(newPriceNum) && newPriceNum !== prevPriceNum) {
-      await trx.insert(materialPriceHistory).values({
-        materialId: id,
-        price: updateData.currentPrice,
-      });
-    }
-
-    if (imageContentType) {
-      const presigned = await createEntityPresignedUrl("materials", id, imageContentType);
-      if ("code" in presigned) {
-        throw new Error(presigned.message);
+      // Delete image from storage when the user explicitly removes it
+      if (deleteImage && existing.image) {
+        await storage.removeItem(existing.image);
       }
 
-      return { ...updated, presignedImageUrl: presigned.uploadUrl, imageKey: presigned.key };
-    }
+      const [updated] = await trx
+        .update(material)
+        .set({
+          ...updateData,
+          image: deleteImage ? null : undefined,
+        })
+        .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)))
+        .returning();
 
-    return updated;
-  });
+      // Record the new price when it actually changed. Compare numerically so
+      // "10.00" and "10" aren't considered different, and skip inputs that
+      // couldn't be parsed as a price.
+      const prevPriceNum = Number(existing.currentPrice);
+      const newPriceNum = Number(updateData.currentPrice);
+      if (Number.isFinite(newPriceNum) && newPriceNum !== prevPriceNum) {
+        await trx.insert(materialPriceHistory).values({
+          materialId: id,
+          price: updateData.currentPrice,
+        });
+      }
+
+      if (imageContentType) {
+        const presigned = await createEntityPresignedUrl("materials", id, imageContentType);
+        if ("code" in presigned) {
+          throw new Error(presigned.message);
+        }
+
+        return { ...updated, presignedImageUrl: presigned.uploadUrl, imageKey: presigned.key };
+      }
+
+      return updated;
+    },
+  );
 
 export const deleteMaterial = createServerFn({ method: "POST" })
-  .middleware([organizationMiddleware])
+  .middleware([organizationMiddleware, storageMiddleware])
   .validator(z.object({ id: z.uuid() }))
-  .handler(async ({ data: { id }, context: { activeOrganizationId, db } }) => {
+  .handler(async ({ data: { id }, context: { activeOrganizationId, db, storage } }) => {
     // Delete the image from storage before removing the record
     const [existing] = await db
       .select({ image: material.image })
@@ -144,7 +147,7 @@ export const deleteMaterial = createServerFn({ method: "POST" })
     if (!existing) throw new Error("Material no encontrado");
 
     if (existing.image) {
-      await deleteObject(existing.image);
+      await storage.removeItem(existing.image);
     }
 
     await db

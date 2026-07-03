@@ -4,7 +4,6 @@ import { ImageIcon, TrashIcon, UploadIcon } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "#/components/ui/button";
-import { resolveImageSrc } from "#/lib/utils";
 
 type ImageUploadProps = {
   initialImage: string | null | undefined;
@@ -84,11 +83,7 @@ export function ImageUpload({
   if (initialImage && !previewUrl && !isUploading) {
     return (
       <div className="relative overflow-hidden rounded-lg border">
-        <img
-          src={resolveImageSrc(initialImage)}
-          alt="Preview"
-          className="aspect-square w-full object-cover"
-        />
+        <img src={initialImage} alt="Preview" className="aspect-square w-full object-cover" />
         <div className="absolute inset-x-0 bottom-0 flex gap-1 bg-black/40 p-2 backdrop-blur-sm">
           <Button
             type="button"

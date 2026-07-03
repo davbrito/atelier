@@ -4,6 +4,7 @@ import { authLocalization, organizationLocalization, passkeyLocalization } from 
 import { authClient } from "#/lib/auth/client";
 import { organizationPlugin } from "#/lib/auth/organization-plugin";
 import { passkeyPlugin } from "#/lib/auth/passkey-plugin";
+import { avatarConfig } from "#/lib/avatar-upload";
 import { AuthProvider } from "./auth/auth-provider";
 import { Toaster } from "./ui/sonner";
 
@@ -16,6 +17,7 @@ export function Providers({ children }: { children: ReactNode }) {
       redirectTo="/app"
       socialProviders={["google"]}
       emailAndPassword={{ requireEmailVerification: false }}
+      avatar={avatarConfig}
       navigate={navigate}
       plugins={[
         passkeyPlugin({ localization: passkeyLocalization }),
