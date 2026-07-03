@@ -44,10 +44,6 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
     remove: removeOperation,
   } = useFieldArray({ control, name: "operations" });
 
-  const { data: catalogMaterials = [] } = useQuery(materialsListQueryOptions);
-
-  const getMaterialUnit = (id: string) => catalogMaterials.find((m) => m.id === id)?.unit ?? "";
-
   return (
     <>
       <StyledField.FieldGroup>
@@ -159,26 +155,7 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
                 <MaterialCombobox value={value} onChange={onChange} />
               )}
             />
-            <Controller
-              name={`materials.${i}.quantity`}
-              control={control}
-              render={({ field: { value, onChange, onBlur, ref } }) => (
-                <InputGroup className="w-40">
-                  <InputGroupInput
-                    type="number"
-                    step="0.01"
-                    placeholder="Cantidad"
-                    value={value}
-                    onBlur={onBlur}
-                    ref={ref}
-                    onChange={(e) => onChange(e.target.value)}
-                  />
-                  <InputGroupAddon align="inline-end">
-                    <InputGroupText>{getMaterialUnit(field.materialId)}</InputGroupText>
-                  </InputGroupAddon>
-                </InputGroup>
-              )}
-            />
+            <MaterialQuantityField index={i} />
             <Button type="button" variant="ghost" size="icon" onClick={() => removeMaterial(i)}>
               <MinusIcon className="size-3" />
             </Button>
@@ -241,5 +218,41 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
         ))}
       </div>
     </>
+  );
+}
+
+/**
+ * Quantity input for one row of the materials array. Reads `materialId` with
+ * useWatch so the unit suffix updates when the material is (re)selected —
+ * useFieldArray's `field.materialId` is a snapshot from the field's mount and
+ * never changes.
+ */
+function MaterialQuantityField({ index }: { index: number }) {
+  const { control } = useFormContext<BudgetFormValues>();
+  const materialId = useWatch({ control, name: `materials.${index}.materialId` });
+  const { data: catalogMaterials = [] } = useQuery(materialsListQueryOptions);
+  const unit = catalogMaterials.find((m) => m.id === materialId)?.unit ?? "";
+
+  return (
+    <Controller
+      name={`materials.${index}.quantity`}
+      control={control}
+      render={({ field: { value, onChange, onBlur, ref } }) => (
+        <InputGroup className="w-40">
+          <InputGroupInput
+            type="number"
+            step="0.01"
+            placeholder="Cantidad"
+            value={value}
+            onBlur={onBlur}
+            ref={ref}
+            onChange={(e) => onChange(e.target.value)}
+          />
+          <InputGroupAddon align="inline-end">
+            <InputGroupText>{unit}</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+      )}
+    />
   );
 }

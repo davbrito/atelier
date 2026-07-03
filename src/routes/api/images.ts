@@ -1,9 +1,9 @@
+import { env } from "cloudflare:workers";
 import { createFileRoute } from "@tanstack/react-router";
 import { and, eq } from "drizzle-orm";
 import type { Db } from "#/db/client";
 import { budget, material, member } from "#/db/schema";
 import { authenticatedMiddleware } from "#/lib/auth/functions";
-import { getStorage } from "#/lib/storage";
 
 const entityTypesTableMap = {
   budgets: budget,
@@ -46,7 +46,7 @@ export const Route = createFileRoute("/api/images")({
   server: {
     middleware: [authenticatedMiddleware],
     handlers: {
-      GET: async ({ context }) => {
+      GET: async ({ context, request }) => {
         const { url, db, user } = context;
         const key = url.searchParams.get("key");
         if (!key) {
@@ -57,19 +57,35 @@ export const Route = createFileRoute("/api/images")({
           return new Response("Image not found", { status: 404 });
         }
 
-        const data = await getStorage().getItemRaw<R2ObjectBody>(key, {
-          type: "object",
+        // Ask R2 to only return the body if the ETag changed. When the
+        // client's cache is still fresh, R2 responds without a body and we
+        // return 304 — this makes uploads visible immediately (a new upload
+        // gets a new ETag) without paying the bandwidth cost on every load.
+        const ifNoneMatch = request.headers.get("If-None-Match") ?? undefined;
+        const object = await env.STORAGE.get(key, {
+          onlyIf: ifNoneMatch ? { etagDoesNotMatch: ifNoneMatch } : undefined,
         });
-        if (!data) {
+        if (!object) {
           return new Response("Image not found", { status: 404 });
+        }
+        // R2 signals a match by returning an object without a body.
+        if (!("body" in object) || object.body === null) {
+          return new Response(null, {
+            status: 304,
+            headers: {
+              ETag: object.httpEtag,
+              "Cache-Control": "private, max-age=86400, must-revalidate",
+            },
+          });
         }
 
         const headers = new Headers();
-        headers.set("Cache-Control", "private, max-age=86400, immutable");
-        headers.set("Content-Type", data.httpMetadata?.contentType ?? "application/octet-stream");
-        headers.set("Content-Length", data.size.toString());
+        headers.set("Cache-Control", "private, max-age=86400, must-revalidate");
+        headers.set("ETag", object.httpEtag);
+        headers.set("Content-Type", object.httpMetadata?.contentType ?? "application/octet-stream");
+        headers.set("Content-Length", object.size.toString());
 
-        return new Response(data.body, { status: 200, headers });
+        return new Response(object.body, { status: 200, headers });
       },
     },
   },
