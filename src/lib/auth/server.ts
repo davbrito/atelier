@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
-import { betterAuth, type SecondaryStorage } from "better-auth";
+import { betterAuth } from "better-auth";
 import type { Db } from "#/db/client";
 import * as schema from "#/db/schema";
 import { isWhitelistedEmail } from "#/lib/whitelist";
@@ -33,36 +33,6 @@ export function createAuth(db: Db, env: Env) {
         }
       },
     },
-    secondaryStorage: {
-      get(key) {
-        return env.KV.get(key, "json");
-      },
-      set(key, value, ttl) {
-        return env.KV.put(key, JSON.stringify(value), {
-          expirationTtl: ttl,
-          metadata: { createdAt: Date.now() },
-        });
-      },
-      delete(key) {
-        return env.KV.delete(key);
-      },
-      async getAndDelete(key) {
-        const value = await env.KV.get(key, "json");
-        if (value !== null) {
-          await env.KV.delete(key);
-        }
-        return value;
-      },
-      async increment(key, ttl) {
-        const value = await env.KV.get(key, "json");
-        const newValue = (typeof value === "number" ? value : 0) + 1;
-        await env.KV.put(key, JSON.stringify(newValue), {
-          expirationTtl: ttl,
-          metadata: { createdAt: Date.now() },
-        });
-        return newValue;
-      },
-    } satisfies SecondaryStorage,
     socialProviders: {
       google: {
         clientId: env.PUBLIC_GOOGLE_CLIENT_ID,
