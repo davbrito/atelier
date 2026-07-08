@@ -24,9 +24,14 @@ function RouteComponent() {
   const { data: count = 0 } = useSuspenseQuery(userOrganizationCountQueryOptions);
 
   const { authClient } = useAuth();
-  const { data: active } = useActiveOrganization(authClient as OrganizationAuthClient);
+  // useSetActiveOrganization updates this query's cache optimistically in
+  // onMutate, before the set-active request actually reaches the server.
+  // Gate the redirect on isFetching too, so we don't navigate to the
+  // workspace (whose server functions require an active organization)
+  // until the query has actually settled with a fetch.
+  const { data: active, isFetching } = useActiveOrganization(authClient as OrganizationAuthClient);
 
-  if (active) {
+  if (active && !isFetching) {
     return <Navigate to="/app" replace />;
   }
 
