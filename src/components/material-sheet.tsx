@@ -32,7 +32,7 @@ import {
   SheetTitle,
 } from "#/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
-import { materialInventoryQueryOptions } from "#/lib/query-options";
+import { materialInventoryQueryOptions, queryKeys } from "#/lib/query-options";
 import { setEntityImage } from "#/lib/server/images";
 import { registerMovement } from "#/lib/server/inventory";
 import { createMaterial, type listMaterials, updateMaterial } from "#/lib/server/materials";
@@ -95,7 +95,7 @@ function formatRelativeDate(date: Date | string): string {
   const days = Math.floor(hours / 24);
 
   if (days > 30)
-    return new Intl.DateTimeFormat("es-AR", { dateStyle: "short" }).format(new Date(date));
+    return new Intl.DateTimeFormat("es-VE", { dateStyle: "short" }).format(new Date(date));
   if (days > 0) return `hace ${days} día${days > 1 ? "s" : ""}`;
   if (hours > 0) return `hace ${hours} hora${hours > 1 ? "s" : ""}`;
   if (minutes > 0) return `hace ${minutes} min`;
@@ -122,17 +122,16 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
     control,
     handleSubmit,
     reset: resetMovementForm,
-    watch,
   } = useForm<MovementFormValues>({
     defaultValues: { type: "entry", quantity: "", note: "" },
   });
-  const movementType = watch("type");
+  const movementType = useWatch({ control, name: "type" });
 
   const movementMutation = useMutation({
     mutationFn: registerFn,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["materials", "inventory", materialId] });
-      queryClient.invalidateQueries({ queryKey: ["materials"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.materialInventory(materialId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.materials });
       toast.success("Movimiento registrado");
       resetMovementForm();
     },
@@ -143,16 +142,27 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
   const movements = data?.movements ?? [];
   const stockNum = Number(currentStock);
 
+  const quantityInput = useWatch({ control, name: "quantity" });
+  const quantityNum = Number(quantityInput);
+  const previewStock =
+    quantityInput !== "" && Number.isFinite(quantityNum)
+      ? movementType === "adjustment"
+        ? quantityNum
+        : movementType === "entry"
+          ? stockNum + quantityNum
+          : stockNum - quantityNum
+      : null;
+
   return (
     <div className="flex flex-col gap-6 overflow-auto p-6">
       {/* Stock actual */}
       <div className="rounded-lg border p-4">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">Stock actual</p>
+        <p className="text-muted-foreground text-xs uppercase tracking-wider">Stock actual</p>
         <p
-          className={cn("mt-1 text-3xl font-bold tabular-nums", stockNum < 0 && "text-destructive")}
+          className={cn("mt-1 font-bold text-3xl tabular-nums", stockNum < 0 && "text-destructive")}
         >
-          {stockNum.toLocaleString("es-AR", { maximumFractionDigits: 4 })}
-          <span className="ml-1.5 text-sm font-normal text-muted-foreground">{unitLabel}</span>
+          {stockNum.toLocaleString("es-VE", { maximumFractionDigits: 4 })}
+          <span className="ml-1.5 font-normal text-muted-foreground text-sm">{unitLabel}</span>
         </p>
       </div>
 
@@ -183,7 +193,7 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
                   type="button"
                   onClick={() => field.onChange(opt.value)}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-lg border p-3 text-xs font-medium transition-colors",
+                    "flex flex-col items-center gap-1.5 rounded-lg border p-3 font-medium text-xs transition-colors",
                     field.value === opt.value
                       ? opt.selected
                       : "border-border text-muted-foreground hover:text-foreground",
@@ -217,6 +227,19 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
                 required
                 render={<Input />}
               />
+              {previewStock !== null && (
+                <p className="text-muted-foreground text-xs">
+                  Nuevo stock:{" "}
+                  <span
+                    className={cn(
+                      "font-medium tabular-nums",
+                      previewStock < 0 && "text-destructive",
+                    )}
+                  >
+                    {previewStock.toLocaleString("es-VE", { maximumFractionDigits: 4 })} {unitLabel}
+                  </span>
+                </p>
+              )}
             </Field.Root>
           )}
         />
@@ -253,7 +276,7 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
             <Loader2Icon className="size-5 animate-spin text-muted-foreground/50" />
           </div>
         ) : movements.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">
+          <p className="py-4 text-center text-muted-foreground text-sm">
             No hay movimientos registrados aún.
           </p>
         ) : (
@@ -286,7 +309,7 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
                         )}
                       >
                         {isPositive ? "+" : ""}
-                        {deltaNum.toLocaleString("es-AR", { maximumFractionDigits: 4 })} {unitLabel}
+                        {deltaNum.toLocaleString("es-VE", { maximumFractionDigits: 4 })} {unitLabel}
                       </span>
                     </div>
                     {m.note && <p className="text-muted-foreground">{m.note}</p>}
@@ -372,7 +395,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["materials"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.materials });
       toast.success("Material creado correctamente");
       onOpenChange(false);
     },
@@ -401,7 +424,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["materials"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.materials });
       toast.success("Material actualizado");
       onOpenChange(false);
     },
