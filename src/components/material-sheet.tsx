@@ -158,12 +158,12 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
     <div className="flex flex-col gap-6 overflow-auto p-6">
       {/* Stock actual */}
       <div className="rounded-lg border p-4">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">Stock actual</p>
+        <p className="text-muted-foreground text-xs uppercase tracking-wider">Stock actual</p>
         <p
-          className={cn("mt-1 text-3xl font-bold tabular-nums", stockNum < 0 && "text-destructive")}
+          className={cn("mt-1 font-bold text-3xl tabular-nums", stockNum < 0 && "text-destructive")}
         >
           {stockNum.toLocaleString("es-AR", { maximumFractionDigits: 4 })}
-          <span className="ml-1.5 text-sm font-normal text-muted-foreground">{unitLabel}</span>
+          <span className="ml-1.5 font-normal text-muted-foreground text-sm">{unitLabel}</span>
         </p>
       </div>
 
@@ -194,7 +194,7 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
                   type="button"
                   onClick={() => field.onChange(opt.value)}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-lg border p-3 text-xs font-medium transition-colors",
+                    "flex flex-col items-center gap-1.5 rounded-lg border p-3 font-medium text-xs transition-colors",
                     field.value === opt.value
                       ? opt.selected
                       : "border-border text-muted-foreground hover:text-foreground",
@@ -229,7 +229,7 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
                 render={<Input />}
               />
               {previewStock !== null && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Nuevo stock:{" "}
                   <span
                     className={cn(
@@ -277,7 +277,7 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
             <Loader2Icon className="size-5 animate-spin text-muted-foreground/50" />
           </div>
         ) : movements.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">
+          <p className="py-4 text-center text-muted-foreground text-sm">
             No hay movimientos registrados aún.
           </p>
         ) : (
