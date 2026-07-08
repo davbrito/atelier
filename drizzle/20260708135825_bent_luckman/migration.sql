@@ -1,0 +1,1 @@
+CREATE INDEX "material_inventory_movements_material_id_created_at_idx" ON "material_inventory_movements" ("material_id","created_at" DESC NULLS LAST);

@@ -33,6 +33,20 @@ export const relations = {
         from: r.material.organizationId,
         to: r.organization.id,
       }),
+      inventoryMovements: r.many.materialInventoryMovement({
+        from: r.material.id,
+        to: r.materialInventoryMovement.materialId,
+      }),
+    },
+    materialInventoryMovements: {
+      material: r.one.material({
+        from: r.materialInventoryMovement.materialId,
+        to: r.material.id,
+      }),
+      createdBy: r.one.user({
+        from: r.materialInventoryMovement.createdById,
+        to: r.user.id,
+      }),
     },
     operations: {
       organization: r.one.organization({

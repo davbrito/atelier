@@ -1,7 +1,9 @@
 import { sql } from "drizzle-orm";
 import {
   decimal,
+  index,
   integer,
+  pgEnum,
   pgPolicy,
   snakeCase,
   text,
@@ -37,6 +39,36 @@ export const material = snakeCase.table("materials", {
     .defaultNow()
     .$onUpdateFn(() => sql`now()`),
 });
+
+export const inventoryMovementType = pgEnum("inventory_movement_type", [
+  "entry",
+  "exit",
+  "adjustment",
+]);
+
+export const materialInventoryMovement = snakeCase.table(
+  "material_inventory_movements",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    materialId: uuid()
+      .notNull()
+      .references(() => material.id, { onDelete: "cascade" }),
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    type: inventoryMovementType().notNull(),
+    delta: decimal({ precision: 12, scale: 4 }).notNull(),
+    note: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    createdById: text().references(() => user.id, { onDelete: "set null" }),
+  },
+  (table) => [
+    index("material_inventory_movements_material_id_created_at_idx").on(
+      table.materialId,
+      table.createdAt.desc(),
+    ),
+  ],
+);
 
 export const materialPriceHistory = snakeCase.table("material_price_history", {
   id: uuid().primaryKey().default(sql`uuidv7()`),
