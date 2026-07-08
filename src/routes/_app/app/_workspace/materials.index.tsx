@@ -128,8 +128,17 @@ function MaterialsPage() {
                   </div>
                   <div className="mt-2 flex justify-between text-xs">
                     <span className="text-muted-foreground uppercase tracking-wider">Stock</span>
-                    <span className={Number(material.currentStock) < 0 ? "font-bold text-destructive" : "font-bold"}>
-                      {Number(material.currentStock).toLocaleString("es-AR", { maximumFractionDigits: 4 })} {unit}
+                    <span
+                      className={
+                        Number(material.currentStock) < 0
+                          ? "font-bold text-destructive"
+                          : "font-bold"
+                      }
+                    >
+                      {Number(material.currentStock).toLocaleString("es-AR", {
+                        maximumFractionDigits: 4,
+                      })}{" "}
+                      {unit}
                     </span>
                   </div>
                 </CardContent>

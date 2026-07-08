@@ -33,11 +33,11 @@ import {
 } from "#/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { materialInventoryQueryOptions } from "#/lib/query-options";
-import { registerMovement } from "#/lib/server/inventory";
 import { setEntityImage } from "#/lib/server/images";
+import { registerMovement } from "#/lib/server/inventory";
 import { createMaterial, type listMaterials, updateMaterial } from "#/lib/server/materials";
-import { cn } from "#/lib/utils";
 import { UNIT_OPTIONS, type Unit, unitSchema } from "#/lib/units";
+import { cn } from "#/lib/utils";
 
 type Material = Awaited<ReturnType<typeof listMaterials>>[number];
 
@@ -66,8 +66,7 @@ const MOVEMENT_TYPES = [
     value: "entry" as const,
     label: "Entrada",
     icon: ArrowDownToLineIcon,
-    selected:
-      "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400",
+    selected: "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400",
   },
   {
     value: "exit" as const,
@@ -119,7 +118,12 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
     enabled,
   });
 
-  const { control, handleSubmit, reset: resetMovementForm, watch } = useForm<MovementFormValues>({
+  const {
+    control,
+    handleSubmit,
+    reset: resetMovementForm,
+    watch,
+  } = useForm<MovementFormValues>({
     defaultValues: { type: "entry", quantity: "", note: "" },
   });
   const movementType = watch("type");
@@ -145,10 +149,7 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
       <div className="rounded-lg border p-4">
         <p className="text-xs uppercase tracking-wider text-muted-foreground">Stock actual</p>
         <p
-          className={cn(
-            "mt-1 text-3xl font-bold tabular-nums",
-            stockNum < 0 && "text-destructive",
-          )}
+          className={cn("mt-1 text-3xl font-bold tabular-nums", stockNum < 0 && "text-destructive")}
         >
           {stockNum.toLocaleString("es-AR", { maximumFractionDigits: 4 })}
           <span className="ml-1.5 text-sm font-normal text-muted-foreground">{unitLabel}</span>
@@ -285,14 +286,11 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
                         )}
                       >
                         {isPositive ? "+" : ""}
-                        {deltaNum.toLocaleString("es-AR", { maximumFractionDigits: 4 })}{" "}
-                        {unitLabel}
+                        {deltaNum.toLocaleString("es-AR", { maximumFractionDigits: 4 })} {unitLabel}
                       </span>
                     </div>
                     {m.note && <p className="text-muted-foreground">{m.note}</p>}
-                    {m.createdByName && (
-                      <p className="text-muted-foreground">{m.createdByName}</p>
-                    )}
+                    {m.createdByName && <p className="text-muted-foreground">{m.createdByName}</p>}
                   </div>
                   <span className="shrink-0 text-muted-foreground">
                     {formatRelativeDate(m.createdAt)}
