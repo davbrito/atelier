@@ -15,6 +15,7 @@ export const listMaterials = createServerFn({ method: "GET" })
         stock: sql<string>`COALESCE(SUM(${materialInventoryMovement.delta}), '0')`.as("stock"),
       })
       .from(materialInventoryMovement)
+      .where(eq(materialInventoryMovement.organizationId, activeOrganizationId))
       .groupBy(materialInventoryMovement.materialId)
       .as("stock_sq");
 

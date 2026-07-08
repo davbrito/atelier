@@ -1,9 +1,35 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, desc, eq, sql } from "drizzle-orm";
 import * as z from "zod";
+import type { Db } from "#/db/client";
 import { transactionMiddleware } from "#/db/middleware";
 import { material, materialInventoryMovement, user } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
+import { computeMovementDelta } from "./inventory-logic";
+
+export { computeMovementDelta };
+
+type Transaction = Parameters<Parameters<Db["transaction"]>[0]>[0];
+
+export async function getCurrentStock(
+  executor: Db | Transaction,
+  materialId: string,
+  organizationId: string,
+): Promise<string> {
+  const [{ currentStock }] = await executor
+    .select({
+      currentStock: sql<string>`COALESCE(SUM(${materialInventoryMovement.delta}), '0')`,
+    })
+    .from(materialInventoryMovement)
+    .where(
+      and(
+        eq(materialInventoryMovement.materialId, materialId),
+        eq(materialInventoryMovement.organizationId, organizationId),
+      ),
+    );
+
+  return currentStock;
+}
 
 export const getMaterialInventory = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
@@ -12,21 +38,13 @@ export const getMaterialInventory = createServerFn({ method: "GET" })
     const [mat] = await db
       .select({ id: material.id })
       .from(material)
-      .where(and(eq(material.id, data.materialId), eq(material.organizationId, activeOrganizationId)));
+      .where(
+        and(eq(material.id, data.materialId), eq(material.organizationId, activeOrganizationId)),
+      );
 
     if (!mat) throw new Error("Material no encontrado");
 
-    const [{ currentStock }] = await db
-      .select({
-        currentStock: sql<string>`COALESCE(SUM(${materialInventoryMovement.delta}), '0')`,
-      })
-      .from(materialInventoryMovement)
-      .where(
-        and(
-          eq(materialInventoryMovement.materialId, data.materialId),
-          eq(materialInventoryMovement.organizationId, activeOrganizationId),
-        ),
-      );
+    const currentStock = await getCurrentStock(db, data.materialId, activeOrganizationId);
 
     const movements = await db
       .select({
@@ -57,7 +75,7 @@ export const registerMovement = createServerFn({ method: "POST" })
     z.object({
       materialId: z.uuid(),
       type: z.enum(["entry", "exit", "adjustment"]),
-      quantity: z.string(),
+      quantity: z.coerce.number().nonnegative().finite(),
       note: z.string().optional(),
     }),
   )
@@ -65,32 +83,23 @@ export const registerMovement = createServerFn({ method: "POST" })
     const [mat] = await trx
       .select({ id: material.id })
       .from(material)
-      .where(and(eq(material.id, data.materialId), eq(material.organizationId, activeOrganizationId)));
+      .where(
+        and(eq(material.id, data.materialId), eq(material.organizationId, activeOrganizationId)),
+      );
 
     if (!mat) throw new Error("Material no encontrado");
 
-    let delta: string;
+    // Serialize concurrent movement registrations for this material so the
+    // stock read below (used by "adjustment") can't race with another
+    // in-flight movement and silently corrupt the ledger.
+    await trx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${data.materialId}, 0))`);
 
-    if (data.type === "adjustment") {
-      const [{ currentStock }] = await trx
-        .select({
-          currentStock: sql<string>`COALESCE(SUM(${materialInventoryMovement.delta}), '0')`,
-        })
-        .from(materialInventoryMovement)
-        .where(
-          and(
-            eq(materialInventoryMovement.materialId, data.materialId),
-            eq(materialInventoryMovement.organizationId, activeOrganizationId),
-          ),
-        );
+    const currentStock =
+      data.type === "adjustment"
+        ? await getCurrentStock(trx, data.materialId, activeOrganizationId)
+        : "0";
 
-      const target = Number(data.quantity);
-      const current = Number(currentStock);
-      delta = (target - current).toFixed(4);
-    } else {
-      const qty = Number(data.quantity);
-      delta = data.type === "entry" ? qty.toFixed(4) : (-qty).toFixed(4);
-    }
+    const delta = computeMovementDelta(data.type, data.quantity, Number(currentStock));
 
     const [movement] = await trx
       .insert(materialInventoryMovement)
