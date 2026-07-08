@@ -135,7 +135,7 @@ function MaterialsPage() {
                           : "font-bold"
                       }
                     >
-                      {Number(material.currentStock).toLocaleString("es-AR", {
+                      {Number(material.currentStock).toLocaleString("es-VE", {
                         maximumFractionDigits: 4,
                       })}{" "}
                       {unit}

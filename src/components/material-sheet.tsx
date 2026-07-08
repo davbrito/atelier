@@ -95,7 +95,7 @@ function formatRelativeDate(date: Date | string): string {
   const days = Math.floor(hours / 24);
 
   if (days > 30)
-    return new Intl.DateTimeFormat("es-AR", { dateStyle: "short" }).format(new Date(date));
+    return new Intl.DateTimeFormat("es-VE", { dateStyle: "short" }).format(new Date(date));
   if (days > 0) return `hace ${days} día${days > 1 ? "s" : ""}`;
   if (hours > 0) return `hace ${hours} hora${hours > 1 ? "s" : ""}`;
   if (minutes > 0) return `hace ${minutes} min`;
@@ -161,7 +161,7 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
         <p
           className={cn("mt-1 font-bold text-3xl tabular-nums", stockNum < 0 && "text-destructive")}
         >
-          {stockNum.toLocaleString("es-AR", { maximumFractionDigits: 4 })}
+          {stockNum.toLocaleString("es-VE", { maximumFractionDigits: 4 })}
           <span className="ml-1.5 font-normal text-muted-foreground text-sm">{unitLabel}</span>
         </p>
       </div>
@@ -236,7 +236,7 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
                       previewStock < 0 && "text-destructive",
                     )}
                   >
-                    {previewStock.toLocaleString("es-AR", { maximumFractionDigits: 4 })} {unitLabel}
+                    {previewStock.toLocaleString("es-VE", { maximumFractionDigits: 4 })} {unitLabel}
                   </span>
                 </p>
               )}
@@ -309,7 +309,7 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
                         )}
                       >
                         {isPositive ? "+" : ""}
-                        {deltaNum.toLocaleString("es-AR", { maximumFractionDigits: 4 })} {unitLabel}
+                        {deltaNum.toLocaleString("es-VE", { maximumFractionDigits: 4 })} {unitLabel}
                       </span>
                     </div>
                     {m.note && <p className="text-muted-foreground">{m.note}</p>}
