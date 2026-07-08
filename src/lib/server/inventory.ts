@@ -5,11 +5,24 @@ import type { Db } from "#/db/client";
 import { transactionMiddleware } from "#/db/middleware";
 import { material, materialInventoryMovement, user } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
-import { computeMovementDelta } from "./inventory-logic";
-
-export { computeMovementDelta };
 
 type Transaction = Parameters<Parameters<Db["transaction"]>[0]>[0];
+
+/**
+ * Namespace seed for material-inventory advisory locks (pg_advisory_xact_lock
+ * takes a (classid, objid) pair). Keeps this lock space from colliding with
+ * advisory locks taken elsewhere in the codebase for unrelated entities.
+ */
+const INVENTORY_LOCK_NAMESPACE = 314159265;
+
+/** Decimal string matching the `delta`/quantity column precision (12,4). */
+const decimalString = z
+  .string()
+  .regex(/^\d*\.?\d{1,8}$/, "Cantidad inválida")
+  .refine((v) => {
+    const [, decimals = ""] = v.split(".");
+    return decimals.length <= 4;
+  }, "Cantidad inválida");
 
 export async function getCurrentStock(
   executor: Db | Transaction,
@@ -75,11 +88,23 @@ export const registerMovement = createServerFn({ method: "POST" })
     z.object({
       materialId: z.uuid(),
       type: z.enum(["entry", "exit", "adjustment"]),
-      quantity: z.coerce.number().nonnegative().finite(),
+      quantity: decimalString,
       note: z.string().optional(),
     }),
   )
   .handler(async ({ data, context: { activeOrganizationId, trx, user: currentUser } }) => {
+    // Bound how long we're willing to wait for the lock below so a stuck
+    // connection can't pile up requests and exhaust the connection pool.
+    await trx.execute(sql`SET LOCAL lock_timeout = '5s'`);
+
+    // Lock first, before any reads: serializes concurrent movements for this
+    // material and avoids taking a table read lock ahead of the advisory
+    // lock, which could otherwise invert lock acquisition order between
+    // concurrent transactions and deadlock.
+    await trx.execute(
+      sql`SELECT pg_advisory_xact_lock(hashtextextended(${data.materialId}, ${INVENTORY_LOCK_NAMESPACE}))`,
+    );
+
     const [mat] = await trx
       .select({ id: material.id })
       .from(material)
@@ -89,17 +114,15 @@ export const registerMovement = createServerFn({ method: "POST" })
 
     if (!mat) throw new Error("Material no encontrado");
 
-    // Serialize concurrent movement registrations for this material so the
-    // stock read below (used by "adjustment") can't race with another
-    // in-flight movement and silently corrupt the ledger.
-    await trx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${data.materialId}, 0))`);
-
-    const currentStock =
+    // The delta is computed entirely in Postgres numeric arithmetic (never
+    // routed through a JS `Number`) so ledger precision can't be lost to
+    // floating-point rounding as quantities scale.
+    const deltaExpr =
       data.type === "adjustment"
-        ? await getCurrentStock(trx, data.materialId, activeOrganizationId)
-        : "0";
-
-    const delta = computeMovementDelta(data.type, data.quantity, Number(currentStock));
+        ? sql`(${data.quantity}::numeric - COALESCE((SELECT SUM(${materialInventoryMovement.delta}) FROM ${materialInventoryMovement} WHERE ${materialInventoryMovement.materialId} = ${data.materialId} AND ${materialInventoryMovement.organizationId} = ${activeOrganizationId}), 0))`
+        : data.type === "entry"
+          ? sql`${data.quantity}::numeric`
+          : sql`(-1 * ${data.quantity}::numeric)`;
 
     const [movement] = await trx
       .insert(materialInventoryMovement)
@@ -107,7 +130,7 @@ export const registerMovement = createServerFn({ method: "POST" })
         materialId: data.materialId,
         organizationId: activeOrganizationId,
         type: data.type,
-        delta,
+        delta: deltaExpr,
         note: data.note ?? null,
         createdById: currentUser.id,
       })
