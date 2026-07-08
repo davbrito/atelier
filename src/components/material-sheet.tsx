@@ -122,11 +122,10 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
     control,
     handleSubmit,
     reset: resetMovementForm,
-    watch,
   } = useForm<MovementFormValues>({
     defaultValues: { type: "entry", quantity: "", note: "" },
   });
-  const movementType = watch("type");
+  const movementType = useWatch({ control, name: "type" });
 
   const movementMutation = useMutation({
     mutationFn: registerFn,
@@ -143,7 +142,7 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
   const movements = data?.movements ?? [];
   const stockNum = Number(currentStock);
 
-  const quantityInput = watch("quantity");
+  const quantityInput = useWatch({ control, name: "quantity" });
   const quantityNum = Number(quantityInput);
   const previewStock =
     quantityInput !== "" && Number.isFinite(quantityNum)
