@@ -32,7 +32,7 @@ import {
   SheetTitle,
 } from "#/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
-import { materialInventoryQueryOptions } from "#/lib/query-options";
+import { materialInventoryQueryOptions, queryKeys } from "#/lib/query-options";
 import { setEntityImage } from "#/lib/server/images";
 import { registerMovement } from "#/lib/server/inventory";
 import { createMaterial, type listMaterials, updateMaterial } from "#/lib/server/materials";
@@ -131,8 +131,8 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
   const movementMutation = useMutation({
     mutationFn: registerFn,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["materials", "inventory", materialId] });
-      queryClient.invalidateQueries({ queryKey: ["materials"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.materialInventory(materialId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.materials });
       toast.success("Movimiento registrado");
       resetMovementForm();
     },
@@ -142,6 +142,17 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
   const currentStock = data?.currentStock ?? "0";
   const movements = data?.movements ?? [];
   const stockNum = Number(currentStock);
+
+  const quantityInput = watch("quantity");
+  const quantityNum = Number(quantityInput);
+  const previewStock =
+    quantityInput !== "" && Number.isFinite(quantityNum)
+      ? movementType === "adjustment"
+        ? quantityNum
+        : movementType === "entry"
+          ? stockNum + quantityNum
+          : stockNum - quantityNum
+      : null;
 
   return (
     <div className="flex flex-col gap-6 overflow-auto p-6">
@@ -217,6 +228,19 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
                 required
                 render={<Input />}
               />
+              {previewStock !== null && (
+                <p className="text-xs text-muted-foreground">
+                  Nuevo stock:{" "}
+                  <span
+                    className={cn(
+                      "font-medium tabular-nums",
+                      previewStock < 0 && "text-destructive",
+                    )}
+                  >
+                    {previewStock.toLocaleString("es-AR", { maximumFractionDigits: 4 })} {unitLabel}
+                  </span>
+                </p>
+              )}
             </Field.Root>
           )}
         />
@@ -372,7 +396,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["materials"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.materials });
       toast.success("Material creado correctamente");
       onOpenChange(false);
     },
@@ -401,7 +425,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["materials"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.materials });
       toast.success("Material actualizado");
       onOpenChange(false);
     },
