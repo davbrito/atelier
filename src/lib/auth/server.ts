@@ -21,6 +21,19 @@ export function createAuth(db: Db, env: Env) {
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(db, { provider: "pg", transaction: true, schema }),
+    emailAndPassword: {
+      enabled: true,
+      async sendResetPassword(data) {
+        console.log(`User requested password reset:`, {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+        });
+        await env.KV.put(`user:${data.user.id}:resets`, JSON.stringify(data), {
+          expirationTtl: 5 * 60,
+        });
+      },
+    },
     user: {
       async validateUserInfo(data) {
         const allowed = await isWhitelistedEmail(db, data.user.email);
