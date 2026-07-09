@@ -197,6 +197,33 @@ export const quotationOperation = snakeCase.table(
   ],
 );
 
+// ── Clients ──────────────────────────────────────────────
+
+export const client = snakeCase.table("clients", {
+  id: uuid().primaryKey().default(sql`uuidv7()`),
+  organizationId: text()
+    .notNull()
+    .references(() => organization.id, { onDelete: "cascade" }),
+  name: varchar({ length: 255 }).notNull(),
+  phone: varchar({ length: 50 }),
+  email: varchar({ length: 255 }),
+  notes: text(),
+  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp({ withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdateFn(() => sql`now()`),
+});
+
+export const clientMeasurement = snakeCase.table("client_measurements", {
+  id: uuid().primaryKey().default(sql`uuidv7()`),
+  clientId: uuid()
+    .notNull()
+    .references(() => client.id, { onDelete: "cascade" }),
+  name: varchar({ length: 255 }).notNull(),
+  value: varchar({ length: 100 }).notNull(),
+});
+
 // ── Whitelist ────────────────────────────────────────────
 
 export const whitelistEmail = snakeCase.table("whitelist_emails", {
