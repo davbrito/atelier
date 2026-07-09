@@ -29,7 +29,7 @@ export function createAuth(db: Db, env: Env) {
           email: data.user.email,
           name: data.user.name,
         });
-        await env.KV.put(`user:${data.user.id}:resets`, JSON.stringify(data), {
+        await env.KV.put(`user:${data.user.id}:resets`, JSON.stringify(data, undefined, 4), {
           expirationTtl: 5 * 60,
         });
       },

@@ -1,6 +1,6 @@
 import { type OrganizationAuthClient, useActiveOrganization, useAuth } from "@better-auth-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Navigate, Outlet, redirect } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { ensureActiveOrganization } from "#/lib/auth/functions";
 import { queryKeys } from "#/lib/query-options";
@@ -11,8 +11,8 @@ export const Route = createFileRoute("/_app/app/_workspace")({
     const { queryClient, session } = context;
     const organization = await ensureActiveOrganization(queryClient, session.user.id);
 
-    if (!organization) {
-      throw Route.redirect({ to: "/app/onboarding" });
+    if (!session.session.activeOrganizationId || !organization) {
+      throw redirect({ to: "/app/onboarding" });
     }
 
     return { organization: organization as typeof organization | null };
