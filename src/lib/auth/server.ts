@@ -75,5 +75,26 @@ export function createAuth(db: Db, env: Env) {
         },
       },
     },
+    databaseHooks: {
+      session: {
+        create: {
+          before: async (session) => {
+            const organization = await db.query.organization.findFirst({
+              where: {
+                members: {
+                  userId: session.userId,
+                },
+              },
+            });
+            return {
+              data: {
+                ...session,
+                activeOrganizationId: organization?.id,
+              },
+            };
+          },
+        },
+      },
+    },
   });
 }
