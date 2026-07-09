@@ -7,6 +7,7 @@ import {
   Package,
   Scissors,
   Shield,
+  Users,
 } from "lucide-react";
 import { OrganizationSwitcher } from "#/components/auth/organization/organization-switcher";
 import {
@@ -34,6 +35,10 @@ const navItems = [
       { label: "Materiales", icon: Package, to: "/app/materials" },
       { label: "Operaciones", icon: Scissors, to: "/app/operations" },
     ],
+  },
+  {
+    group: "Clientes",
+    items: [{ label: "Clientes", icon: Users, to: "/app/clients" }],
   },
   {
     group: "Presupuestos",
