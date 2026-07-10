@@ -19,6 +19,7 @@ import {
 import { budgetByIdQueryOptions, queryKeys } from "#/lib/query-options";
 import { budgetFormSchema, updateBudget } from "#/lib/server/budgets";
 import { uploadEntityImage } from "#/lib/server/images";
+import { storageUrl } from "#/lib/utils";
 
 type BudgetEditSheetProps = {
   budgetId: string | null;
@@ -126,7 +127,9 @@ export function BudgetEditSheet({ budgetId, open, onOpenChange }: BudgetEditShee
             className="flex flex-1 flex-col gap-6 overflow-y-auto p-6"
           >
             <BudgetFormFields
-              imageUrl={deleteImage ? null : (budgetData?.image ?? null)}
+              imageUrl={
+                deleteImage ? null : budgetData?.image ? storageUrl(budgetData.image) : null
+              }
               onFileSelect={(file) => form.setValue("file", file)}
               onDeleteImage={() => form.setValue("deleteImage", true)}
             />

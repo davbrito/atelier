@@ -37,6 +37,7 @@ import {
 import { materialsListQueryOptions } from "#/lib/query-options";
 import { deleteMaterial, type listMaterials } from "#/lib/server/materials";
 import { UNIT_OPTIONS } from "#/lib/units";
+import { storageUrl } from "#/lib/utils";
 
 const PAGE_SIZE = 20;
 
@@ -144,7 +145,7 @@ function MaterialsPage() {
                       <TableCell>
                         {material.image ? (
                           <img
-                            src={material.image}
+                            src={storageUrl(material.image)}
                             alt={material.name}
                             className="size-8 rounded object-cover"
                           />
