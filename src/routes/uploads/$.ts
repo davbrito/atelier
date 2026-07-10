@@ -9,7 +9,10 @@ export const Route = createFileRoute("/uploads/$")({
     handlers: {
       GET: async ({ context, request }) => {
         const { db, user } = context;
-        const key = new URL(request.url).pathname.slice("/uploads/".length);
+        // The route path already matches the literal R2 key (e.g.
+        // "uploads/materials/<id>.png") — only the leading "/" from the URL
+        // pathname needs stripping, not the "uploads/" prefix itself.
+        const key = new URL(request.url).pathname.slice(1);
 
         if (!key) {
           return new Response("Missing image key", { status: 400 });
