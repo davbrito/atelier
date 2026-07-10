@@ -4,7 +4,7 @@ import { getClientById, listClients } from "./server/clients";
 import { getDashboardStats } from "./server/dashboard";
 import { getMaterialInventory } from "./server/inventory";
 import { getMaterialById, listMaterials } from "./server/materials";
-import { listOperations } from "./server/operations";
+import { getOperationById, listOperations } from "./server/operations";
 import { getUserOrganizationCount } from "./server/organizations";
 import { listWhitelistedEmails } from "./server/whitelist";
 
@@ -12,11 +12,14 @@ export const queryKeys = {
   budgets: ["budgets"],
   budget: (idOrSlug: string) => ["budget", idOrSlug],
   materials: ["materials"],
-  materialsPage: (page: number, pageSize: number) => ["materials", page, pageSize],
+  materialsPage: (params: { page: number; pageSize: number }) => ["materials", params],
   material: (id: string) => ["material", id],
   materialInventory: (materialId: string) => ["materials", "inventory", materialId],
   operations: ["operations"],
+  operationsPage: (params: { page: number; pageSize: number }) => ["operations", params],
+  operation: (id: string) => ["operation", id],
   clients: ["clients"],
+  clientsPage: (params: { page: number; pageSize: number }) => ["clients", params],
   client: (id: string) => ["client", id],
   dashboard: ["dashboard"],
   userOrganizationCount: ["userOrganizationCount"],
@@ -40,10 +43,10 @@ export const budgetByIdQueryOptions = (id: string) =>
     queryFn: ({ signal }) => getBudgetById({ data: { id }, signal }),
   });
 
-export const materialsListQueryOptions = (page: number, pageSize: number) =>
+export const materialsListQueryOptions = (params: { page: number; pageSize: number }) =>
   queryOptions({
-    queryKey: queryKeys.materialsPage(page, pageSize),
-    queryFn: ({ signal }) => listMaterials({ data: { page, pageSize }, signal }),
+    queryKey: queryKeys.materialsPage(params),
+    queryFn: ({ signal }) => listMaterials({ data: params, signal }),
   });
 
 export const materialByIdQueryOptions = (id: string) =>
@@ -58,15 +61,23 @@ export const materialInventoryQueryOptions = (materialId: string) =>
     queryFn: ({ signal }) => getMaterialInventory({ data: { materialId }, signal }),
   });
 
-export const operationsListQueryOptions = queryOptions({
-  queryKey: queryKeys.operations,
-  queryFn: ({ signal }) => listOperations({ signal }),
-});
+export const operationsListQueryOptions = (params: { page: number; pageSize: number }) =>
+  queryOptions({
+    queryKey: queryKeys.operationsPage(params),
+    queryFn: ({ signal }) => listOperations({ data: params, signal }),
+  });
 
-export const clientsListQueryOptions = queryOptions({
-  queryKey: queryKeys.clients,
-  queryFn: ({ signal }) => listClients({ signal }),
-});
+export const operationByIdQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: queryKeys.operation(id),
+    queryFn: ({ signal }) => getOperationById({ data: { id }, signal }),
+  });
+
+export const clientsListQueryOptions = (params: { page: number; pageSize: number }) =>
+  queryOptions({
+    queryKey: queryKeys.clientsPage(params),
+    queryFn: ({ signal }) => listClients({ data: params, signal }),
+  });
 
 export const clientByIdQueryOptions = (id: string) =>
   queryOptions({

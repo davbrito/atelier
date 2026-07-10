@@ -1,10 +1,11 @@
 "use client";
 
 import { Field } from "@base-ui/react/field";
+import { useDebouncer } from "@tanstack/react-pacer";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2Icon, PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ImageUpload } from "#/components/image-upload";
 import {
@@ -34,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select";
+import { materialByIdQueryOptions } from "#/lib/query-options";
 import { createMaterial, listMaterials } from "#/lib/server/materials";
 import { UNIT_OPTIONS, type Unit } from "#/lib/units";
 
@@ -55,15 +57,29 @@ export function MaterialCombobox({ value, onChange }: MaterialComboboxProps) {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [search, setSearch] = useState("");
   const [newName, setNewName] = useState("");
   const [newUnit, setNewUnit] = useState<Unit>("unit");
   const [newPrice, setNewPrice] = useState("");
   const [newImage, setNewImage] = useState<string | null>(null);
 
-  const { data: rawMaterials = [] } = useQuery<RawMaterial[]>({
-    queryKey: ["materials", "all"],
-    queryFn: async () => (await listFn({ data: { page: 1, pageSize: 1000 } })).items,
-    staleTime: 30_000,
+  const searchDebouncer = useDebouncer((next: string) => setSearch(next), { wait: 300 });
+
+  useEffect(() => {
+    searchDebouncer.maybeExecute(inputValue);
+  }, [inputValue, searchDebouncer.maybeExecute]);
+
+  const { data: rawMaterials = [], isFetching } = useQuery<RawMaterial[]>({
+    queryKey: ["materials", "search", search],
+    queryFn: async () => (await listFn({ data: { page: 1, pageSize: 20, search } })).items,
+    staleTime: 10_000,
+  });
+
+  // The selected material may not be in the current (filtered) results —
+  // fetch it directly so its label still renders when the combobox is closed.
+  const { data: selectedMaterial } = useQuery({
+    ...materialByIdQueryOptions(value),
+    enabled: !!value,
   });
 
   const materialItems = rawMaterials.map((m) => ({
@@ -71,7 +87,11 @@ export function MaterialCombobox({ value, onChange }: MaterialComboboxProps) {
     label: `${m.name} (${m.unit})`,
   }));
 
-  const selectedItem = materialItems.find((item) => item.id === value) ?? null;
+  const selectedItem =
+    materialItems.find((item) => item.id === value) ??
+    (selectedMaterial && selectedMaterial.id === value
+      ? { id: selectedMaterial.id, label: `${selectedMaterial.name} (${selectedMaterial.unit})` }
+      : null);
 
   const createMutation = useMutation({
     mutationFn: createFn,
@@ -114,19 +134,27 @@ export function MaterialCombobox({ value, onChange }: MaterialComboboxProps) {
           if (item) onChange(item.id);
         }}
         onInputValueChange={(val) => setInputValue(typeof val === "string" ? val : "")}
+        filter={null}
       >
         <ComboboxInput placeholder="Buscar material..." className="w-full" showTrigger />
 
         <ComboboxContent>
           <ComboboxEmpty>
-            <button
-              type="button"
-              onClick={openCreateDialog}
-              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-accent hover:text-accent-foreground"
-            >
-              <PlusIcon className="size-3" />
-              Crear nuevo material en el catálogo
-            </button>
+            {isFetching ? (
+              <span className="flex items-center gap-2 px-3 py-2 text-muted-foreground text-xs">
+                <Loader2Icon className="size-3 animate-spin" />
+                Buscando...
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={openCreateDialog}
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-accent hover:text-accent-foreground"
+              >
+                <PlusIcon className="size-3" />
+                Crear nuevo material en el catálogo
+              </button>
+            )}
           </ComboboxEmpty>
           <ComboboxList>
             {(item) => (

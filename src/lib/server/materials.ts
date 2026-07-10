@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, count, eq, getTableColumns, sql } from "drizzle-orm";
+import { and, asc, count, eq, getTableColumns, ilike, sql } from "drizzle-orm";
 import * as z from "zod";
 import { material, materialInventoryMovement, materialPriceHistory } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
@@ -11,10 +11,11 @@ export const listMaterials = createServerFn({ method: "GET" })
     z.object({
       page: z.number().int().min(1).default(1),
       pageSize: z.number().int().min(1).max(100).default(20),
+      search: z.string().trim().optional(),
     }),
   )
   .middleware([organizationMiddleware])
-  .handler(async ({ data: { page, pageSize }, context: { activeOrganizationId, db } }) => {
+  .handler(async ({ data: { page, pageSize, search }, context: { activeOrganizationId, db } }) => {
     const stockSq = db
       .select({
         materialId: materialInventoryMovement.materialId,
@@ -25,6 +26,11 @@ export const listMaterials = createServerFn({ method: "GET" })
       .groupBy(materialInventoryMovement.materialId)
       .as("stock_sq");
 
+    const whereClause = and(
+      eq(material.organizationId, activeOrganizationId),
+      search ? ilike(material.name, `%${search}%`) : undefined,
+    );
+
     const [items, [{ total }]] = await Promise.all([
       db
         .select({
@@ -33,14 +39,11 @@ export const listMaterials = createServerFn({ method: "GET" })
         })
         .from(material)
         .leftJoin(stockSq, eq(material.id, stockSq.materialId))
-        .where(eq(material.organizationId, activeOrganizationId))
+        .where(whereClause)
         .orderBy(asc(material.name))
         .limit(pageSize)
         .offset((page - 1) * pageSize),
-      db
-        .select({ total: count() })
-        .from(material)
-        .where(eq(material.organizationId, activeOrganizationId)),
+      db.select({ total: count() }).from(material).where(whereClause),
     ]);
 
     return {

@@ -49,7 +49,7 @@ export const Route = createFileRoute("/_app/app/_workspace/materials/")({
   validateSearch: materialsSearchSchema,
   loaderDeps: ({ search: { page } }) => ({ page }),
   loader: ({ context: { queryClient }, deps: { page } }) =>
-    void queryClient.prefetchQuery(materialsListQueryOptions(page, PAGE_SIZE)),
+    void queryClient.prefetchQuery(materialsListQueryOptions({ page, pageSize: PAGE_SIZE })),
 });
 
 type Material = Awaited<ReturnType<typeof listMaterials>>["items"][number];
@@ -64,7 +64,7 @@ function MaterialsPage() {
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery(materialsListQueryOptions(page, PAGE_SIZE));
+  const { data, isLoading } = useQuery(materialsListQueryOptions({ page, pageSize: PAGE_SIZE }));
   const materials = data?.items ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));

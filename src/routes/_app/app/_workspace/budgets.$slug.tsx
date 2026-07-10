@@ -39,8 +39,8 @@ function QuotePage() {
   });
 
   const { data: catalogOperations = [] } = useQuery({
-    queryKey: ["operations"],
-    queryFn: () => listOperationsFn(),
+    queryKey: ["operations", "all"],
+    queryFn: async () => (await listOperationsFn({ data: { page: 1, pageSize: 1000 } })).items,
     staleTime: 30_000,
   });
 
