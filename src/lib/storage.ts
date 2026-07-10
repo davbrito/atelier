@@ -51,7 +51,7 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
     if (!object) {
       throw new MoveObjectSourceNotFoundError(sourceKey);
     }
-    await bucket.put(destKey, await object.arrayBuffer(), {
+    await bucket.put(destKey, object.body, {
       httpMetadata: object.httpMetadata ?? { contentType: contentTypeFromKey(destKey) },
     });
     await removeItemSafe(sourceKey);
@@ -59,7 +59,7 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
 
   /** Writes a file to the bucket with its Content-Type. */
   async function putObject(key: string, file: File): Promise<void> {
-    await bucket.put(key, await file.arrayBuffer(), {
+    await bucket.put(key, file, {
       httpMetadata: { contentType: file.type || contentTypeFromKey(key) },
     });
   }
