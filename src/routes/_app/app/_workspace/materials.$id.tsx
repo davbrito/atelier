@@ -24,6 +24,7 @@ import {
 } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { Dialog, DialogContent } from "#/components/ui/dialog";
 import { materialByIdQueryOptions } from "#/lib/query-options";
 import { deleteMaterial } from "#/lib/server/materials";
 import { UNIT_OPTIONS } from "#/lib/units";
@@ -42,6 +43,7 @@ function MaterialDetailPage() {
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
   const { data: material, isLoading } = useQuery(materialByIdQueryOptions(id));
 
@@ -85,37 +87,46 @@ function MaterialDetailPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            nativeButton={false}
-            render={<Link to="/app/materials" />}
+      {/* Banner */}
+      <div className="relative overflow-hidden rounded-xl">
+        {material.image ? (
+          <button
+            type="button"
+            onClick={() => setIsGalleryOpen(true)}
+            className="block aspect-[21/9] w-full cursor-zoom-in"
           >
-            <ArrowLeftIcon className="size-4" />
-          </Button>
-          {material.image ? (
             <img
               src={material.image}
               alt={material.name}
-              className="size-14 rounded-lg object-cover"
+              className="size-full object-cover transition hover:brightness-90"
             />
-          ) : (
-            <div className="flex size-14 items-center justify-center rounded-lg bg-muted">
-              <PackageIcon className="size-6 text-muted-foreground/40" />
-            </div>
-          )}
-          <div>
-            <h1 className="font-heading text-2xl">{material.name}</h1>
-            <p className="mt-1 text-muted-foreground text-sm">
-              Agregado el{" "}
-              {new Intl.DateTimeFormat("es-VE", { dateStyle: "long" }).format(
-                new Date(material.createdAt),
-              )}
-            </p>
+          </button>
+        ) : (
+          <div className="flex aspect-[21/9] w-full items-center justify-center bg-gradient-to-br from-muted to-muted/40">
+            <PackageIcon className="size-10 text-muted-foreground/30" />
           </div>
+        )}
+        <Button
+          variant="secondary"
+          size="icon"
+          className="absolute top-3 left-3 shadow"
+          nativeButton={false}
+          render={<Link to="/app/materials" />}
+        >
+          <ArrowLeftIcon className="size-4" />
+        </Button>
+      </div>
+
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl">{material.name}</h1>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Agregado el{" "}
+            {new Intl.DateTimeFormat("es-VE", { dateStyle: "long" }).format(
+              new Date(material.createdAt),
+            )}
+          </p>
         </div>
         <div className="flex gap-1">
           <Button variant="outline" size="sm" onClick={() => setIsSheetOpen(true)}>
@@ -132,6 +143,18 @@ function MaterialDetailPage() {
           </Button>
         </div>
       </div>
+
+      {material.image && (
+        <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+          <DialogContent className="max-w-3xl bg-transparent p-0 shadow-none ring-0">
+            <img
+              src={material.image}
+              alt={material.name}
+              className="max-h-[85vh] w-full rounded-xl object-contain"
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Details */}
       <Card>
