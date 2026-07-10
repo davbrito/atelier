@@ -2,6 +2,7 @@ import { Field } from "@base-ui/react/field";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2Icon, MinusIcon, PlusIcon } from "lucide-react";
+import { useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "#/components/ui/button";
@@ -51,9 +52,19 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
 
   const {
     fields: measurementFields,
-    append: appendMeasurement,
+    prepend: prependMeasurement,
     remove: removeMeasurement,
   } = useFieldArray({ control, name: "measurements" });
+
+  const [draftMeasurement, setDraftMeasurement] = useState({ name: "", value: "" });
+  const draftMeasurementValid =
+    draftMeasurement.name.trim() !== "" && draftMeasurement.value.trim() !== "";
+
+  function commitMeasurement() {
+    if (!draftMeasurementValid) return;
+    prependMeasurement(draftMeasurement);
+    setDraftMeasurement({ name: "", value: "" });
+  }
 
   const isEdit = !!editingClient;
 
@@ -199,18 +210,43 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
 
           {/* Measurements */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-sm">Medidas</span>
+            <span className="font-medium text-sm">Medidas</span>
+
+            <div className="flex items-center gap-2">
+              <Input
+                value={draftMeasurement.name}
+                onChange={(e) => setDraftMeasurement((d) => ({ ...d, name: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitMeasurement();
+                  }
+                }}
+                placeholder="Ej: Busto"
+              />
+              <Input
+                value={draftMeasurement.value}
+                onChange={(e) => setDraftMeasurement((d) => ({ ...d, value: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitMeasurement();
+                  }
+                }}
+                placeholder="Ej: 92 cm"
+                className="w-32"
+              />
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
-                onClick={() => appendMeasurement({ name: "", value: "" })}
+                size="icon"
+                disabled={!draftMeasurementValid}
+                onClick={commitMeasurement}
               >
                 <PlusIcon className="size-3" />
-                Agregar
               </Button>
             </div>
+
             {measurementFields.map((field, i) => (
               <div key={field.id} className="flex items-center gap-2">
                 <Controller

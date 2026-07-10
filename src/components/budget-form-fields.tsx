@@ -3,6 +3,7 @@
 import { Field } from "@base-ui/react/field";
 import { useQuery } from "@tanstack/react-query";
 import { MinusIcon, PlusIcon } from "lucide-react";
+import { useState } from "react";
 import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { ImageUpload } from "#/components/image-upload";
@@ -34,15 +35,35 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
 
   const {
     fields: materialFields,
-    append: appendMaterial,
+    prepend: prependMaterial,
     remove: removeMaterial,
   } = useFieldArray({ control, name: "materials" });
 
   const {
     fields: operationFields,
-    append: appendOperation,
+    prepend: prependOperation,
     remove: removeOperation,
   } = useFieldArray({ control, name: "operations" });
+
+  const [draftMaterial, setDraftMaterial] = useState({ materialId: "", quantity: "" });
+  const draftMaterialValid =
+    draftMaterial.materialId !== "" && draftMaterial.quantity.trim() !== "";
+
+  function commitMaterial() {
+    if (!draftMaterialValid) return;
+    prependMaterial(draftMaterial);
+    setDraftMaterial({ materialId: "", quantity: "" });
+  }
+
+  const [draftOperation, setDraftOperation] = useState({ operationId: "", durationMinutes: 0 });
+  const draftOperationValid =
+    draftOperation.operationId !== "" && draftOperation.durationMinutes > 0;
+
+  function commitOperation() {
+    if (!draftOperationValid) return;
+    prependOperation(draftOperation);
+    setDraftOperation({ operationId: "", durationMinutes: 0 });
+  }
 
   return (
     <>
@@ -134,18 +155,30 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
 
       {/* Materials */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="font-medium text-sm">Materiales</span>
+        <span className="font-medium text-sm">Materiales</span>
+
+        <div className="flex items-center gap-2">
+          <MaterialCombobox
+            value={draftMaterial.materialId}
+            onChange={(materialId) => setDraftMaterial((d) => ({ ...d, materialId }))}
+          />
+          <DraftMaterialQuantityField
+            materialId={draftMaterial.materialId}
+            value={draftMaterial.quantity}
+            onChange={(quantity) => setDraftMaterial((d) => ({ ...d, quantity }))}
+            onEnter={commitMaterial}
+          />
           <Button
             type="button"
             variant="ghost"
-            size="sm"
-            onClick={() => appendMaterial({ materialId: "", quantity: "" })}
+            size="icon"
+            disabled={!draftMaterialValid}
+            onClick={commitMaterial}
           >
             <PlusIcon className="size-3" />
-            Agregar
           </Button>
         </div>
+
         {materialFields.map((field, i) => (
           <div key={field.id} className="flex items-center gap-2">
             <Controller
@@ -165,18 +198,45 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
 
       {/* Operations */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="font-medium text-sm">Operaciones</span>
+        <span className="font-medium text-sm">Operaciones</span>
+
+        <div className="flex items-center gap-2">
+          <OperationCombobox
+            value={draftOperation.operationId}
+            onChange={(operationId, defaultDurationMinutes) =>
+              setDraftOperation({ operationId, durationMinutes: defaultDurationMinutes })
+            }
+          />
+          <InputGroup className="w-28">
+            <InputGroupInput
+              type="number"
+              placeholder="Minutos"
+              value={draftOperation.durationMinutes || ""}
+              onChange={(e) =>
+                setDraftOperation((d) => ({ ...d, durationMinutes: Number(e.target.value) || 0 }))
+              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitOperation();
+                }
+              }}
+            />
+            <InputGroupAddon align="inline-end">
+              <InputGroupText>min</InputGroupText>
+            </InputGroupAddon>
+          </InputGroup>
           <Button
             type="button"
             variant="ghost"
-            size="sm"
-            onClick={() => appendOperation({ operationId: "", durationMinutes: 0 })}
+            size="icon"
+            disabled={!draftOperationValid}
+            onClick={commitOperation}
           >
             <PlusIcon className="size-3" />
-            Agregar
           </Button>
         </div>
+
         {operationFields.map((field, i) => (
           <div key={field.id} className="flex items-center gap-2">
             <Controller
@@ -218,6 +278,45 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
         ))}
       </div>
     </>
+  );
+}
+
+type DraftMaterialQuantityFieldProps = {
+  materialId: string;
+  value: string;
+  onChange: (value: string) => void;
+  onEnter: () => void;
+};
+
+/** Quantity input for the draft (not-yet-added) material row. */
+function DraftMaterialQuantityField({
+  materialId,
+  value,
+  onChange,
+  onEnter,
+}: DraftMaterialQuantityFieldProps) {
+  const { data: catalogMaterials = [] } = useQuery(materialsListQueryOptions);
+  const unit = catalogMaterials.find((m) => m.id === materialId)?.unit ?? "";
+
+  return (
+    <InputGroup className="w-40">
+      <InputGroupInput
+        type="number"
+        step="0.01"
+        placeholder="Cantidad"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            onEnter();
+          }
+        }}
+      />
+      <InputGroupAddon align="inline-end">
+        <InputGroupText>{unit}</InputGroupText>
+      </InputGroupAddon>
+    </InputGroup>
   );
 }
 
