@@ -97,7 +97,10 @@ export const updateMaterial = createServerFn({ method: "POST" })
     }),
   )
   .handler(
-    async ({ data, context: { activeOrganizationId, db, createEntityPresignedUrl, storage } }) => {
+    async ({
+      data,
+      context: { activeOrganizationId, db, createEntityPresignedUrl, removeItemSafe },
+    }) => {
       const { id, imageContentType, deleteImage, ...updateData } = data;
 
       const { updated, existingImage } = await db.transaction(async (tx) => {
@@ -132,9 +135,10 @@ export const updateMaterial = createServerFn({ method: "POST" })
         return { updated, existingImage: existing.image };
       });
 
-      // Delete image from storage after successful DB update
+      // Delete image from storage after successful DB update. Best-effort:
+      // a stale or corrupt previous object must not surface as an update failure.
       if (deleteImage && existingImage) {
-        await storage.removeItem(existingImage);
+        await removeItemSafe(existingImage);
       }
 
       if (imageContentType) {
@@ -153,8 +157,9 @@ export const updateMaterial = createServerFn({ method: "POST" })
 export const deleteMaterial = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware, storageMiddleware])
   .validator(z.object({ id: z.uuid() }))
-  .handler(async ({ data: { id }, context: { activeOrganizationId, db, storage } }) => {
-    // Delete the image from storage before removing the record
+  .handler(async ({ data: { id }, context: { activeOrganizationId, db, removeItemSafe } }) => {
+    // Delete the image from storage before removing the record. Best-effort:
+    // a missing/corrupt image object must not prevent deleting the material.
     const [existing] = await db
       .select({ image: material.image })
       .from(material)
@@ -163,7 +168,7 @@ export const deleteMaterial = createServerFn({ method: "POST" })
     if (!existing) throw new Error("Material no encontrado");
 
     if (existing.image) {
-      await storage.removeItem(existing.image);
+      await removeItemSafe(existing.image);
     }
 
     await db
