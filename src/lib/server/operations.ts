@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, ilike } from "drizzle-orm";
 import * as z from "zod";
 import { operation } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
@@ -9,25 +9,42 @@ export const listOperations = createServerFn({ method: "GET" })
     z.object({
       page: z.number().int().min(1).default(1),
       pageSize: z.number().int().min(1).max(100).default(20),
+      search: z.string().trim().optional(),
     }),
   )
   .middleware([organizationMiddleware])
-  .handler(async ({ data: { page, pageSize }, context: { activeOrganizationId, db } }) => {
+  .handler(async ({ data: { page, pageSize, search }, context: { activeOrganizationId, db } }) => {
+    const whereClause = and(
+      eq(operation.organizationId, activeOrganizationId),
+      search ? ilike(operation.name, `%${search}%`) : undefined,
+    );
+
     const [items, [{ total }]] = await Promise.all([
       db
         .select()
         .from(operation)
-        .where(eq(operation.organizationId, activeOrganizationId))
+        .where(whereClause)
         .orderBy(asc(operation.name))
         .limit(pageSize)
         .offset((page - 1) * pageSize),
-      db
-        .select({ total: count() })
-        .from(operation)
-        .where(eq(operation.organizationId, activeOrganizationId)),
+      db.select({ total: count() }).from(operation).where(whereClause),
     ]);
 
     return { items, total, page, pageSize };
+  });
+
+export const getOperationById = createServerFn({ method: "GET" })
+  .middleware([organizationMiddleware])
+  .validator(z.object({ id: z.uuid() }))
+  .handler(async ({ data: { id }, context: { activeOrganizationId, db } }) => {
+    const [found] = await db
+      .select()
+      .from(operation)
+      .where(and(eq(operation.id, id), eq(operation.organizationId, activeOrganizationId)));
+
+    if (!found) throw new Error("Operación no encontrada");
+
+    return found;
   });
 
 export const createOperation = createServerFn({ method: "POST" })

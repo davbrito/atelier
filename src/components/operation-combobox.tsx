@@ -1,10 +1,11 @@
 "use client";
 
 import { Field } from "@base-ui/react/field";
+import { useDebouncer } from "@tanstack/react-pacer";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2Icon, PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -26,6 +27,7 @@ import {
 } from "#/components/ui/combobox";
 import * as StyledField from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
+import { operationByIdQueryOptions } from "#/lib/query-options";
 import { createOperation, listOperations } from "#/lib/server/operations";
 
 type RawOperation = {
@@ -45,13 +47,27 @@ export function OperationCombobox({ value, onChange }: OperationComboboxProps) {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [search, setSearch] = useState("");
   const [newName, setNewName] = useState("");
   const [newDuration, setNewDuration] = useState("60");
 
-  const { data: rawOperations = [] } = useQuery<RawOperation[]>({
-    queryKey: ["operations", "all"],
-    queryFn: async () => (await listFn({ data: { page: 1, pageSize: 1000 } })).items,
-    staleTime: 30_000,
+  const searchDebouncer = useDebouncer((next: string) => setSearch(next), { wait: 300 });
+
+  useEffect(() => {
+    searchDebouncer.maybeExecute(inputValue);
+  }, [inputValue, searchDebouncer.maybeExecute]);
+
+  const { data: rawOperations = [], isFetching } = useQuery<RawOperation[]>({
+    queryKey: ["operations", "search", search],
+    queryFn: async () => (await listFn({ data: { page: 1, pageSize: 20, search } })).items,
+    staleTime: 10_000,
+  });
+
+  // The selected operation may not be in the current (filtered) results —
+  // fetch it directly so its label still renders when the combobox is closed.
+  const { data: selectedOperation } = useQuery({
+    ...operationByIdQueryOptions(value),
+    enabled: !!value,
   });
 
   const operationItems = rawOperations.map((o) => ({
@@ -60,7 +76,15 @@ export function OperationCombobox({ value, onChange }: OperationComboboxProps) {
     defaultDurationMinutes: o.defaultDurationMinutes,
   }));
 
-  const selectedItem = operationItems.find((item) => item.id === value) ?? null;
+  const selectedItem =
+    operationItems.find((item) => item.id === value) ??
+    (selectedOperation && selectedOperation.id === value
+      ? {
+          id: selectedOperation.id,
+          label: selectedOperation.name,
+          defaultDurationMinutes: selectedOperation.defaultDurationMinutes,
+        }
+      : null);
 
   const createMutation = useMutation({
     mutationFn: createFn,
@@ -101,19 +125,27 @@ export function OperationCombobox({ value, onChange }: OperationComboboxProps) {
           if (item) onChange(item.id, item.defaultDurationMinutes);
         }}
         onInputValueChange={(val) => setInputValue(typeof val === "string" ? val : "")}
+        filter={null}
       >
         <ComboboxInput placeholder="Buscar operación..." className="w-full" showTrigger />
 
         <ComboboxContent>
           <ComboboxEmpty>
-            <button
-              type="button"
-              onClick={openCreateDialog}
-              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-accent hover:text-accent-foreground"
-            >
-              <PlusIcon className="size-3" />
-              Crear nueva operación en el catálogo
-            </button>
+            {isFetching ? (
+              <span className="flex items-center gap-2 px-3 py-2 text-muted-foreground text-xs">
+                <Loader2Icon className="size-3 animate-spin" />
+                Buscando...
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={openCreateDialog}
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-accent hover:text-accent-foreground"
+              >
+                <PlusIcon className="size-3" />
+                Crear nueva operación en el catálogo
+              </button>
+            )}
           </ComboboxEmpty>
           <ComboboxList>
             {(item) => (

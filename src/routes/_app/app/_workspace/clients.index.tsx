@@ -50,7 +50,7 @@ export const Route = createFileRoute("/_app/app/_workspace/clients/")({
   validateSearch: clientsSearchSchema,
   loaderDeps: ({ search: { page } }) => ({ page }),
   loader: ({ context: { queryClient }, deps: { page } }) =>
-    void queryClient.prefetchQuery(clientsListQueryOptions(page, PAGE_SIZE)),
+    void queryClient.prefetchQuery(clientsListQueryOptions({ page, pageSize: PAGE_SIZE })),
 });
 
 function getInitials(name: string) {
@@ -68,7 +68,7 @@ function ClientsPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery(clientsListQueryOptions(page, PAGE_SIZE));
+  const { data, isLoading } = useQuery(clientsListQueryOptions({ page, pageSize: PAGE_SIZE }));
   const clients = data?.items ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));

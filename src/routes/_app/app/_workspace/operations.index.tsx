@@ -65,7 +65,7 @@ export const Route = createFileRoute("/_app/app/_workspace/operations/")({
   validateSearch: operationsSearchSchema,
   loaderDeps: ({ search: { page } }) => ({ page }),
   loader: ({ context: { queryClient }, deps: { page } }) =>
-    void queryClient.prefetchQuery(operationsListQueryOptions(page, PAGE_SIZE)),
+    void queryClient.prefetchQuery(operationsListQueryOptions({ page, pageSize: PAGE_SIZE })),
 });
 
 type Operation = Awaited<ReturnType<typeof listOperations>>["items"][number];
@@ -83,7 +83,7 @@ function OperationsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
 
-  const { data, isLoading } = useQuery(operationsListQueryOptions(page, PAGE_SIZE));
+  const { data, isLoading } = useQuery(operationsListQueryOptions({ page, pageSize: PAGE_SIZE }));
   const operations = data?.items ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
