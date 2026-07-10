@@ -10,6 +10,7 @@ import {
 import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { ColorPicker } from "#/components/color-picker";
 import { ImageUpload } from "#/components/image-upload";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -565,20 +566,10 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
         <Controller
           name="color"
           control={control}
-          render={({
-            field: { name, ref, value, onBlur, onChange },
-            fieldState: { invalid, error },
-          }) => (
+          render={({ field: { name, value, onChange }, fieldState: { invalid, error } }) => (
             <Field.Root name={name} invalid={invalid} render={<StyledField.Field />}>
               <Field.Label render={<StyledField.FieldLabel />}>Color (opcional)</Field.Label>
-              <Field.Control
-                value={value}
-                onBlur={onBlur}
-                onValueChange={onChange}
-                ref={ref}
-                placeholder="Ej: Azul marino"
-                render={<Input />}
-              />
+              <ColorPicker value={value} onValueChange={onChange} placeholder="Ej: #1E3A8A" />
               <Field.Error render={<StyledField.FieldError />}>{error?.message}</Field.Error>
             </Field.Root>
           )}
