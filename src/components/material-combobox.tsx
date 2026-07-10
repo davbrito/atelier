@@ -61,8 +61,8 @@ export function MaterialCombobox({ value, onChange }: MaterialComboboxProps) {
   const [newImage, setNewImage] = useState<string | null>(null);
 
   const { data: rawMaterials = [] } = useQuery<RawMaterial[]>({
-    queryKey: ["materials"],
-    queryFn: () => listFn(),
+    queryKey: ["materials", "all"],
+    queryFn: async () => (await listFn({ data: { page: 1, pageSize: 1000 } })).items,
     staleTime: 30_000,
   });
 

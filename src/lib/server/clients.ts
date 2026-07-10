@@ -7,14 +7,14 @@ import { organizationMiddleware } from "../auth/functions";
 // ── Types ────────────────────────────────────────────────
 
 export const clientFormSchema = z.object({
-  name: z.string().min(1),
-  phone: z.string().optional(),
-  email: z.email().optional().or(z.literal("")),
-  notes: z.string().optional(),
+  name: z.string().trim().min(1),
+  phone: z.string().trim().optional(),
+  email: z.string().trim().email().optional().or(z.literal("")),
+  notes: z.string().trim().optional(),
   measurements: z.array(
     z.object({
-      name: z.string().min(1),
-      value: z.string().min(1),
+      name: z.string().trim().min(1),
+      value: z.string().trim().min(1),
     }),
   ),
 });

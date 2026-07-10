@@ -33,8 +33,8 @@ function QuotePage() {
   const { data: budget, isLoading } = useQuery(budgetBySlugQueryOptions(slug));
 
   const { data: catalogMaterials = [] } = useQuery({
-    queryKey: ["materials"],
-    queryFn: () => listMaterialsFn(),
+    queryKey: ["materials", "all"],
+    queryFn: async () => (await listMaterialsFn({ data: { page: 1, pageSize: 1000 } })).items,
     staleTime: 30_000,
   });
 

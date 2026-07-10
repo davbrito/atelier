@@ -35,11 +35,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { materialInventoryQueryOptions, queryKeys } from "#/lib/query-options";
 import { setEntityImage } from "#/lib/server/images";
 import { registerMovement } from "#/lib/server/inventory";
-import { createMaterial, type listMaterials, updateMaterial } from "#/lib/server/materials";
+import { createMaterial, type getMaterialById, updateMaterial } from "#/lib/server/materials";
 import { UNIT_OPTIONS, type Unit, unitSchema } from "#/lib/units";
 import { cn } from "#/lib/utils";
 
-type Material = Awaited<ReturnType<typeof listMaterials>>[number];
+type Material = Awaited<ReturnType<typeof getMaterialById>>;
 
 type MaterialSheetProps = {
   open: boolean;
@@ -51,6 +51,7 @@ type MaterialFormValues = {
   name: string;
   currentPrice: string;
   unit: Unit;
+  color: string;
   deleteImage: boolean;
   file: File | null;
 };
@@ -338,6 +339,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
       name: editingMaterial?.name ?? "",
       currentPrice: editingMaterial?.currentPrice ?? "",
       unit: editingMaterial ? unitSchema.catch("unit").parse(editingMaterial.unit) : "unit",
+      color: editingMaterial?.color ?? "",
       deleteImage: false,
       file: null,
     },
@@ -468,6 +470,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
           name: values.name,
           unit: values.unit,
           currentPrice: values.currentPrice,
+          color: values.color,
           deleteImage: values.deleteImage,
         };
         const id = editingMaterial?.id;
@@ -551,6 +554,29 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
                 step="0.01"
                 placeholder="0.00"
                 required
+                render={<Input />}
+              />
+              <Field.Error render={<StyledField.FieldError />}>{error?.message}</Field.Error>
+            </Field.Root>
+          )}
+        />
+
+        {/* Color */}
+        <Controller
+          name="color"
+          control={control}
+          render={({
+            field: { name, ref, value, onBlur, onChange },
+            fieldState: { invalid, error },
+          }) => (
+            <Field.Root name={name} invalid={invalid} render={<StyledField.Field />}>
+              <Field.Label render={<StyledField.FieldLabel />}>Color (opcional)</Field.Label>
+              <Field.Control
+                value={value}
+                onBlur={onBlur}
+                onValueChange={onChange}
+                ref={ref}
+                placeholder="Ej: Azul marino"
                 render={<Input />}
               />
               <Field.Error render={<StyledField.FieldError />}>{error?.message}</Field.Error>

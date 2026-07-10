@@ -295,7 +295,8 @@ function DraftMaterialQuantityField({
   onChange,
   onEnter,
 }: DraftMaterialQuantityFieldProps) {
-  const { data: catalogMaterials = [] } = useQuery(materialsListQueryOptions);
+  const { data } = useQuery(materialsListQueryOptions(1, 1000));
+  const catalogMaterials = data?.items ?? [];
   const unit = catalogMaterials.find((m) => m.id === materialId)?.unit ?? "";
 
   return (
@@ -329,7 +330,8 @@ function DraftMaterialQuantityField({
 function MaterialQuantityField({ index }: { index: number }) {
   const { control } = useFormContext<BudgetFormValues>();
   const materialId = useWatch({ control, name: `materials.${index}.materialId` });
-  const { data: catalogMaterials = [] } = useQuery(materialsListQueryOptions);
+  const { data } = useQuery(materialsListQueryOptions(1, 1000));
+  const catalogMaterials = data?.items ?? [];
   const unit = catalogMaterials.find((m) => m.id === materialId)?.unit ?? "";
 
   return (

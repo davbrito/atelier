@@ -1,9 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2Icon, PackageIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Loader2Icon,
+  PackageIcon,
+  PencilIcon,
+  PlusIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import * as z from "zod";
 import { MaterialSheet } from "#/components/material-sheet";
 import {
   AlertDialog,
@@ -16,20 +25,38 @@ import {
   AlertDialogTitle,
 } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { Card } from "#/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "#/components/ui/table";
 import { materialsListQueryOptions } from "#/lib/query-options";
 import { deleteMaterial, type listMaterials } from "#/lib/server/materials";
 import { UNIT_OPTIONS } from "#/lib/units";
 
-export const Route = createFileRoute("/_app/app/_workspace/materials/")({
-  component: MaterialsPage,
-  loader: ({ context: { queryClient } }) =>
-    void queryClient.prefetchQuery(materialsListQueryOptions),
+const PAGE_SIZE = 20;
+
+const materialsSearchSchema = z.object({
+  page: z.number().int().min(1).default(1).catch(1),
 });
 
-type Material = Awaited<ReturnType<typeof listMaterials>>[number];
+export const Route = createFileRoute("/_app/app/_workspace/materials/")({
+  component: MaterialsPage,
+  validateSearch: materialsSearchSchema,
+  loaderDeps: ({ search: { page } }) => ({ page }),
+  loader: ({ context: { queryClient }, deps: { page } }) =>
+    void queryClient.prefetchQuery(materialsListQueryOptions(page, PAGE_SIZE)),
+});
+
+type Material = Awaited<ReturnType<typeof listMaterials>>["items"][number];
 
 function MaterialsPage() {
+  const { page } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
   const deleteFn = useServerFn(deleteMaterial);
 
@@ -37,7 +64,10 @@ function MaterialsPage() {
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data: materials, isLoading } = useQuery(materialsListQueryOptions);
+  const { data, isLoading } = useQuery(materialsListQueryOptions(page, PAGE_SIZE));
+  const materials = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const deleteMutation = useMutation({
     mutationFn: deleteFn,
@@ -59,6 +89,10 @@ function MaterialsPage() {
     setIsSheetOpen(true);
   }
 
+  function goToPage(nextPage: number) {
+    navigate({ search: { page: nextPage } });
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
@@ -75,7 +109,7 @@ function MaterialsPage() {
         <div className="flex h-64 items-center justify-center">
           <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
         </div>
-      ) : materials?.length === 0 ? (
+      ) : materials.length === 0 ? (
         <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
           <PackageIcon className="mb-4 size-12 text-muted-foreground/20" />
           <h3 className="font-medium text-lg">No hay materiales</h3>
@@ -87,67 +121,119 @@ function MaterialsPage() {
           </Button>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {materials?.map((material) => {
-            const unit =
-              UNIT_OPTIONS.find((option) => option.value === material.unit)?.label || material.unit;
-            return (
-              <Card key={material.id} className="relative overflow-hidden pt-0">
-                <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
-                {material.image ? (
-                  <img
-                    src={material.image}
-                    alt={material.name}
-                    className="relative z-20 aspect-video w-full object-cover brightness-60 grayscale-25 dark:brightness-40"
-                  />
-                ) : (
-                  <div className="relative z-20 flex aspect-video w-full items-center justify-center bg-gradient-to-br from-muted to-muted/40">
-                    <PackageIcon className="size-10 text-muted-foreground/30" />
-                  </div>
-                )}
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="font-medium text-sm">{material.name}</CardTitle>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(material)}>
-                      <PencilIcon className="size-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => setDeletingId(material.id)}
-                    >
-                      <Trash2Icon className="size-3" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground uppercase tracking-wider">Precio</span>
-                    <span className="font-bold">
-                      ${material.currentPrice} / {unit}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex justify-between text-xs">
-                    <span className="text-muted-foreground uppercase tracking-wider">Stock</span>
-                    <span
-                      className={
-                        Number(material.currentStock) < 0
-                          ? "font-bold text-destructive"
-                          : "font-bold"
-                      }
-                    >
-                      {Number(material.currentStock).toLocaleString("es-VE", {
-                        maximumFractionDigits: 4,
-                      })}{" "}
-                      {unit}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        <>
+          <Card className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead></TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Color</TableHead>
+                  <TableHead>Precio</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {materials.map((material) => {
+                  const unit =
+                    UNIT_OPTIONS.find((option) => option.value === material.unit)?.label ||
+                    material.unit;
+                  return (
+                    <TableRow key={material.id}>
+                      <TableCell>
+                        {material.image ? (
+                          <img
+                            src={material.image}
+                            alt={material.name}
+                            className="size-8 rounded object-cover"
+                          />
+                        ) : (
+                          <div className="flex size-8 items-center justify-center rounded bg-muted">
+                            <PackageIcon className="size-4 text-muted-foreground/40" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <Link
+                          to="/app/materials/$id"
+                          params={{ id: material.id }}
+                          className="hover:underline"
+                        >
+                          {material.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        {material.color ? (
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="size-3 shrink-0 rounded-full border"
+                              style={{ backgroundColor: material.color }}
+                            />
+                            <span className="text-muted-foreground">{material.color}</span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        ${material.currentPrice} / {unit}
+                      </TableCell>
+                      <TableCell
+                        className={Number(material.currentStock) < 0 ? "text-destructive" : ""}
+                      >
+                        {Number(material.currentStock).toLocaleString("es-VE", {
+                          maximumFractionDigits: 4,
+                        })}{" "}
+                        {unit}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(material)}>
+                            <PencilIcon className="size-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setDeletingId(material.id)}
+                          >
+                            <Trash2Icon className="size-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Card>
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground text-sm">
+              Página {page} de {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => goToPage(page - 1)}
+              >
+                <ChevronLeftIcon className="mr-1 size-4" />
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => goToPage(page + 1)}
+              >
+                Siguiente
+                <ChevronRightIcon className="ml-1 size-4" />
+              </Button>
+            </div>
+          </div>
+        </>
       )}
       {/* Form Sheet */}
       <MaterialSheet
