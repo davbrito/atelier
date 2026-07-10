@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, desc, eq, sql } from "drizzle-orm";
 import * as z from "zod";
 import type { Db } from "#/db/client";
-import { transactionMiddleware } from "#/db/middleware";
 import { material, materialInventoryMovement, user } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 
@@ -83,7 +82,7 @@ export const getMaterialInventory = createServerFn({ method: "GET" })
   });
 
 export const registerMovement = createServerFn({ method: "POST" })
-  .middleware([organizationMiddleware, transactionMiddleware])
+  .middleware([organizationMiddleware])
   .validator(
     z.object({
       materialId: z.uuid(),
@@ -92,49 +91,51 @@ export const registerMovement = createServerFn({ method: "POST" })
       note: z.string().optional(),
     }),
   )
-  .handler(async ({ data, context: { activeOrganizationId, trx, user: currentUser } }) => {
-    // Bound how long we're willing to wait for the lock below so a stuck
-    // connection can't pile up requests and exhaust the connection pool.
-    await trx.execute(sql`SET LOCAL lock_timeout = '5s'`);
+  .handler(async ({ data, context: { activeOrganizationId, db, user: currentUser } }) => {
+    return await db.transaction(async (trx) => {
+      // Bound how long we're willing to wait for the lock below so a stuck
+      // connection can't pile up requests and exhaust the connection pool.
+      await trx.execute(sql`SET LOCAL lock_timeout = '5s'`);
 
-    // Lock first, before any reads: serializes concurrent movements for this
-    // material and avoids taking a table read lock ahead of the advisory
-    // lock, which could otherwise invert lock acquisition order between
-    // concurrent transactions and deadlock.
-    await trx.execute(
-      sql`SELECT pg_advisory_xact_lock(hashtextextended(${data.materialId}, ${INVENTORY_LOCK_NAMESPACE}))`,
-    );
-
-    const [mat] = await trx
-      .select({ id: material.id })
-      .from(material)
-      .where(
-        and(eq(material.id, data.materialId), eq(material.organizationId, activeOrganizationId)),
+      // Lock first, before any reads: serializes concurrent movements for this
+      // material and avoids taking a table read lock ahead of the advisory
+      // lock, which could otherwise invert lock acquisition order between
+      // concurrent transactions and deadlock.
+      await trx.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtextextended(${data.materialId}, ${INVENTORY_LOCK_NAMESPACE}))`,
       );
 
-    if (!mat) throw new Error("Material no encontrado");
+      const [mat] = await trx
+        .select({ id: material.id })
+        .from(material)
+        .where(
+          and(eq(material.id, data.materialId), eq(material.organizationId, activeOrganizationId)),
+        );
 
-    // The delta is computed entirely in Postgres numeric arithmetic (never
-    // routed through a JS `Number`) so ledger precision can't be lost to
-    // floating-point rounding as quantities scale.
-    const deltaExpr =
-      data.type === "adjustment"
-        ? sql`(${data.quantity}::numeric - COALESCE((SELECT SUM(${materialInventoryMovement.delta}) FROM ${materialInventoryMovement} WHERE ${materialInventoryMovement.materialId} = ${data.materialId} AND ${materialInventoryMovement.organizationId} = ${activeOrganizationId}), 0))`
-        : data.type === "entry"
-          ? sql`${data.quantity}::numeric`
-          : sql`(-1 * ${data.quantity}::numeric)`;
+      if (!mat) throw new Error("Material no encontrado");
 
-    const [movement] = await trx
-      .insert(materialInventoryMovement)
-      .values({
-        materialId: data.materialId,
-        organizationId: activeOrganizationId,
-        type: data.type,
-        delta: deltaExpr,
-        note: data.note ?? null,
-        createdById: currentUser.id,
-      })
-      .returning();
+      // The delta is computed entirely in Postgres numeric arithmetic (never
+      // routed through a JS `Number`) so ledger precision can't be lost to
+      // floating-point rounding as quantities scale.
+      const deltaExpr =
+        data.type === "adjustment"
+          ? sql`(${data.quantity}::numeric - COALESCE((SELECT SUM(${materialInventoryMovement.delta}) FROM ${materialInventoryMovement} WHERE ${materialInventoryMovement.materialId} = ${data.materialId} AND ${materialInventoryMovement.organizationId} = ${activeOrganizationId}), 0))`
+          : data.type === "entry"
+            ? sql`${data.quantity}::numeric`
+            : sql`(-1 * ${data.quantity}::numeric)`;
 
-    return movement;
+      const [movement] = await trx
+        .insert(materialInventoryMovement)
+        .values({
+          materialId: data.materialId,
+          organizationId: activeOrganizationId,
+          type: data.type,
+          delta: deltaExpr,
+          note: data.note ?? null,
+          createdById: currentUser.id,
+        })
+        .returning();
+
+      return movement;
+    });
   });

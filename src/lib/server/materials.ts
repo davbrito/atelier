@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, eq, getTableColumns, sql } from "drizzle-orm";
 import * as z from "zod";
-import { transactionMiddleware } from "#/db/middleware";
 import { material, materialInventoryMovement, materialPriceHistory } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import { storageMiddleware } from "../storage";
@@ -84,7 +83,7 @@ export const createMaterial = createServerFn({ method: "POST" })
   });
 
 export const updateMaterial = createServerFn({ method: "POST" })
-  .middleware([organizationMiddleware, transactionMiddleware])
+  .middleware([organizationMiddleware, storageMiddleware])
   .validator(
     z.object({
       id: z.uuid(),
@@ -97,42 +96,45 @@ export const updateMaterial = createServerFn({ method: "POST" })
       imageContentType: z.string().optional(),
     }),
   )
-  .middleware([storageMiddleware])
   .handler(
-    async ({ data, context: { activeOrganizationId, trx, createEntityPresignedUrl, storage } }) => {
+    async ({ data, context: { activeOrganizationId, db, createEntityPresignedUrl, storage } }) => {
       const { id, imageContentType, deleteImage, ...updateData } = data;
 
-      const [existing] = await trx
-        .select({ currentPrice: material.currentPrice, image: material.image })
-        .from(material)
-        .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)));
+      const { updated, existingImage } = await db.transaction(async (tx) => {
+        const [existing] = await tx
+          .select({ currentPrice: material.currentPrice, image: material.image })
+          .from(material)
+          .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)));
 
-      if (!existing) throw new Error("Material no encontrado");
+        if (!existing) throw new Error("Material no encontrado");
 
-      // Delete image from storage when the user explicitly removes it
-      if (deleteImage && existing.image) {
-        await storage.removeItem(existing.image);
-      }
+        const [updated] = await tx
+          .update(material)
+          .set({
+            ...updateData,
+            image: deleteImage ? null : undefined,
+          })
+          .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)))
+          .returning();
 
-      const [updated] = await trx
-        .update(material)
-        .set({
-          ...updateData,
-          image: deleteImage ? null : undefined,
-        })
-        .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)))
-        .returning();
+        // Record the new price when it actually changed. Compare numerically so
+        // "10.00" and "10" aren't considered different, and skip inputs that
+        // couldn't be parsed as a price.
+        const prevPriceNum = Number(existing.currentPrice);
+        const newPriceNum = Number(updateData.currentPrice);
+        if (Number.isFinite(newPriceNum) && newPriceNum !== prevPriceNum) {
+          await tx.insert(materialPriceHistory).values({
+            materialId: id,
+            price: updateData.currentPrice,
+          });
+        }
 
-      // Record the new price when it actually changed. Compare numerically so
-      // "10.00" and "10" aren't considered different, and skip inputs that
-      // couldn't be parsed as a price.
-      const prevPriceNum = Number(existing.currentPrice);
-      const newPriceNum = Number(updateData.currentPrice);
-      if (Number.isFinite(newPriceNum) && newPriceNum !== prevPriceNum) {
-        await trx.insert(materialPriceHistory).values({
-          materialId: id,
-          price: updateData.currentPrice,
-        });
+        return { updated, existingImage: existing.image };
+      });
+
+      // Delete image from storage after successful DB update
+      if (deleteImage && existingImage) {
+        await storage.removeItem(existingImage);
       }
 
       if (imageContentType) {
