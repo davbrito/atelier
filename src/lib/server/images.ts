@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 import { budget, material } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
-import { storageMiddleware } from "../storage";
+import { MoveObjectSourceNotFoundError, storageMiddleware } from "../storage";
 
 const entityTypesTableMap = {
   budgets: budget,
@@ -50,7 +50,14 @@ export const setEntityImage = createServerFn({ method: "POST" })
 
     // Move the object from temp to permanent in the bucket via unstorage.
     // If this fails, do not update the DB so we don't point at a missing object.
-    await moveObject(data.imageKey, permanentKey);
+    try {
+      await moveObject(data.imageKey, permanentKey);
+    } catch (err) {
+      if (err instanceof MoveObjectSourceNotFoundError) {
+        throw new Error("La imagen no se subió correctamente, vuelve a intentarlo");
+      }
+      throw err;
+    }
 
     // Persist the permanent key in the database only after the object exists there.
     await db
@@ -74,11 +81,16 @@ export async function uploadEntityImage({
   file: File;
   key: string;
 }) {
-  await fetch(signedUrl, {
+  const uploadResponse = await fetch(signedUrl, {
     method: "PUT",
     body: file,
     headers: { "Content-Type": file.type },
   });
+
+  if (!uploadResponse.ok) {
+    throw new Error("Failed to upload image");
+  }
+
   const commit = await setEntityImage({
     data: { entityType, entityId, imageKey: key },
   });

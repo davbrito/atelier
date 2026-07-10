@@ -17,6 +17,14 @@ export type PresignedResult = {
 
 export type PresignedError = { error: true; code: "CONFIG_ERROR"; message: string };
 
+/** Thrown by moveObject when the source object does not exist (e.g. the client's upload PUT failed). */
+export class MoveObjectSourceNotFoundError extends Error {
+  constructor(public readonly sourceKey: string) {
+    super(`Source object not found: ${sourceKey}`);
+    this.name = "MoveObjectSourceNotFoundError";
+  }
+}
+
 // ── Unstorage instance ───────────────────────────────────
 
 let _storage: ReturnType<typeof createStorage> | null = null;
@@ -36,7 +44,7 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
   async function moveObject(sourceKey: string, destKey: string): Promise<void> {
     const data = await storage.getItemRaw(sourceKey);
     if (data === null || data === undefined) {
-      throw new Error(`Source object not found: ${sourceKey}`);
+      throw new MoveObjectSourceNotFoundError(sourceKey);
     }
     await storage.setItemRaw(destKey, data);
     await storage.removeItem(sourceKey);
