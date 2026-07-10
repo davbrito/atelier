@@ -155,7 +155,7 @@ function MaterialsPage() {
                               className="size-8 rounded object-cover"
                               style={{
                                 viewTransitionName: `material-image-${material.id}`,
-                                viewTransitionClass: "material-image",
+                                viewTransitionClass: "material-image material-image-thumb",
                               }}
                             />
                           ) : (

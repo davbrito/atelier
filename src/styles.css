@@ -320,9 +320,6 @@
   height: 100%;
   width: 100%;
   overflow: clip;
-  /* These pseudo-elements don't inherit the <img>'s rounded corners,
-     so without this they flash square-cornered mid-transition. */
-  border-radius: var(--radius-image);
 }
 
 ::view-transition-old(.material-image) {
@@ -331,6 +328,26 @@
 
 ::view-transition-new(.material-image) {
   object-fit: cover;
+}
+
+/* These pseudo-elements don't inherit the <img>'s rounded corners, so
+   without an explicit radius here they flash square-cornered
+   mid-transition. A single shared radius doesn't match either end
+   though — the table thumbnail (rounded, 0.25rem) and the detail
+   banner (rounded-xl, 0.75rem) use different values. Since "new" is
+   opaque and fully covers "old" for the whole transition (no fade
+   animation above), giving each its OWN real radius — keyed by a
+   class specific to that view rather than old/new — means whichever
+   one is playing the "new" role always shows the correct radius for
+   its actual element, in both navigation directions. */
+::view-transition-old(.material-image-thumb),
+::view-transition-new(.material-image-thumb) {
+  border-radius: 0.25rem;
+}
+
+::view-transition-old(.material-image-banner),
+::view-transition-new(.material-image-banner) {
+  border-radius: 0.75rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

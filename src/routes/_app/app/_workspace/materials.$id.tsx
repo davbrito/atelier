@@ -101,7 +101,7 @@ function MaterialDetailPage() {
               className="size-full object-cover transition hover:brightness-90"
               style={{
                 viewTransitionName: `material-image-${material.id}`,
-                viewTransitionClass: "material-image",
+                viewTransitionClass: "material-image material-image-banner",
               }}
             />
           </button>
