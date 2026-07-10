@@ -1,8 +1,11 @@
-import { useId, useState } from "react";
+import { Sketch } from "@uiw/react-color";
+import { useId } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
 import { cn } from "#/lib/utils";
+
+const HEX_COLOR_REGEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
 const PRESET_COLORS = [
   "#ef4444",
@@ -19,8 +22,6 @@ const PRESET_COLORS = [
   "#ffffff",
 ];
 
-const HEX_COLOR_REGEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
-
 type ColorPickerProps = {
   value: string;
   onValueChange: (value: string) => void;
@@ -29,12 +30,11 @@ type ColorPickerProps = {
 
 export function ColorPicker({ value, onValueChange, placeholder }: ColorPickerProps) {
   const inputId = useId();
-  const [open, setOpen] = useState(false);
   const isValidHex = HEX_COLOR_REGEX.test(value);
 
   return (
     <div className="flex items-center gap-2">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover>
         <PopoverTrigger
           render={
             <Button
@@ -55,31 +55,12 @@ export function ColorPicker({ value, onValueChange, placeholder }: ColorPickerPr
             style={isValidHex ? { backgroundColor: value } : undefined}
           />
         </PopoverTrigger>
-        <PopoverContent className="w-auto">
-          <div className="flex flex-col gap-3">
-            <input
-              type="color"
-              value={isValidHex ? value : "#000000"}
-              onChange={(e) => onValueChange(e.target.value)}
-              className="h-9 w-full cursor-pointer rounded-md border bg-transparent"
-              aria-label="Selector de color"
-            />
-            <div className="grid grid-cols-6 gap-1.5">
-              {PRESET_COLORS.map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  className={cn(
-                    "size-6 rounded-full border transition-transform hover:scale-110",
-                    value.toLowerCase() === preset && "ring-2 ring-ring ring-offset-1",
-                  )}
-                  style={{ backgroundColor: preset }}
-                  onClick={() => onValueChange(preset)}
-                  aria-label={preset}
-                />
-              ))}
-            </div>
-          </div>
+        <PopoverContent className="w-auto p-0">
+          <Sketch
+            color={isValidHex ? value : "#000000"}
+            presetColors={PRESET_COLORS}
+            onChange={(color) => onValueChange(color.hex)}
+          />
         </PopoverContent>
       </Popover>
       <Input

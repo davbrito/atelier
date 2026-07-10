@@ -43,6 +43,7 @@
     "@tanstack/react-router-ssr-query": "latest",
     "@tanstack/react-start": "latest",
     "@tanstack/router-plugin": "^1.168.19",
+    "@uiw/react-color": "^2.10.3",
     "@vercel/analytics": "^2.0.1",
     "@vercel/functions": "^3.7.5",
     "aws4fetch": "^1.0.20",
