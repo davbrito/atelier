@@ -35,16 +35,6 @@ export const Route = createFileRoute("/uploads/$")({
         }
 
         // R2 signals a match by returning an object without a body.
-        if (!("body" in object) || object.body === null) {
-          return new Response(null, {
-            status: 304,
-            headers: {
-              ETag: object.httpEtag,
-              "Cache-Control": "private, no-cache",
-            },
-          });
-        }
-
         // Deterministic keys mean a replaced image reuses the same URL, so
         // the browser must revalidate on every load — no-cache still lets it
         // cache the bytes, so a fresh image only costs a 304, not a
@@ -53,6 +43,11 @@ export const Route = createFileRoute("/uploads/$")({
         const headers = new Headers();
         headers.set("Cache-Control", "private, no-cache");
         headers.set("ETag", object.httpEtag);
+
+        if (!("body" in object) || object.body === null) {
+          return new Response(null, { status: 304, headers });
+        }
+
         headers.set("Content-Type", object.httpMetadata?.contentType ?? "application/octet-stream");
         headers.set("Content-Length", object.size.toString());
 
