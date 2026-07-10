@@ -393,7 +393,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
       data: Parameters<typeof createFn>[0]["data"];
       file: File | null;
     }) => {
-      const fnData = { ...data, imageContentType: file?.type };
+      const fnData = { ...data, imageContentType: file?.type, imageSize: file?.size };
       const result = await createFn({ data: fnData });
       if (file && "presignedImageUrl" in result && "imageKey" in result) {
         const permanentKey = await commitFile({
@@ -426,7 +426,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
       data: Parameters<typeof updateMaterial>[0]["data"];
       file: File | null;
     }) => {
-      const fnData = { ...data, imageContentType: file?.type };
+      const fnData = { ...data, imageContentType: file?.type, imageSize: file?.size };
       const result = await updateMaterial({ data: fnData });
       if (file && "presignedImageUrl" in result && "imageKey" in result) {
         const permanentKey = await commitFile({

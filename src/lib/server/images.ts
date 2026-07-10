@@ -26,47 +26,58 @@ export const setEntityImage = createServerFn({ method: "POST" })
     }),
   )
   .middleware([storageMiddleware])
-  .handler(async ({ data, context: { activeOrganizationId, db, moveObjectSafe } }) => {
-    const table = entityTypesTableMap[data.entityType];
+  .handler(
+    async ({ data, context: { activeOrganizationId, db, moveObjectSafe, removeItemSafe } }) => {
+      const table = entityTypesTableMap[data.entityType];
 
-    // The key must match what createEntityPresignedUrl generates for this
-    // exact entity — never move arbitrary objects around the bucket.
-    const expectedPrefix = `uploads/tmp/${data.entityType}/${data.entityId}.`;
-    const ext = data.imageKey.slice(expectedPrefix.length);
-    if (!data.imageKey.startsWith(expectedPrefix) || !/^[a-z0-9]+$/.test(ext)) {
-      throw new Error("Clave de imagen inválida");
-    }
+      // The key must match what createEntityPresignedUrl generates for this
+      // exact entity — never move arbitrary objects around the bucket.
+      const expectedPrefix = `uploads/tmp/${data.entityType}/${data.entityId}.`;
+      const ext = data.imageKey.slice(expectedPrefix.length);
+      if (!data.imageKey.startsWith(expectedPrefix) || !/^[a-z0-9]+$/.test(ext)) {
+        throw new Error("Clave de imagen inválida");
+      }
 
-    // The entity must belong to the active organization.
-    const [entity] = await db
-      .select({ id: table.id })
-      .from(table)
-      .where(and(eq(table.id, data.entityId), eq(table.organizationId, activeOrganizationId)));
-    if (!entity) {
-      throw new Error("Entidad no encontrada");
-    }
+      // The entity must belong to the active organization. Also read its
+      // current image so a replace with a different extension can clean up
+      // the old permanent object instead of orphaning it.
+      const [entity] = await db
+        .select({ id: table.id, image: table.image })
+        .from(table)
+        .where(and(eq(table.id, data.entityId), eq(table.organizationId, activeOrganizationId)));
+      if (!entity) {
+        throw new Error("Entidad no encontrada");
+      }
 
-    const permanentKey = `uploads/${data.entityType}/${data.entityId}.${ext}`;
+      const permanentKey = `uploads/${data.entityType}/${data.entityId}.${ext}`;
 
-    // Move the object from temp to permanent in the bucket. If the
-    // upload never actually landed (e.g. the client's PUT silently failed), this
-    // must not block saving the rest of the entity — just skip the image update.
-    const moved = await moveObjectSafe(data.imageKey, permanentKey);
-    if (!moved) {
-      return {
-        success: false as const,
-        error: "La imagen no se subió correctamente, vuelve a intentarlo",
-      };
-    }
+      // Move the object from temp to permanent in the bucket. If the
+      // upload never actually landed (e.g. the client's PUT silently failed), this
+      // must not block saving the rest of the entity — just skip the image update.
+      const moved = await moveObjectSafe(data.imageKey, permanentKey);
+      if (!moved) {
+        return {
+          success: false as const,
+          error: "La imagen no se subió correctamente, vuelve a intentarlo",
+        };
+      }
 
-    // Persist the permanent key in the database only after the object exists there.
-    await db
-      .update(table)
-      .set({ image: permanentKey })
-      .where(and(eq(table.id, data.entityId), eq(table.organizationId, activeOrganizationId)));
+      // Persist the permanent key in the database only after the object exists there.
+      await db
+        .update(table)
+        .set({ image: permanentKey })
+        .where(and(eq(table.id, data.entityId), eq(table.organizationId, activeOrganizationId)));
 
-    return { success: true as const, permanentKey };
-  });
+      // The extension can change between uploads (e.g. png -> webp); the
+      // previous permanent object would otherwise be orphaned in R2 while
+      // still being readable through the serving route.
+      if (entity.image && entity.image !== permanentKey) {
+        await removeItemSafe(entity.image);
+      }
+
+      return { success: true as const, permanentKey };
+    },
+  );
 
 /**
  * Uploads the file and commits it as the entity's image. A failure here

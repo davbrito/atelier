@@ -73,7 +73,7 @@ export function BudgetEditSheet({ budgetId, open, onOpenChange }: BudgetEditShee
     }) => {
       const fnData = {
         ...data,
-        data: { ...data.data, imageContentType: file?.type },
+        data: { ...data.data, imageContentType: file?.type, imageSize: file?.size },
       };
       const result = await updateBudget({ data: fnData });
       if (file && "presignedImageUrl" in result && "imageKey" in result) {

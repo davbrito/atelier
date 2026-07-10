@@ -40,13 +40,18 @@ export const Route = createFileRoute("/uploads/$")({
             status: 304,
             headers: {
               ETag: object.httpEtag,
-              "Cache-Control": "public, max-age=31536000, immutable",
+              "Cache-Control": "private, no-cache",
             },
           });
         }
 
+        // Deterministic keys mean a replaced image reuses the same URL, so
+        // the browser must revalidate on every load — no-cache still lets it
+        // cache the bytes, so a fresh image only costs a 304, not a
+        // re-download. `private` keeps shared/CDN caches (this response is
+        // authorization-gated per user) from serving it to other users.
         const headers = new Headers();
-        headers.set("Cache-Control", "public, max-age=31536000, immutable");
+        headers.set("Cache-Control", "private, no-cache");
         headers.set("ETag", object.httpEtag);
         headers.set("Content-Type", object.httpMetadata?.contentType ?? "application/octet-stream");
         headers.set("Content-Length", object.size.toString());

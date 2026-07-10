@@ -5,7 +5,7 @@ import { and, asc, eq } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
-import { storageMiddleware } from "../storage";
+import { MAX_IMAGE_SIZE, storageMiddleware } from "../storage";
 import { storageUrl } from "../utils";
 
 // ── Types ────────────────────────────────────────────────
@@ -16,8 +16,9 @@ export const budgetFormSchema = z.object({
   hourlyRate: z.string(),
   /** When true, deletes the current image from storage and sets image to null. */
   deleteImage: z.boolean().optional(),
-  /** When provided, a presigned upload URL scoped to this entity is returned. */
+  /** When provided (with imageSize), a presigned upload URL scoped to this entity is returned. */
   imageContentType: z.string().optional(),
+  imageSize: z.number().int().positive().max(MAX_IMAGE_SIZE).optional(),
   materials: z.array(
     z.object({
       materialId: z.string(),
@@ -163,11 +164,12 @@ export const createBudget = createServerFn({ method: "POST" })
     });
 
     // Generate presigned URL after commit so the entity ID is final
-    if (data.imageContentType) {
+    if (data.imageContentType && data.imageSize) {
       const presigned = await createEntityPresignedUrl(
         "budgets",
         newBudget.id,
         data.imageContentType,
+        data.imageSize,
       );
       if ("code" in presigned) {
         throw new Error(presigned.message);
@@ -257,12 +259,21 @@ export const updateBudget = createServerFn({ method: "POST" })
 
       // Delete old image from storage after successful DB update. Best-effort:
       // a stale or corrupt previous object must not surface as an update failure.
-      if (existing?.image && (data.deleteImage || data.imageContentType)) {
+      // On replace (imageContentType set), the old object is instead cleaned
+      // up by setEntityImage once the new upload is actually committed —
+      // deleting it here would leave a broken reference if the client's
+      // upload PUT never lands.
+      if (existing?.image && data.deleteImage) {
         await removeItemSafe(existing.image);
       }
 
-      if (data.imageContentType) {
-        const presigned = await createEntityPresignedUrl("budgets", id, data.imageContentType);
+      if (data.imageContentType && data.imageSize) {
+        const presigned = await createEntityPresignedUrl(
+          "budgets",
+          id,
+          data.imageContentType,
+          data.imageSize,
+        );
         if ("code" in presigned) {
           throw new Error(presigned.message);
         }
@@ -278,21 +289,19 @@ export const deleteBudget = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware, storageMiddleware])
   .validator(z.object({ id: z.uuid() }))
   .handler(async ({ data: { id }, context: { activeOrganizationId, db, removeItemSafe } }) => {
-    // Delete the image from storage before removing the record. Best-effort:
-    // a missing/corrupt image object must not prevent deleting the budget.
-    const [existing] = await db
-      .select({ image: schema.budget.image })
-      .from(schema.budget)
-      .where(and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)));
+    // Delete the DB row first and only then the storage object, best-effort:
+    // if the DB delete fails, no reference is left dangling; if the storage
+    // delete fails, it's just an unreferenced (harmless) orphan object.
+    const [deleted] = await db
+      .delete(schema.budget)
+      .where(and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)))
+      .returning({ image: schema.budget.image });
 
-    if (!existing) throw new Error("Presupuesto no encontrado");
+    if (!deleted) throw new Error("Presupuesto no encontrado");
 
-    if (existing.image) {
-      await removeItemSafe(existing.image);
+    if (deleted.image) {
+      await removeItemSafe(deleted.image);
     }
 
-    await db
-      .delete(schema.budget)
-      .where(and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)));
     return { success: true };
   });

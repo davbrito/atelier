@@ -54,7 +54,7 @@ export function BudgetCreateSheet({ open, onOpenChange }: BudgetCreateSheetProps
       data: Parameters<typeof createBudget>[0]["data"];
       file: File | null;
     }) => {
-      const fnData = { ...data, imageContentType: file?.type };
+      const fnData = { ...data, imageContentType: file?.type, imageSize: file?.size };
       const result = await createBudget({ data: fnData });
       if (file && "presignedImageUrl" in result && "imageKey" in result) {
         const permanentKey = await uploadEntityImage({
