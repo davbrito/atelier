@@ -142,22 +142,31 @@ function MaterialsPage() {
                   return (
                     <TableRow key={material.id}>
                       <TableCell>
-                        {material.image ? (
-                          <img
-                            src={material.image}
-                            alt={material.name}
-                            className="size-8 rounded object-cover"
-                          />
-                        ) : (
-                          <div className="flex size-8 items-center justify-center rounded bg-muted">
-                            <PackageIcon className="size-4 text-muted-foreground/40" />
-                          </div>
-                        )}
+                        <Link
+                          to="/app/materials/$id"
+                          params={{ id: material.id }}
+                          viewTransition
+                          className="block"
+                        >
+                          {material.image ? (
+                            <img
+                              src={material.image}
+                              alt={material.name}
+                              className="size-8 rounded object-cover"
+                              style={{ viewTransitionName: `material-image-${material.id}` }}
+                            />
+                          ) : (
+                            <div className="flex size-8 items-center justify-center rounded bg-muted">
+                              <PackageIcon className="size-4 text-muted-foreground/40" />
+                            </div>
+                          )}
+                        </Link>
                       </TableCell>
                       <TableCell className="font-medium">
                         <Link
                           to="/app/materials/$id"
                           params={{ id: material.id }}
+                          viewTransition
                           className="hover:underline"
                         >
                           {material.name}

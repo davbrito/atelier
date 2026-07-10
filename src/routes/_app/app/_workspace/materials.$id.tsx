@@ -99,6 +99,7 @@ function MaterialDetailPage() {
               src={material.image}
               alt={material.name}
               className="size-full object-cover transition hover:brightness-90"
+              style={{ viewTransitionName: `material-image-${material.id}` }}
             />
           </button>
         ) : (
@@ -111,7 +112,7 @@ function MaterialDetailPage() {
           size="icon"
           className="absolute top-3 left-3 shadow"
           nativeButton={false}
-          render={<Link to="/app/materials" />}
+          render={<Link to="/app/materials" viewTransition />}
         >
           <ArrowLeftIcon className="size-4" />
         </Button>
