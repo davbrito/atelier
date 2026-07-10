@@ -33,7 +33,9 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
   const { env } = context;
   _storage ??= createStorage({ driver: s3Driver({ binding: env.STORAGE }) });
   const storage = _storage;
-  return next({ context: { storage, moveObject, removeItemSafe, createEntityPresignedUrl } });
+  return next({
+    context: { storage, moveObject, moveObjectSafe, removeItemSafe, createEntityPresignedUrl },
+  });
 
   /**
    * Moves an object from sourceKey to destKey within the same bucket
@@ -48,6 +50,22 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
     }
     await storage.setItemRaw(destKey, data);
     await storage.removeItem(sourceKey);
+  }
+
+  /**
+   * Best-effort version of moveObject: a missing/corrupt source object
+   * (e.g. the client's upload PUT silently failed) must not block committing
+   * the rest of the entity, so failures are logged and swallowed instead of
+   * thrown. Returns whether the move actually happened.
+   */
+  async function moveObjectSafe(sourceKey: string, destKey: string): Promise<boolean> {
+    try {
+      await moveObject(sourceKey, destKey);
+      return true;
+    } catch (err) {
+      console.warn(`Failed to move storage object "${sourceKey}" -> "${destKey}":`, err);
+      return false;
+    }
   }
 
   /**

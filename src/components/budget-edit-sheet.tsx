@@ -84,13 +84,19 @@ export function BudgetEditSheet({ budgetId, open, onOpenChange }: BudgetEditShee
           entityType: "budgets",
           key: result.imageKey,
         });
-        return { ...result, image: permanentKey };
+        return { ...result, image: permanentKey, imageFailed: permanentKey === null };
       }
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
-      toast.success("Presupuesto actualizado");
+      if ("imageFailed" in result && result.imageFailed) {
+        toast.warning(
+          "Presupuesto actualizado, pero no se pudo subir la imagen. Intenta de nuevo.",
+        );
+      } else {
+        toast.success("Presupuesto actualizado");
+      }
       onOpenChange(false);
     },
     onError: () => toast.error("Error al actualizar el presupuesto"),
