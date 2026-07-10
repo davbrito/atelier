@@ -42,6 +42,10 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
    * (read → write → delete) via unstorage.
    * Content-Type is inferred from the key extension on read,
    * so we do not need to preserve S3 metadata.
+   *
+   * The final delete of sourceKey is best-effort (via removeItemSafe): once
+   * the object has been written to destKey, the move has already succeeded —
+   * failing to clean up the leftover source object must not undo that.
    */
   async function moveObject(sourceKey: string, destKey: string): Promise<void> {
     const data = await storage.getItemRaw(sourceKey);
@@ -49,7 +53,7 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
       throw new MoveObjectSourceNotFoundError(sourceKey);
     }
     await storage.setItemRaw(destKey, data);
-    await storage.removeItem(sourceKey);
+    await removeItemSafe(sourceKey);
   }
 
   /**
