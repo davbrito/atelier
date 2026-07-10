@@ -4,6 +4,7 @@ import * as z from "zod";
 import { material, materialInventoryMovement, materialPriceHistory } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import { storageMiddleware } from "../storage";
+import { storageUrl } from "../utils";
 
 export const listMaterials = createServerFn({ method: "GET" })
   .validator(
@@ -42,7 +43,12 @@ export const listMaterials = createServerFn({ method: "GET" })
         .where(eq(material.organizationId, activeOrganizationId)),
     ]);
 
-    return { items, total, page, pageSize };
+    return {
+      items: items.map((item) => ({ ...item, image: item.image && storageUrl(item.image) })),
+      total,
+      page,
+      pageSize,
+    };
   });
 
 export const getMaterialById = createServerFn({ method: "GET" })
@@ -70,7 +76,7 @@ export const getMaterialById = createServerFn({ method: "GET" })
 
     if (!found) throw new Error("Material no encontrado");
 
-    return found;
+    return { ...found, image: found.image && storageUrl(found.image) };
   });
 
 export const createMaterial = createServerFn({ method: "POST" })
