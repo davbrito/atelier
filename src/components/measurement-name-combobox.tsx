@@ -3,13 +3,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "#/components/ui/combobox";
+  Autocomplete,
+  AutocompleteContent,
+  AutocompleteEmpty,
+  AutocompleteInput,
+  AutocompleteItem,
+  AutocompleteList,
+} from "#/components/ui/autocomplete";
 import { listMeasurementNames } from "#/lib/server/measurement-names";
 
 type MeasurementNameComboboxProps = {
@@ -38,15 +38,8 @@ export function MeasurementNameCombobox({
   });
 
   return (
-    <Combobox
-      items={names}
-      value={value}
-      // Free text: the input value is always the source of truth, whether it
-      // came from typing or from picking a suggestion.
-      onValueChange={(name) => name != null && onChange(name)}
-      onInputValueChange={(val) => typeof val === "string" && onChange(val)}
-    >
-      <ComboboxInput
+    <Autocomplete items={names} value={value} onValueChange={onChange}>
+      <AutocompleteInput
         placeholder={placeholder}
         className={className}
         showTrigger={names.length > 0}
@@ -54,16 +47,16 @@ export function MeasurementNameCombobox({
         onKeyDown={onKeyDown}
       />
 
-      <ComboboxContent>
-        <ComboboxEmpty>Sin coincidencias</ComboboxEmpty>
-        <ComboboxList>
+      <AutocompleteContent>
+        <AutocompleteEmpty>Sin coincidencias</AutocompleteEmpty>
+        <AutocompleteList>
           {(name: string) => (
-            <ComboboxItem key={name} value={name}>
+            <AutocompleteItem key={name} value={name}>
               {name}
-            </ComboboxItem>
+            </AutocompleteItem>
           )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+        </AutocompleteList>
+      </AutocompleteContent>
+    </Autocomplete>
   );
 }

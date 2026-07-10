@@ -58,7 +58,7 @@ export const getClientById = createServerFn({ method: "GET" })
 export const createClient = createServerFn({ method: "POST" })
   .validator(clientFormSchema)
   .middleware([organizationMiddleware])
-  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
+  .handler(async ({ data, context: { activeOrganizationId, db, env } }) => {
     const newClient = await db.transaction(async (tx) => {
       const [newClient] = await tx
         .insert(schema.client)
@@ -85,6 +85,7 @@ export const createClient = createServerFn({ method: "POST" })
     });
 
     await cacheMeasurementNames(
+      env.KV,
       activeOrganizationId,
       data.measurements.map((m) => m.name),
     );
@@ -95,7 +96,7 @@ export const createClient = createServerFn({ method: "POST" })
 export const updateClient = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.uuid(), data: clientFormSchema }))
   .middleware([organizationMiddleware])
-  .handler(async ({ data: { id, data }, context: { activeOrganizationId, db } }) => {
+  .handler(async ({ data: { id, data }, context: { activeOrganizationId, db, env } }) => {
     const updated = await db.transaction(async (tx) => {
       const [existing] = await tx
         .select({ id: schema.client.id })
@@ -132,6 +133,7 @@ export const updateClient = createServerFn({ method: "POST" })
     });
 
     await cacheMeasurementNames(
+      env.KV,
       activeOrganizationId,
       data.measurements.map((m) => m.name),
     );
