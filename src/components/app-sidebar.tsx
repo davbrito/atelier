@@ -73,6 +73,8 @@ export function AppSidebar() {
                       to={to}
                       activeOptions={{ exact: true }}
                       activeProps={{ isActive: true }}
+                      nativeButton={false}
+                      render={<a />}
                     >
                       <Icon className="size-4" />
                       <span>{label}</span>
