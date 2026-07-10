@@ -1,7 +1,5 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { AwsClient } from "aws4fetch";
-import { createStorage } from "unstorage";
-import s3Driver from "unstorage/drivers/cloudflare-r2-binding";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
 
@@ -25,35 +23,45 @@ export class MoveObjectSourceNotFoundError extends Error {
   }
 }
 
-// ── Unstorage instance ───────────────────────────────────
-
-let _storage: ReturnType<typeof createStorage> | null = null;
+// ── Storage middleware (R2 binding) ──────────────────────
+//
+// All object keys here are literal R2 keys with `/` separators — the same
+// convention used by the presigned PUT URLs and the `/uploads/$` serving
+// route. Do NOT route these operations through unstorage: it normalizes
+// keys (`/` → `:`), so objects written by the presigned upload would never
+// be found and objects it writes would never be served.
 
 export const storageMiddleware = createMiddleware().server(async ({ next, context }) => {
   const { env } = context;
-  _storage ??= createStorage({ driver: s3Driver({ binding: env.STORAGE }) });
-  const storage = _storage;
+  const bucket = env.STORAGE;
   return next({
-    context: { storage, moveObject, moveObjectSafe, removeItemSafe, createEntityPresignedUrl },
+    context: { moveObject, moveObjectSafe, putObject, removeItemSafe, createEntityPresignedUrl },
   });
 
   /**
    * Moves an object from sourceKey to destKey within the same bucket
-   * (read → write → delete) via unstorage.
-   * Content-Type is inferred from the key extension on read,
-   * so we do not need to preserve S3 metadata.
+   * (read → write → delete), preserving the stored Content-Type.
    *
    * The final delete of sourceKey is best-effort (via removeItemSafe): once
    * the object has been written to destKey, the move has already succeeded —
    * failing to clean up the leftover source object must not undo that.
    */
   async function moveObject(sourceKey: string, destKey: string): Promise<void> {
-    const data = await storage.getItemRaw(sourceKey);
-    if (data === null || data === undefined) {
+    const object = await bucket.get(sourceKey);
+    if (!object) {
       throw new MoveObjectSourceNotFoundError(sourceKey);
     }
-    await storage.setItemRaw(destKey, data);
+    await bucket.put(destKey, await object.arrayBuffer(), {
+      httpMetadata: object.httpMetadata ?? { contentType: contentTypeFromKey(destKey) },
+    });
     await removeItemSafe(sourceKey);
+  }
+
+  /** Writes a file to the bucket with its Content-Type. */
+  async function putObject(key: string, file: File): Promise<void> {
+    await bucket.put(key, await file.arrayBuffer(), {
+      httpMetadata: { contentType: file.type || contentTypeFromKey(key) },
+    });
   }
 
   /**
@@ -80,7 +88,7 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
    */
   async function removeItemSafe(key: string): Promise<void> {
     try {
-      await storage.removeItem(key);
+      await bucket.delete(key);
     } catch (err) {
       console.warn(`Failed to remove storage object "${key}":`, err);
     }

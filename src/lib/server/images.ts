@@ -13,7 +13,7 @@ const entityTypesTableMap = {
 /**
  * After a client uploads an image directly to S3 via a pre-signed URL,
  * call this to commit the image:
- * 1. Move the file from `uploads/tmp/` to `uploads/` (permanent) via unstorage
+ * 1. Move the file from `uploads/tmp/` to `uploads/` (permanent) in the bucket
  * 2. Persist the permanent key on the entity.
  */
 export const setEntityImage = createServerFn({ method: "POST" })
@@ -48,7 +48,7 @@ export const setEntityImage = createServerFn({ method: "POST" })
 
     const permanentKey = `uploads/${data.entityType}/${data.entityId}.${ext}`;
 
-    // Move the object from temp to permanent in the bucket via unstorage. If the
+    // Move the object from temp to permanent in the bucket. If the
     // upload never actually landed (e.g. the client's PUT silently failed), this
     // must not block saving the rest of the entity — just skip the image update.
     const moved = await moveObjectSafe(data.imageKey, permanentKey);

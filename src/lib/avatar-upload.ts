@@ -17,23 +17,23 @@ function avatarKey(userId: string): string {
 export const uploadAvatarFn = createServerFn({ method: "POST" })
   .middleware([authenticatedMiddleware, storageMiddleware])
   .validator(z.instanceof(File))
-  .handler(async ({ data: file, context: { user, storage } }) => {
+  .handler(async ({ data: file, context: { user, putObject } }) => {
     if (!(file instanceof File)) throw new Error("No file provided");
     if (!ALLOWED_TYPES.includes(file.type)) throw new Error("Tipo de archivo no permitido");
     if (file.size > MAX_SIZE) throw new Error("El archivo supera los 5 MB");
 
     const key = avatarKey(user.id);
-    await storage.setItemRaw(key, file);
+    await putObject(key, file);
     return { key, url: `/${key}` };
   });
 
 export const deleteAvatarFn = createServerFn({ method: "POST" })
   .middleware([authenticatedMiddleware, storageMiddleware])
-  .handler(async ({ context: { user, storage } }) => {
+  .handler(async ({ context: { user, removeItemSafe } }) => {
     const image = user.image;
     // Only delete if it's a storage URL we own, not an external URL (e.g. Google)
     if (image?.startsWith("/uploads/avatars/")) {
-      await storage.removeItem(image.slice(1)); // strip leading slash to get the storage key
+      await removeItemSafe(image.slice(1)); // strip leading slash to get the storage key
     }
   });
 
