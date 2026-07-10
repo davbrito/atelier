@@ -6,6 +6,7 @@ import * as z from "zod";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import { storageMiddleware } from "../storage";
+import { storageUrl } from "../utils";
 
 // ── Types ────────────────────────────────────────────────
 
@@ -36,11 +37,13 @@ export const budgetFormSchema = z.object({
 export const listBudgets = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .handler(async ({ context: { activeOrganizationId, db } }) => {
-    return await db
+    const budgets = await db
       .select()
       .from(schema.budget)
       .where(eq(schema.budget.organizationId, activeOrganizationId))
       .orderBy(asc(schema.budget.name));
+
+    return budgets.map((b) => ({ ...b, image: b.image && storageUrl(b.image) }));
   });
 
 export const getBudgetBySlug = createServerFn({ method: "GET" })
@@ -69,7 +72,12 @@ export const getBudgetBySlug = createServerFn({ method: "GET" })
       .from(schema.budgetOperation)
       .where(eq(schema.budgetOperation.budgetId, budget.id));
 
-    return { ...budget, materials: mats, operations: ops };
+    return {
+      ...budget,
+      image: budget.image && storageUrl(budget.image),
+      materials: mats,
+      operations: ops,
+    };
   });
 
 export const getBudgetById = createServerFn({ method: "GET" })
@@ -95,7 +103,12 @@ export const getBudgetById = createServerFn({ method: "GET" })
       .from(schema.budgetOperation)
       .where(eq(schema.budgetOperation.budgetId, data.id));
 
-    return { ...budget, materials: mats, operations: ops };
+    return {
+      ...budget,
+      image: budget.image && storageUrl(budget.image),
+      materials: mats,
+      operations: ops,
+    };
   });
 
 // ── Mutations ────────────────────────────────────────────

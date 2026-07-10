@@ -19,7 +19,6 @@ import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { budgetsListQueryOptions } from "#/lib/query-options";
 import { deleteBudget } from "#/lib/server/budgets";
-import { storageUrl } from "#/lib/utils";
 
 export const Route = createFileRoute("/_app/app/_workspace/budgets/")({
   component: BudgetsPage,
@@ -81,7 +80,7 @@ function BudgetsPage() {
               <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
               {budget.image ? (
                 <img
-                  src={storageUrl(budget.image)}
+                  src={budget.image}
                   alt={budget.name}
                   className="relative z-20 aspect-video w-full object-cover brightness-60 dark:brightness-40"
                 />

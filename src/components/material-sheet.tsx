@@ -37,7 +37,7 @@ import { setEntityImage } from "#/lib/server/images";
 import { registerMovement } from "#/lib/server/inventory";
 import { createMaterial, type getMaterialById, updateMaterial } from "#/lib/server/materials";
 import { UNIT_OPTIONS, type Unit, unitSchema } from "#/lib/units";
-import { cn, storageUrl } from "#/lib/utils";
+import { cn } from "#/lib/utils";
 
 type Material = Awaited<ReturnType<typeof getMaterialById>>;
 
@@ -588,9 +588,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
         <StyledField.Field>
           <StyledField.FieldLabel>Imagen</StyledField.FieldLabel>
           <ImageUpload
-            initialImage={
-              deleteImage ? null : editingMaterial?.image ? storageUrl(editingMaterial.image) : null
-            }
+            initialImage={deleteImage ? null : (editingMaterial?.image ?? null)}
             onClear={() => {
               setValue("deleteImage", true);
             }}

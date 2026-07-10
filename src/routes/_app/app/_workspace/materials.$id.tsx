@@ -27,7 +27,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { materialByIdQueryOptions } from "#/lib/query-options";
 import { deleteMaterial } from "#/lib/server/materials";
 import { UNIT_OPTIONS } from "#/lib/units";
-import { storageUrl } from "#/lib/utils";
 
 export const Route = createFileRoute("/_app/app/_workspace/materials/$id")({
   component: MaterialDetailPage,
@@ -99,7 +98,7 @@ function MaterialDetailPage() {
           </Button>
           {material.image ? (
             <img
-              src={storageUrl(material.image)}
+              src={material.image}
               alt={material.name}
               className="size-14 rounded-lg object-cover"
             />
