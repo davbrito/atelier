@@ -5,6 +5,7 @@ import { Loader2Icon, MinusIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { MeasurementNameCombobox } from "#/components/measurement-name-combobox";
 import { Button } from "#/components/ui/button";
 import * as StyledField from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
@@ -72,6 +73,7 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
     mutationFn: createFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.clients });
+      queryClient.invalidateQueries({ queryKey: ["measurement-names"] });
       toast.success("Cliente creado correctamente");
       onOpenChange(false);
     },
@@ -82,6 +84,7 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
     mutationFn: updateFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.clients });
+      queryClient.invalidateQueries({ queryKey: ["measurement-names"] });
       toast.success("Cliente actualizado");
       onOpenChange(false);
     },
@@ -213,9 +216,9 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
             <span className="font-medium text-sm">Medidas</span>
 
             <div className="flex items-center gap-2">
-              <Input
+              <MeasurementNameCombobox
                 value={draftMeasurement.name}
-                onChange={(e) => setDraftMeasurement((d) => ({ ...d, name: e.target.value }))}
+                onChange={(name) => setDraftMeasurement((d) => ({ ...d, name }))}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -252,12 +255,11 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
                 <Controller
                   name={`measurements.${i}.name`}
                   control={control}
-                  render={({ field: { value, onChange, onBlur, ref } }) => (
-                    <Input
+                  render={({ field: { value, onChange, onBlur } }) => (
+                    <MeasurementNameCombobox
                       value={value}
-                      onChange={(e) => onChange(e.target.value)}
+                      onChange={onChange}
                       onBlur={onBlur}
-                      ref={ref}
                       placeholder="Ej: Busto"
                     />
                   )}

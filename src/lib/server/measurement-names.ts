@@ -1,0 +1,41 @@
+import { createServerFn } from "@tanstack/react-start";
+import { organizationMiddleware } from "../auth/functions";
+
+const MAX_CACHED_NAMES = 200;
+
+function kvKey(organizationId: string) {
+  return `measurement-names:${organizationId}`;
+}
+
+async function readNames(kv: Cloudflare.Env["KV"], organizationId: string): Promise<string[]> {
+  const raw = await kv.get(kvKey(organizationId), "json");
+  return Array.isArray(raw) ? (raw as string[]) : [];
+}
+
+export const listMeasurementNames = createServerFn({ method: "GET" })
+  .middleware([organizationMiddleware])
+  .handler(async ({ context: { activeOrganizationId, env } }) => {
+    return readNames(env.KV, activeOrganizationId);
+  });
+
+/**
+ * Merges the given names into the organization's cached measurement-name
+ * list (case-insensitive dedupe, newest first, capped). Meant to be called
+ * from within the client create/update mutations, not as its own endpoint.
+ */
+export async function cacheMeasurementNames(
+  kv: Cloudflare.Env["KV"],
+  organizationId: string,
+  names: string[],
+) {
+  if (names.length === 0) return;
+
+  const cached = await readNames(kv, organizationId);
+  const cachedLower = new Set(cached.map((n) => n.toLowerCase()));
+
+  const newNames = [...new Set(names)].filter((n) => !cachedLower.has(n.toLowerCase()));
+  if (newNames.length === 0) return;
+
+  const merged = [...newNames.reverse(), ...cached].slice(0, MAX_CACHED_NAMES);
+  await kv.put(kvKey(organizationId), JSON.stringify(merged));
+}
