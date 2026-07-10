@@ -357,11 +357,16 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
     imageKey: string;
     file: File;
   }) => {
-    await fetch(signedUrl, {
+    const uploadResponse = await fetch(signedUrl, {
       method: "PUT",
       body: file,
       headers: { "Content-Type": file.type },
     });
+
+    if (!uploadResponse.ok) {
+      throw new Error("No se pudo subir la imagen");
+    }
+
     const commit = await setEntityImage({
       data: { entityType: "materials", entityId, imageKey },
     });
