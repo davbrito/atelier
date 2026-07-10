@@ -298,25 +298,41 @@
   --sidebar-ring: oklch(0.709 0.01 56.259);
 }
 
-/* Shared-element view transitions for material images (see
-   materials.index.tsx / materials.$id.tsx viewTransitionName). The
-   browser defaults are too snappy and cross-fade with
-   mix-blend-mode: plus-lighter, which visibly washes out photos
-   mid-transition — override both for a smoother, truer-color morph. */
-::view-transition-group(.material-image) {
-  animation-duration: 450ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+/* Shared-element view transitions for material images and titles (see
+   materials.index.tsx / materials.$id.tsx viewTransitionName/Class).
+   The group is the only thing that actually animates (position/size
+   morph, iOS-like easing). old/new get no opacity animation — with
+   very different aspect ratios (small table thumbnail vs wide banner)
+   the default UA cross-fade letterboxes each snapshot inside the
+   morphing box and shows both semi-transparent at once, which reads
+   as a "ghost"/see-through glitch instead of one solid image scaling
+   into place. */
+::view-transition-group(.material-image),
+::view-transition-group(.material-title) {
+  animation-duration: 350ms;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 ::view-transition-old(.material-image),
 ::view-transition-new(.material-image) {
-  animation-duration: 450ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation: none;
   mix-blend-mode: normal;
+  height: 100%;
+  width: 100%;
+  overflow: clip;
+}
+
+::view-transition-old(.material-image) {
+  object-fit: contain;
+}
+
+::view-transition-new(.material-image) {
+  object-fit: cover;
 }
 
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(.material-image),
+  ::view-transition-group(.material-title),
   ::view-transition-old(.material-image),
   ::view-transition-new(.material-image) {
     animation: none;

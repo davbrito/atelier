@@ -172,7 +172,14 @@ function MaterialsPage() {
                           viewTransition
                           className="hover:underline"
                         >
-                          {material.name}
+                          <span
+                            style={{
+                              viewTransitionName: `material-title-${material.id}`,
+                              viewTransitionClass: "material-title",
+                            }}
+                          >
+                            {material.name}
+                          </span>
                         </Link>
                       </TableCell>
                       <TableCell>

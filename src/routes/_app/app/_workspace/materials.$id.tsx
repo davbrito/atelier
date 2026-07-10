@@ -124,7 +124,15 @@ function MaterialDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl">{material.name}</h1>
+          <h1
+            className="w-fit font-heading text-2xl"
+            style={{
+              viewTransitionName: `material-title-${material.id}`,
+              viewTransitionClass: "material-title",
+            }}
+          >
+            {material.name}
+          </h1>
           <p className="mt-1 text-muted-foreground text-sm">
             Agregado el{" "}
             {new Intl.DateTimeFormat("es-VE", { dateStyle: "long" }).format(
