@@ -1,13 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, getTableColumns, sql } from "drizzle-orm";
+import { and, asc, count, eq, getTableColumns, sql } from "drizzle-orm";
 import * as z from "zod";
 import { material, materialInventoryMovement, materialPriceHistory } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import { storageMiddleware } from "../storage";
 
 export const listMaterials = createServerFn({ method: "GET" })
+  .validator(
+    z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(20),
+    }),
+  )
   .middleware([organizationMiddleware])
-  .handler(async ({ context: { activeOrganizationId, db } }) => {
+  .handler(async ({ data: { page, pageSize }, context: { activeOrganizationId, db } }) => {
     const stockSq = db
       .select({
         materialId: materialInventoryMovement.materialId,
@@ -18,23 +24,62 @@ export const listMaterials = createServerFn({ method: "GET" })
       .groupBy(materialInventoryMovement.materialId)
       .as("stock_sq");
 
-    return await db
+    const [items, [{ total }]] = await Promise.all([
+      db
+        .select({
+          ...getTableColumns(material),
+          currentStock: sql<string>`COALESCE(${stockSq.stock}, '0')`,
+        })
+        .from(material)
+        .leftJoin(stockSq, eq(material.id, stockSq.materialId))
+        .where(eq(material.organizationId, activeOrganizationId))
+        .orderBy(asc(material.name))
+        .limit(pageSize)
+        .offset((page - 1) * pageSize),
+      db
+        .select({ total: count() })
+        .from(material)
+        .where(eq(material.organizationId, activeOrganizationId)),
+    ]);
+
+    return { items, total, page, pageSize };
+  });
+
+export const getMaterialById = createServerFn({ method: "GET" })
+  .middleware([organizationMiddleware])
+  .validator(z.object({ id: z.uuid() }))
+  .handler(async ({ data: { id }, context: { activeOrganizationId, db } }) => {
+    const stockSq = db
+      .select({
+        materialId: materialInventoryMovement.materialId,
+        stock: sql<string>`COALESCE(SUM(${materialInventoryMovement.delta}), '0')`.as("stock"),
+      })
+      .from(materialInventoryMovement)
+      .where(eq(materialInventoryMovement.organizationId, activeOrganizationId))
+      .groupBy(materialInventoryMovement.materialId)
+      .as("stock_sq");
+
+    const [found] = await db
       .select({
         ...getTableColumns(material),
         currentStock: sql<string>`COALESCE(${stockSq.stock}, '0')`,
       })
       .from(material)
       .leftJoin(stockSq, eq(material.id, stockSq.materialId))
-      .where(eq(material.organizationId, activeOrganizationId))
-      .orderBy(asc(material.name));
+      .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)));
+
+    if (!found) throw new Error("Material no encontrado");
+
+    return found;
   });
 
 export const createMaterial = createServerFn({ method: "POST" })
   .validator(
     z.object({
-      name: z.string(),
-      unit: z.string(),
+      name: z.string().trim().min(1),
+      unit: z.string().trim().min(1),
       currentPrice: z.string(),
+      color: z.string().trim().optional(),
       /** When provided, returns a presigned upload URL scoped to the new material. */
       imageContentType: z.string().optional(),
     }),
@@ -49,6 +94,7 @@ export const createMaterial = createServerFn({ method: "POST" })
           name: data.name,
           unit: data.unit,
           currentPrice: data.currentPrice,
+          color: data.color || null,
         })
         .returning();
 
@@ -87,9 +133,10 @@ export const updateMaterial = createServerFn({ method: "POST" })
   .validator(
     z.object({
       id: z.uuid(),
-      name: z.string(),
-      unit: z.string(),
+      name: z.string().trim().min(1),
+      unit: z.string().trim().min(1),
       currentPrice: z.string(),
+      color: z.string().trim().optional(),
       /** When true, deletes the current image from storage and sets image to null. */
       deleteImage: z.boolean().optional(),
       /** When provided, returns a presigned upload URL scoped to this material. */
@@ -115,6 +162,7 @@ export const updateMaterial = createServerFn({ method: "POST" })
           .update(material)
           .set({
             ...updateData,
+            color: updateData.color || null,
             image: deleteImage ? null : undefined,
           })
           .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)))

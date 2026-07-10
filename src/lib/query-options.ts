@@ -3,7 +3,7 @@ import { getBudgetById, getBudgetBySlug, listBudgets } from "./server/budgets";
 import { getClientById, listClients } from "./server/clients";
 import { getDashboardStats } from "./server/dashboard";
 import { getMaterialInventory } from "./server/inventory";
-import { listMaterials } from "./server/materials";
+import { getMaterialById, listMaterials } from "./server/materials";
 import { listOperations } from "./server/operations";
 import { getUserOrganizationCount } from "./server/organizations";
 import { listWhitelistedEmails } from "./server/whitelist";
@@ -12,6 +12,8 @@ export const queryKeys = {
   budgets: ["budgets"],
   budget: (idOrSlug: string) => ["budget", idOrSlug],
   materials: ["materials"],
+  materialsPage: (page: number, pageSize: number) => ["materials", page, pageSize],
+  material: (id: string) => ["material", id],
   materialInventory: (materialId: string) => ["materials", "inventory", materialId],
   operations: ["operations"],
   clients: ["clients"],
@@ -38,10 +40,17 @@ export const budgetByIdQueryOptions = (id: string) =>
     queryFn: ({ signal }) => getBudgetById({ data: { id }, signal }),
   });
 
-export const materialsListQueryOptions = queryOptions({
-  queryKey: queryKeys.materials,
-  queryFn: ({ signal }) => listMaterials({ signal }),
-});
+export const materialsListQueryOptions = (page: number, pageSize: number) =>
+  queryOptions({
+    queryKey: queryKeys.materialsPage(page, pageSize),
+    queryFn: ({ signal }) => listMaterials({ data: { page, pageSize }, signal }),
+  });
+
+export const materialByIdQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: queryKeys.material(id),
+    queryFn: ({ signal }) => getMaterialById({ data: { id }, signal }),
+  });
 
 export const materialInventoryQueryOptions = (materialId: string) =>
   queryOptions({

@@ -174,7 +174,7 @@ function ClientDetailPage() {
           {client.measurements.length > 0 ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {client.measurements.map((m) => (
-                <div key={m.id} className="rounded-lg border p-3">
+                <div key={m.id} className="border-b p-3">
                   <p className="text-muted-foreground text-xs uppercase tracking-wider">{m.name}</p>
                   <p className="mt-1 font-semibold text-lg tabular-nums">{m.value}</p>
                 </div>

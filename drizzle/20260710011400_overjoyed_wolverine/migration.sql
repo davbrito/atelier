@@ -1,0 +1,1 @@
+ALTER TABLE "materials" ADD COLUMN "color" varchar(50);
