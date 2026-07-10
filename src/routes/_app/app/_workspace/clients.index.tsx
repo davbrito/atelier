@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2Icon, MailIcon, PencilIcon, PhoneIcon, Trash2Icon, UsersIcon } from "lucide-react";
+import { EyeIcon, Loader2Icon, MailIcon, PhoneIcon, Trash2Icon, UsersIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ClientSheet } from "#/components/client-sheet";
@@ -15,26 +15,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "#/components/ui/alert-dialog";
+import { Avatar, AvatarFallback } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { clientsListQueryOptions } from "#/lib/query-options";
-import { deleteClient, getClientById, type listClients } from "#/lib/server/clients";
+import { deleteClient } from "#/lib/server/clients";
 
 export const Route = createFileRoute("/_app/app/_workspace/clients/")({
   component: ClientsPage,
   loader: ({ context: { queryClient } }) => void queryClient.prefetchQuery(clientsListQueryOptions),
 });
 
-type Client = Awaited<ReturnType<typeof listClients>>[number];
-type ClientWithMeasurements = Awaited<ReturnType<typeof getClientById>>;
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  const initials = parts.length > 1 ? [parts[0], parts.at(-1)] : [parts[0]];
+  return initials.map((p) => p?.[0]?.toUpperCase()).join("");
+}
 
 function ClientsPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const deleteFn = useServerFn(deleteClient);
-  const getByIdFn = useServerFn(getClientById);
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState<ClientWithMeasurements | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: clients, isLoading } = useQuery(clientsListQueryOptions);
@@ -49,22 +52,12 @@ function ClientsPage() {
     onError: () => toast.error("Error al eliminar el cliente"),
   });
 
-  const editMutation = useMutation({
-    mutationFn: getByIdFn,
-    onSuccess: (client) => {
-      setEditingClient(client);
-      setIsSheetOpen(true);
-    },
-    onError: () => toast.error("Error al cargar el cliente"),
-  });
-
   function openCreate() {
-    setEditingClient(null);
     setIsSheetOpen(true);
   }
 
-  function handleEdit(client: Client) {
-    editMutation.mutate({ data: { id: client.id } });
+  function viewClient(id: string) {
+    navigate({ to: "/app/clients/$id", params: { id } });
   }
 
   return (
@@ -97,23 +90,37 @@ function ClientsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {clients?.map((client) => (
-            <Card key={client.id}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="font-medium text-sm">{client.name}</CardTitle>
+            <Card
+              key={client.id}
+              className="cursor-pointer transition-colors hover:bg-accent/40"
+              onClick={() => viewClient(client.id)}
+            >
+              <CardHeader className="flex flex-row items-center gap-3 pb-2">
+                <Avatar>
+                  <AvatarFallback className="font-medium text-xs">
+                    {getInitials(client.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <CardTitle className="flex-1 font-medium text-sm">{client.name}</CardTitle>
                 <div className="flex gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleEdit(client)}
-                    disabled={editMutation.isPending}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      viewClient(client.id);
+                    }}
                   >
-                    <PencilIcon className="size-3" />
+                    <EyeIcon className="size-3" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="text-destructive hover:text-destructive"
-                    onClick={() => setDeletingId(client.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeletingId(client.id);
+                    }}
                   >
                     <Trash2Icon className="size-3" />
                   </Button>
@@ -141,14 +148,7 @@ function ClientsPage() {
         </div>
       )}
       {/* Form Sheet */}
-      <ClientSheet
-        open={isSheetOpen}
-        onOpenChange={(open) => {
-          if (!open) setEditingClient(null);
-          setIsSheetOpen(open);
-        }}
-        editingClient={editingClient}
-      />
+      <ClientSheet open={isSheetOpen} onOpenChange={setIsSheetOpen} editingClient={null} />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
