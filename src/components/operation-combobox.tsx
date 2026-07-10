@@ -49,8 +49,8 @@ export function OperationCombobox({ value, onChange }: OperationComboboxProps) {
   const [newDuration, setNewDuration] = useState("60");
 
   const { data: rawOperations = [] } = useQuery<RawOperation[]>({
-    queryKey: ["operations"],
-    queryFn: () => listFn(),
+    queryKey: ["operations", "all"],
+    queryFn: async () => (await listFn({ data: { page: 1, pageSize: 1000 } })).items,
     staleTime: 30_000,
   });
 

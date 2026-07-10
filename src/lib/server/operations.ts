@@ -1,17 +1,33 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, count, eq } from "drizzle-orm";
 import * as z from "zod";
 import { operation } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 
 export const listOperations = createServerFn({ method: "GET" })
+  .validator(
+    z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(20),
+    }),
+  )
   .middleware([organizationMiddleware])
-  .handler(async ({ context: { activeOrganizationId, db } }) => {
-    return await db
-      .select()
-      .from(operation)
-      .where(eq(operation.organizationId, activeOrganizationId))
-      .orderBy(asc(operation.name));
+  .handler(async ({ data: { page, pageSize }, context: { activeOrganizationId, db } }) => {
+    const [items, [{ total }]] = await Promise.all([
+      db
+        .select()
+        .from(operation)
+        .where(eq(operation.organizationId, activeOrganizationId))
+        .orderBy(asc(operation.name))
+        .limit(pageSize)
+        .offset((page - 1) * pageSize),
+      db
+        .select({ total: count() })
+        .from(operation)
+        .where(eq(operation.organizationId, activeOrganizationId)),
+    ]);
+
+    return { items, total, page, pageSize };
   });
 
 export const createOperation = createServerFn({ method: "POST" })

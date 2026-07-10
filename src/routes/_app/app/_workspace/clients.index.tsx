@@ -1,9 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { EyeIcon, Loader2Icon, MailIcon, PhoneIcon, Trash2Icon, UsersIcon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  EyeIcon,
+  Loader2Icon,
+  MailIcon,
+  PhoneIcon,
+  Trash2Icon,
+  UsersIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import * as z from "zod";
 import { ClientSheet } from "#/components/client-sheet";
 import {
   AlertDialog,
@@ -17,13 +27,30 @@ import {
 } from "#/components/ui/alert-dialog";
 import { Avatar, AvatarFallback } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { Card } from "#/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "#/components/ui/table";
 import { clientsListQueryOptions } from "#/lib/query-options";
 import { deleteClient } from "#/lib/server/clients";
 
+const PAGE_SIZE = 20;
+
+const clientsSearchSchema = z.object({
+  page: z.number().int().min(1).default(1).catch(1),
+});
+
 export const Route = createFileRoute("/_app/app/_workspace/clients/")({
   component: ClientsPage,
-  loader: ({ context: { queryClient } }) => void queryClient.prefetchQuery(clientsListQueryOptions),
+  validateSearch: clientsSearchSchema,
+  loaderDeps: ({ search: { page } }) => ({ page }),
+  loader: ({ context: { queryClient }, deps: { page } }) =>
+    void queryClient.prefetchQuery(clientsListQueryOptions(page, PAGE_SIZE)),
 });
 
 function getInitials(name: string) {
@@ -33,14 +60,18 @@ function getInitials(name: string) {
 }
 
 function ClientsPage() {
+  const { page } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const deleteFn = useServerFn(deleteClient);
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data: clients, isLoading } = useQuery(clientsListQueryOptions);
+  const { data, isLoading } = useQuery(clientsListQueryOptions(page, PAGE_SIZE));
+  const clients = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const deleteMutation = useMutation({
     mutationFn: deleteFn,
@@ -60,6 +91,10 @@ function ClientsPage() {
     navigate({ to: "/app/clients/$id", params: { id } });
   }
 
+  function goToPage(nextPage: number) {
+    navigate({ search: { page: nextPage } });
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
@@ -76,7 +111,7 @@ function ClientsPage() {
         <div className="flex h-64 items-center justify-center">
           <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
         </div>
-      ) : clients?.length === 0 ? (
+      ) : clients.length === 0 ? (
         <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
           <UsersIcon className="mb-4 size-12 text-muted-foreground/20" />
           <h3 className="font-medium text-lg">No hay clientes</h3>
@@ -88,64 +123,117 @@ function ClientsPage() {
           </Button>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {clients?.map((client) => (
-            <Card
-              key={client.id}
-              className="cursor-pointer transition-colors hover:bg-accent/40"
-              onClick={() => viewClient(client.id)}
-            >
-              <CardHeader className="flex flex-row items-center gap-3 pb-2">
-                <Avatar>
-                  <AvatarFallback className="font-medium text-xs">
-                    {getInitials(client.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <CardTitle className="flex-1 font-medium text-sm">{client.name}</CardTitle>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      viewClient(client.id);
-                    }}
+        <>
+          <Card className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Teléfono</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {clients.map((client) => (
+                  <TableRow
+                    key={client.id}
+                    className="cursor-pointer"
+                    onClick={() => viewClient(client.id)}
                   >
-                    <EyeIcon className="size-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeletingId(client.id);
-                    }}
-                  >
-                    <Trash2Icon className="size-3" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-1.5 text-xs">
-                {client.phone && (
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <PhoneIcon className="size-3" />
-                    <span>{client.phone}</span>
-                  </div>
-                )}
-                {client.email && (
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <MailIcon className="size-3" />
-                    <span>{client.email}</span>
-                  </div>
-                )}
-                {!client.phone && !client.email && (
-                  <span className="text-muted-foreground">Sin datos de contacto</span>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <Avatar size="sm">
+                          <AvatarFallback className="font-medium text-xs">
+                            {getInitials(client.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <Link
+                          to="/app/clients/$id"
+                          params={{ id: client.id }}
+                          className="hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {client.name}
+                        </Link>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {client.phone ? (
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <PhoneIcon className="size-3" />
+                          {client.phone}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {client.email ? (
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <MailIcon className="size-3" />
+                          {client.email}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            viewClient(client.id);
+                          }}
+                        >
+                          <EyeIcon className="size-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingId(client.id);
+                          }}
+                        >
+                          <Trash2Icon className="size-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground text-sm">
+              Página {page} de {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => goToPage(page - 1)}
+              >
+                <ChevronLeftIcon className="mr-1 size-4" />
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => goToPage(page + 1)}
+              >
+                Siguiente
+                <ChevronRightIcon className="ml-1 size-4" />
+              </Button>
+            </div>
+          </div>
+        </>
       )}
       {/* Form Sheet */}
       <ClientSheet open={isSheetOpen} onOpenChange={setIsSheetOpen} editingClient={null} />

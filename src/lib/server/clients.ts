@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, count, eq } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
@@ -23,13 +23,29 @@ export const clientFormSchema = z.object({
 // ── Queries ──────────────────────────────────────────────
 
 export const listClients = createServerFn({ method: "GET" })
+  .validator(
+    z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(20),
+    }),
+  )
   .middleware([organizationMiddleware])
-  .handler(async ({ context: { activeOrganizationId, db } }) => {
-    return await db
-      .select()
-      .from(schema.client)
-      .where(eq(schema.client.organizationId, activeOrganizationId))
-      .orderBy(asc(schema.client.name));
+  .handler(async ({ data: { page, pageSize }, context: { activeOrganizationId, db } }) => {
+    const [items, [{ total }]] = await Promise.all([
+      db
+        .select()
+        .from(schema.client)
+        .where(eq(schema.client.organizationId, activeOrganizationId))
+        .orderBy(asc(schema.client.name))
+        .limit(pageSize)
+        .offset((page - 1) * pageSize),
+      db
+        .select({ total: count() })
+        .from(schema.client)
+        .where(eq(schema.client.organizationId, activeOrganizationId)),
+    ]);
+
+    return { items, total, page, pageSize };
   });
 
 export const getClientById = createServerFn({ method: "GET" })

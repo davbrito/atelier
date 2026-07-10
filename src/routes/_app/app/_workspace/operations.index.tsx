@@ -1,11 +1,20 @@
 import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2Icon, PencilIcon, PlusIcon, ScissorsIcon, Trash2Icon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Loader2Icon,
+  PencilIcon,
+  PlusIcon,
+  ScissorsIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import * as z from "zod";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { Card } from "#/components/ui/card";
 import * as StyledField from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import {
@@ -29,6 +38,14 @@ import {
   SheetHeader,
   SheetTitle,
 } from "#/components/ui/sheet";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "#/components/ui/table";
 import { operationsListQueryOptions } from "#/lib/query-options";
 import {
   createOperation,
@@ -37,15 +54,25 @@ import {
   updateOperation,
 } from "#/lib/server/operations";
 
-export const Route = createFileRoute("/_app/app/_workspace/operations/")({
-  component: OperationsPage,
-  loader: ({ context: { queryClient } }) =>
-    void queryClient.prefetchQuery(operationsListQueryOptions),
+const PAGE_SIZE = 20;
+
+const operationsSearchSchema = z.object({
+  page: z.number().int().min(1).default(1).catch(1),
 });
 
-type Operation = Awaited<ReturnType<typeof listOperations>>[number];
+export const Route = createFileRoute("/_app/app/_workspace/operations/")({
+  component: OperationsPage,
+  validateSearch: operationsSearchSchema,
+  loaderDeps: ({ search: { page } }) => ({ page }),
+  loader: ({ context: { queryClient }, deps: { page } }) =>
+    void queryClient.prefetchQuery(operationsListQueryOptions(page, PAGE_SIZE)),
+});
+
+type Operation = Awaited<ReturnType<typeof listOperations>>["items"][number];
 
 function OperationsPage() {
+  const { page } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
   const createFn = useServerFn(createOperation);
   const updateFn = useServerFn(updateOperation);
@@ -56,7 +83,10 @@ function OperationsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
 
-  const { data: operations, isLoading } = useQuery(operationsListQueryOptions);
+  const { data, isLoading } = useQuery(operationsListQueryOptions(page, PAGE_SIZE));
+  const operations = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const createMutation = useMutation({
     mutationFn: createFn,
@@ -101,6 +131,10 @@ function OperationsPage() {
     setIsSheetOpen(true);
   }
 
+  function goToPage(nextPage: number) {
+    navigate({ search: { page: nextPage } });
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
@@ -118,7 +152,7 @@ function OperationsPage() {
         <div className="flex h-64 items-center justify-center">
           <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
         </div>
-      ) : operations?.length === 0 ? (
+      ) : operations.length === 0 ? (
         <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
           <ScissorsIcon className="mb-4 size-12 text-muted-foreground/20" />
           <h3 className="font-medium text-lg">No hay operaciones</h3>
@@ -130,33 +164,69 @@ function OperationsPage() {
           </Button>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {operations?.map((operation) => (
-            <Card key={operation.id}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="font-medium text-sm">{operation.name}</CardTitle>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => handleEdit(operation)}>
-                    <PencilIcon className="size-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => setDeletingId(operation.id)}
-                  >
-                    <Trash2Icon className="size-3" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-muted-foreground text-xs">
-                  Duración por defecto: {operation.defaultDurationMinutes} min
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <>
+          <Card className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Duración por defecto</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {operations.map((operation) => (
+                  <TableRow key={operation.id}>
+                    <TableCell className="font-medium">{operation.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {operation.defaultDurationMinutes} min
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(operation)}>
+                          <PencilIcon className="size-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setDeletingId(operation.id)}
+                        >
+                          <Trash2Icon className="size-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground text-sm">
+              Página {page} de {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => goToPage(page - 1)}
+              >
+                <ChevronLeftIcon className="mr-1 size-4" />
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => goToPage(page + 1)}
+              >
+                Siguiente
+                <ChevronRightIcon className="ml-1 size-4" />
+              </Button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Form Sheet */}
