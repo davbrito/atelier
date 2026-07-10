@@ -3,6 +3,7 @@ import { and, asc, eq } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
+import { cacheMeasurementNames } from "./measurement-names";
 
 // ── Types ────────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ export const createClient = createServerFn({ method: "POST" })
   .validator(clientFormSchema)
   .middleware([organizationMiddleware])
   .handler(async ({ data, context: { activeOrganizationId, db } }) => {
-    return await db.transaction(async (tx) => {
+    const newClient = await db.transaction(async (tx) => {
       const [newClient] = await tx
         .insert(schema.client)
         .values({
@@ -82,13 +83,20 @@ export const createClient = createServerFn({ method: "POST" })
 
       return newClient;
     });
+
+    await cacheMeasurementNames(
+      activeOrganizationId,
+      data.measurements.map((m) => m.name),
+    );
+
+    return newClient;
   });
 
 export const updateClient = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.uuid(), data: clientFormSchema }))
   .middleware([organizationMiddleware])
   .handler(async ({ data: { id, data }, context: { activeOrganizationId, db } }) => {
-    return await db.transaction(async (tx) => {
+    const updated = await db.transaction(async (tx) => {
       const [existing] = await tx
         .select({ id: schema.client.id })
         .from(schema.client)
@@ -122,6 +130,13 @@ export const updateClient = createServerFn({ method: "POST" })
       const [updated] = await tx.select().from(schema.client).where(eq(schema.client.id, id));
       return updated;
     });
+
+    await cacheMeasurementNames(
+      activeOrganizationId,
+      data.measurements.map((m) => m.name),
+    );
+
+    return updated;
   });
 
 export const deleteClient = createServerFn({ method: "POST" })

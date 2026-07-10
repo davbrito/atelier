@@ -21,7 +21,6 @@ import {
 import { Textarea } from "#/components/ui/textarea";
 import { queryKeys } from "#/lib/query-options";
 import { createClient, type getClientById, updateClient } from "#/lib/server/clients";
-import { addMeasurementName } from "#/lib/server/measurement-names";
 
 type ClientSheetProps = {
   open: boolean;
@@ -41,7 +40,6 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
   const queryClient = useQueryClient();
   const createFn = useServerFn(createClient);
   const updateFn = useServerFn(updateClient);
-  const addMeasurementNameFn = useServerFn(addMeasurementName);
 
   const { control, handleSubmit, reset } = useForm<ClientFormValues>({
     values: {
@@ -66,9 +64,6 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
   function commitMeasurement() {
     if (!draftMeasurementValid) return;
     prependMeasurement(draftMeasurement);
-    addMeasurementNameFn({ data: { name: draftMeasurement.name.trim() } }).then(() =>
-      queryClient.invalidateQueries({ queryKey: ["measurement-names"] }),
-    );
     setDraftMeasurement({ name: "", value: "" });
   }
 
@@ -78,6 +73,7 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
     mutationFn: createFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.clients });
+      queryClient.invalidateQueries({ queryKey: ["measurement-names"] });
       toast.success("Cliente creado correctamente");
       onOpenChange(false);
     },
@@ -88,6 +84,7 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
     mutationFn: updateFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.clients });
+      queryClient.invalidateQueries({ queryKey: ["measurement-names"] });
       toast.success("Cliente actualizado");
       onOpenChange(false);
     },

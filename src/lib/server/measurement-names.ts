@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import * as z from "zod";
 import { organizationMiddleware } from "../auth/functions";
 import { getEnv } from "../context.server";
 
@@ -20,19 +19,20 @@ export const listMeasurementNames = createServerFn({ method: "GET" })
     return readNames(activeOrganizationId);
   });
 
-export const addMeasurementName = createServerFn({ method: "POST" })
-  .validator(z.object({ name: z.string().trim().min(1) }))
-  .middleware([organizationMiddleware])
-  .handler(async ({ data: { name }, context: { activeOrganizationId } }) => {
-    const names = await readNames(activeOrganizationId);
+/**
+ * Merges the given names into the organization's cached measurement-name
+ * list (case-insensitive dedupe, newest first, capped). Meant to be called
+ * from within the client create/update mutations, not as its own endpoint.
+ */
+export async function cacheMeasurementNames(organizationId: string, names: string[]) {
+  if (names.length === 0) return;
 
-    const alreadyCached = names.some((n) => n.toLowerCase() === name.toLowerCase());
-    if (!alreadyCached) {
-      // Newest first, capped so the cache doesn't grow unbounded across a long-lived org.
-      names.unshift(name);
-      names.splice(MAX_CACHED_NAMES);
-      await getEnv().KV.put(kvKey(activeOrganizationId), JSON.stringify(names));
-    }
+  const cached = await readNames(organizationId);
+  const cachedLower = new Set(cached.map((n) => n.toLowerCase()));
 
-    return names;
-  });
+  const newNames = [...new Set(names)].filter((n) => !cachedLower.has(n.toLowerCase()));
+  if (newNames.length === 0) return;
+
+  const merged = [...newNames.reverse(), ...cached].slice(0, MAX_CACHED_NAMES);
+  await getEnv().KV.put(kvKey(organizationId), JSON.stringify(merged));
+}
