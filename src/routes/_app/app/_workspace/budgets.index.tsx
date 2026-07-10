@@ -85,7 +85,9 @@ function BudgetsPage() {
                   className="relative z-20 aspect-video w-full object-cover brightness-60 dark:brightness-40"
                 />
               ) : (
-                <div className="relative z-20 aspect-video w-full bg-gray-100" />
+                <div className="relative z-20 flex aspect-video w-full items-center justify-center bg-gradient-to-br from-muted to-muted/40">
+                  <CalculatorIcon className="size-10 text-muted-foreground/30" />
+                </div>
               )}
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="font-medium text-sm">{budget.name}</CardTitle>
