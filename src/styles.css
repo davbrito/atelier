@@ -297,3 +297,28 @@
   --sidebar-border: oklch(0.923 0.003 48.717);
   --sidebar-ring: oklch(0.709 0.01 56.259);
 }
+
+/* Shared-element view transitions for material images (see
+   materials.index.tsx / materials.$id.tsx viewTransitionName). The
+   browser defaults are too snappy and cross-fade with
+   mix-blend-mode: plus-lighter, which visibly washes out photos
+   mid-transition — override both for a smoother, truer-color morph. */
+::view-transition-group(.material-image) {
+  animation-duration: 450ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-old(.material-image),
+::view-transition-new(.material-image) {
+  animation-duration: 450ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(.material-image),
+  ::view-transition-old(.material-image),
+  ::view-transition-new(.material-image) {
+    animation: none;
+  }
+}

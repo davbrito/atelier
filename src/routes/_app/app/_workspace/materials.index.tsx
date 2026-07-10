@@ -153,7 +153,10 @@ function MaterialsPage() {
                               src={material.image}
                               alt={material.name}
                               className="size-8 rounded object-cover"
-                              style={{ viewTransitionName: `material-image-${material.id}` }}
+                              style={{
+                                viewTransitionName: `material-image-${material.id}`,
+                                viewTransitionClass: "material-image",
+                              }}
                             />
                           ) : (
                             <div className="flex size-8 items-center justify-center rounded bg-muted">
