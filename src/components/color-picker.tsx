@@ -49,7 +49,8 @@ export function ColorPicker({ value, onValueChange, placeholder }: ColorPickerPr
           <span
             className={cn(
               "size-full rounded-sm border",
-              !isValidHex && "bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] bg-[length:8px_8px]",
+              !isValidHex &&
+                "bg-[length:8px_8px] bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)]",
             )}
             style={isValidHex ? { backgroundColor: value } : undefined}
           />
