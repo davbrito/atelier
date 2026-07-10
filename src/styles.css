@@ -320,6 +320,9 @@
   height: 100%;
   width: 100%;
   overflow: clip;
+  /* These pseudo-elements don't inherit the <img>'s rounded corners,
+     so without this they flash square-cornered mid-transition. */
+  border-radius: var(--radius-image);
 }
 
 ::view-transition-old(.material-image) {
