@@ -46,3 +46,7 @@ export function getDb(): Db {
 export function getAuth(): AppAuth {
   return getContext().auth;
 }
+
+export function getEnv(): Cloudflare.Env {
+  return getContext().env;
+}

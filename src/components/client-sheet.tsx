@@ -5,6 +5,7 @@ import { Loader2Icon, MinusIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { MeasurementNameCombobox } from "#/components/measurement-name-combobox";
 import { Button } from "#/components/ui/button";
 import * as StyledField from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
@@ -20,6 +21,7 @@ import {
 import { Textarea } from "#/components/ui/textarea";
 import { queryKeys } from "#/lib/query-options";
 import { createClient, type getClientById, updateClient } from "#/lib/server/clients";
+import { addMeasurementName } from "#/lib/server/measurement-names";
 
 type ClientSheetProps = {
   open: boolean;
@@ -39,6 +41,7 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
   const queryClient = useQueryClient();
   const createFn = useServerFn(createClient);
   const updateFn = useServerFn(updateClient);
+  const addMeasurementNameFn = useServerFn(addMeasurementName);
 
   const { control, handleSubmit, reset } = useForm<ClientFormValues>({
     values: {
@@ -63,6 +66,9 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
   function commitMeasurement() {
     if (!draftMeasurementValid) return;
     prependMeasurement(draftMeasurement);
+    addMeasurementNameFn({ data: { name: draftMeasurement.name.trim() } }).then(() =>
+      queryClient.invalidateQueries({ queryKey: ["measurement-names"] }),
+    );
     setDraftMeasurement({ name: "", value: "" });
   }
 
@@ -213,9 +219,9 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
             <span className="font-medium text-sm">Medidas</span>
 
             <div className="flex items-center gap-2">
-              <Input
+              <MeasurementNameCombobox
                 value={draftMeasurement.name}
-                onChange={(e) => setDraftMeasurement((d) => ({ ...d, name: e.target.value }))}
+                onChange={(name) => setDraftMeasurement((d) => ({ ...d, name }))}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -252,12 +258,11 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
                 <Controller
                   name={`measurements.${i}.name`}
                   control={control}
-                  render={({ field: { value, onChange, onBlur, ref } }) => (
-                    <Input
+                  render={({ field: { value, onChange, onBlur } }) => (
+                    <MeasurementNameCombobox
                       value={value}
-                      onChange={(e) => onChange(e.target.value)}
+                      onChange={onChange}
                       onBlur={onBlur}
-                      ref={ref}
                       placeholder="Ej: Busto"
                     />
                   )}
