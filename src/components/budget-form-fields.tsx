@@ -35,13 +35,13 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
 
   const {
     fields: materialFields,
-    prepend: prependMaterial,
+    append: appendMaterial,
     remove: removeMaterial,
   } = useFieldArray({ control, name: "materials" });
 
   const {
     fields: operationFields,
-    prepend: prependOperation,
+    append: appendOperation,
     remove: removeOperation,
   } = useFieldArray({ control, name: "operations" });
 
@@ -51,7 +51,7 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
 
   function commitMaterial() {
     if (!draftMaterialValid) return;
-    prependMaterial(draftMaterial);
+    appendMaterial(draftMaterial);
     setDraftMaterial({ materialId: "", quantity: "" });
   }
 
@@ -61,7 +61,7 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
 
   function commitOperation() {
     if (!draftOperationValid) return;
-    prependOperation(draftOperation);
+    appendOperation(draftOperation);
     setDraftOperation({ operationId: "", durationMinutes: 0 });
   }
 
@@ -157,6 +157,22 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
       <div className="space-y-2">
         <span className="font-medium text-sm">Materiales</span>
 
+        {materialFields.map((field, i) => (
+          <div key={field.id} className="flex items-center gap-2">
+            <Controller
+              name={`materials.${i}.materialId`}
+              control={control}
+              render={({ field: { value, onChange } }) => (
+                <MaterialCombobox value={value} onChange={onChange} />
+              )}
+            />
+            <MaterialQuantityField index={i} />
+            <Button type="button" variant="ghost" size="icon" onClick={() => removeMaterial(i)}>
+              <MinusIcon className="size-3" />
+            </Button>
+          </div>
+        ))}
+
         <div className="flex items-center gap-2">
           <MaterialCombobox
             value={draftMaterial.materialId}
@@ -178,64 +194,11 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
             <PlusIcon className="size-3" />
           </Button>
         </div>
-
-        {materialFields.map((field, i) => (
-          <div key={field.id} className="flex items-center gap-2">
-            <Controller
-              name={`materials.${i}.materialId`}
-              control={control}
-              render={({ field: { value, onChange } }) => (
-                <MaterialCombobox value={value} onChange={onChange} />
-              )}
-            />
-            <MaterialQuantityField index={i} />
-            <Button type="button" variant="ghost" size="icon" onClick={() => removeMaterial(i)}>
-              <MinusIcon className="size-3" />
-            </Button>
-          </div>
-        ))}
       </div>
 
       {/* Operations */}
       <div className="space-y-2">
         <span className="font-medium text-sm">Operaciones</span>
-
-        <div className="flex items-center gap-2">
-          <OperationCombobox
-            value={draftOperation.operationId}
-            onChange={(operationId, defaultDurationMinutes) =>
-              setDraftOperation({ operationId, durationMinutes: defaultDurationMinutes })
-            }
-          />
-          <InputGroup className="w-28">
-            <InputGroupInput
-              type="number"
-              placeholder="Minutos"
-              value={draftOperation.durationMinutes || ""}
-              onChange={(e) =>
-                setDraftOperation((d) => ({ ...d, durationMinutes: Number(e.target.value) || 0 }))
-              }
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  commitOperation();
-                }
-              }}
-            />
-            <InputGroupAddon align="inline-end">
-              <InputGroupText>min</InputGroupText>
-            </InputGroupAddon>
-          </InputGroup>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            disabled={!draftOperationValid}
-            onClick={commitOperation}
-          >
-            <PlusIcon className="size-3" />
-          </Button>
-        </div>
 
         {operationFields.map((field, i) => (
           <div key={field.id} className="flex items-center gap-2">
@@ -276,6 +239,43 @@ export function BudgetFormFields({ imageUrl, onFileSelect, onDeleteImage }: Budg
             </Button>
           </div>
         ))}
+
+        <div className="flex items-center gap-2">
+          <OperationCombobox
+            value={draftOperation.operationId}
+            onChange={(operationId, defaultDurationMinutes) =>
+              setDraftOperation({ operationId, durationMinutes: defaultDurationMinutes })
+            }
+          />
+          <InputGroup className="w-28">
+            <InputGroupInput
+              type="number"
+              placeholder="Minutos"
+              value={draftOperation.durationMinutes || ""}
+              onChange={(e) =>
+                setDraftOperation((d) => ({ ...d, durationMinutes: Number(e.target.value) || 0 }))
+              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitOperation();
+                }
+              }}
+            />
+            <InputGroupAddon align="inline-end">
+              <InputGroupText>min</InputGroupText>
+            </InputGroupAddon>
+          </InputGroup>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={!draftOperationValid}
+            onClick={commitOperation}
+          >
+            <PlusIcon className="size-3" />
+          </Button>
+        </div>
       </div>
     </>
   );

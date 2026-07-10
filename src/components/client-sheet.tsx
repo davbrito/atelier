@@ -53,7 +53,7 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
 
   const {
     fields: measurementFields,
-    prepend: prependMeasurement,
+    append: appendMeasurement,
     remove: removeMeasurement,
   } = useFieldArray({ control, name: "measurements" });
 
@@ -63,7 +63,7 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
 
   function commitMeasurement() {
     if (!draftMeasurementValid) return;
-    prependMeasurement(draftMeasurement);
+    appendMeasurement(draftMeasurement);
     setDraftMeasurement({ name: "", value: "" });
   }
 
@@ -215,41 +215,6 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
           <div className="space-y-2">
             <span className="font-medium text-sm">Medidas</span>
 
-            <div className="flex items-center gap-2">
-              <MeasurementNameCombobox
-                value={draftMeasurement.name}
-                onChange={(name) => setDraftMeasurement((d) => ({ ...d, name }))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    commitMeasurement();
-                  }
-                }}
-                placeholder="Ej: Busto"
-              />
-              <Input
-                value={draftMeasurement.value}
-                onChange={(e) => setDraftMeasurement((d) => ({ ...d, value: e.target.value }))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    commitMeasurement();
-                  }
-                }}
-                placeholder="Ej: 92 cm"
-                className="w-32"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                disabled={!draftMeasurementValid}
-                onClick={commitMeasurement}
-              >
-                <PlusIcon className="size-3" />
-              </Button>
-            </div>
-
             {measurementFields.map((field, i) => (
               <div key={field.id} className="flex items-center gap-2">
                 <Controller
@@ -288,6 +253,41 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
                 </Button>
               </div>
             ))}
+
+            <div className="flex items-center gap-2">
+              <MeasurementNameCombobox
+                value={draftMeasurement.name}
+                onChange={(name) => setDraftMeasurement((d) => ({ ...d, name }))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitMeasurement();
+                  }
+                }}
+                placeholder="Ej: Busto"
+              />
+              <Input
+                value={draftMeasurement.value}
+                onChange={(e) => setDraftMeasurement((d) => ({ ...d, value: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitMeasurement();
+                  }
+                }}
+                placeholder="Ej: 92 cm"
+                className="w-32"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={!draftMeasurementValid}
+                onClick={commitMeasurement}
+              >
+                <PlusIcon className="size-3" />
+              </Button>
+            </div>
           </div>
         </form>
 
