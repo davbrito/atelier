@@ -2,10 +2,7 @@ import type { AvatarConfig } from "@better-auth-ui/core";
 import { createServerFn } from "@tanstack/react-start";
 import * as z from "zod";
 import { authenticatedMiddleware } from "#/lib/auth/functions";
-import { storageMiddleware } from "./storage";
-
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
-const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, storageMiddleware } from "./storage";
 
 export const AVATAR_SIZE = 256;
 export const AVATAR_EXTENSION = "jpg";
@@ -18,9 +15,10 @@ export const uploadAvatarFn = createServerFn({ method: "POST" })
   .middleware([authenticatedMiddleware, storageMiddleware])
   .validator(z.instanceof(File))
   .handler(async ({ data: file, context: { user, putObject } }) => {
-    if (!(file instanceof File)) throw new Error("No file provided");
-    if (!ALLOWED_TYPES.includes(file.type)) throw new Error("Tipo de archivo no permitido");
-    if (file.size > MAX_SIZE) throw new Error("El archivo supera los 5 MB");
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
+      throw new Error("Tipo de archivo no permitido");
+    }
+    if (file.size > MAX_IMAGE_SIZE) throw new Error("El archivo supera los 5 MB");
 
     const key = avatarKey(user.id);
     await putObject(key, file);

@@ -1,7 +1,15 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { AwsClient } from "aws4fetch";
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
+export const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+] as const;
+
+export const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export type EntityType = "materials" | "budgets";
 
@@ -13,7 +21,11 @@ export type PresignedResult = {
   key: string;
 };
 
-export type PresignedError = { error: true; code: "CONFIG_ERROR"; message: string };
+export type PresignedError = {
+  error: true;
+  code: "CONFIG_ERROR" | "VALIDATION_ERROR";
+  message: string;
+};
 
 /** Thrown by moveObject when the source object does not exist (e.g. the client's upload PUT failed). */
 export class MoveObjectSourceNotFoundError extends Error {
@@ -50,6 +62,13 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
     const object = await bucket.get(sourceKey);
     if (!object) {
       throw new MoveObjectSourceNotFoundError(sourceKey);
+    }
+    // Defense in depth: the presigned URL already signs Content-Length, but
+    // an object exceeding the limit must never be promoted to permanent
+    // storage even if that check was somehow bypassed.
+    if (object.size > MAX_IMAGE_SIZE) {
+      await removeItemSafe(sourceKey);
+      throw new Error(`Source object "${sourceKey}" exceeds max size: ${object.size} bytes`);
     }
     await bucket.put(destKey, object.body, {
       httpMetadata: object.httpMetadata ?? { contentType: contentTypeFromKey(destKey) },
@@ -105,9 +124,22 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
     entityType: EntityType,
     entityId: string,
     contentType: string,
+    contentLength: number,
   ): Promise<PresignedResult | PresignedError> {
-    if (!ALLOWED_TYPES.includes(contentType)) {
-      return { error: true, code: "CONFIG_ERROR", message: `Invalid content type: ${contentType}` };
+    if (!ALLOWED_IMAGE_TYPES.includes(contentType as (typeof ALLOWED_IMAGE_TYPES)[number])) {
+      return {
+        error: true,
+        code: "VALIDATION_ERROR",
+        message: `Invalid content type: ${contentType}`,
+      };
+    }
+
+    if (!Number.isInteger(contentLength) || contentLength <= 0 || contentLength > MAX_IMAGE_SIZE) {
+      return {
+        error: true,
+        code: "VALIDATION_ERROR",
+        message: "El archivo supera los 5 MB",
+      };
     }
 
     let s3: ReturnType<typeof getS3Client>;
@@ -121,7 +153,7 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
     const ext = contentType.split("/")[1] ?? "jpg";
     // Uploads go to a temp prefix. When the entity is committed via setEntityImage,
     // the object is moved to the permanent location.
-    const key = `uploads/tmp/${encodeURI(entityType)}/${encodeURIComponent(entityId)}.${encodeURIComponent(ext)}`;
+    const key = `uploads/tmp/${entityType}/${entityId}.${ext}`;
 
     const url = `${env.STORAGE_URL}/${env.STORAGE_BUCKET}/${key}?X-Amz-Expires=300`;
 
@@ -130,6 +162,9 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
         method: "PUT",
         headers: {
           "Content-Type": contentType,
+          // Signed into the URL so R2 rejects a PUT of any other size —
+          // without this an entity presigned URL had no upload size limit.
+          "Content-Length": String(contentLength),
         },
         aws: {
           signQuery: true,

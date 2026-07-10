@@ -26,15 +26,16 @@ export async function canAccessImage(db: Db, userId: string, key: string): Promi
   const table = entityTypesTableMap[match[1] as keyof typeof entityTypesTableMap];
   const entityId = match[2];
 
-  const [entity] = await db
-    .select({ organizationId: table.organizationId })
+  // Single join instead of two round trips: the entity's organization and
+  // the caller's membership in it are checked in one query.
+  const [row] = await db
+    .select({ organizationId: member.organizationId })
     .from(table)
+    .innerJoin(
+      member,
+      and(eq(member.organizationId, table.organizationId), eq(member.userId, userId)),
+    )
     .where(eq(table.id, entityId));
-  if (!entity) return false;
 
-  const memberships = await db.$count(
-    member,
-    and(eq(member.userId, userId), eq(member.organizationId, entity.organizationId)),
-  );
-  return memberships > 0;
+  return row !== undefined;
 }

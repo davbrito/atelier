@@ -3,7 +3,7 @@ import { and, asc, count, eq, getTableColumns, sql } from "drizzle-orm";
 import * as z from "zod";
 import { material, materialInventoryMovement, materialPriceHistory } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
-import { storageMiddleware } from "../storage";
+import { MAX_IMAGE_SIZE, storageMiddleware } from "../storage";
 import { storageUrl } from "../utils";
 
 export const listMaterials = createServerFn({ method: "GET" })
@@ -86,8 +86,9 @@ export const createMaterial = createServerFn({ method: "POST" })
       unit: z.string().trim().min(1),
       currentPrice: z.string(),
       color: z.string().trim().optional(),
-      /** When provided, returns a presigned upload URL scoped to the new material. */
+      /** When provided (with imageSize), returns a presigned upload URL scoped to the new material. */
       imageContentType: z.string().optional(),
+      imageSize: z.number().int().positive().max(MAX_IMAGE_SIZE).optional(),
     }),
   )
   .middleware([organizationMiddleware, storageMiddleware])
@@ -114,11 +115,12 @@ export const createMaterial = createServerFn({ method: "POST" })
       return created;
     });
 
-    if (data.imageContentType) {
+    if (data.imageContentType && data.imageSize) {
       const presigned = await createEntityPresignedUrl(
         "materials",
         newMaterial.id,
         data.imageContentType,
+        data.imageSize,
       );
       if ("code" in presigned) {
         throw new Error(presigned.message);
@@ -145,8 +147,9 @@ export const updateMaterial = createServerFn({ method: "POST" })
       color: z.string().trim().optional(),
       /** When true, deletes the current image from storage and sets image to null. */
       deleteImage: z.boolean().optional(),
-      /** When provided, returns a presigned upload URL scoped to this material. */
+      /** When provided (with imageSize), returns a presigned upload URL scoped to this material. */
       imageContentType: z.string().optional(),
+      imageSize: z.number().int().positive().max(MAX_IMAGE_SIZE).optional(),
     }),
   )
   .handler(
@@ -154,7 +157,7 @@ export const updateMaterial = createServerFn({ method: "POST" })
       data,
       context: { activeOrganizationId, db, createEntityPresignedUrl, removeItemSafe },
     }) => {
-      const { id, imageContentType, deleteImage, ...updateData } = data;
+      const { id, imageContentType, imageSize, deleteImage, ...updateData } = data;
 
       const { updated, existingImage } = await db.transaction(async (tx) => {
         const [existing] = await tx
@@ -195,8 +198,13 @@ export const updateMaterial = createServerFn({ method: "POST" })
         await removeItemSafe(existingImage);
       }
 
-      if (imageContentType) {
-        const presigned = await createEntityPresignedUrl("materials", id, imageContentType);
+      if (imageContentType && imageSize) {
+        const presigned = await createEntityPresignedUrl(
+          "materials",
+          id,
+          imageContentType,
+          imageSize,
+        );
         if ("code" in presigned) {
           throw new Error(presigned.message);
         }
@@ -212,21 +220,19 @@ export const deleteMaterial = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware, storageMiddleware])
   .validator(z.object({ id: z.uuid() }))
   .handler(async ({ data: { id }, context: { activeOrganizationId, db, removeItemSafe } }) => {
-    // Delete the image from storage before removing the record. Best-effort:
-    // a missing/corrupt image object must not prevent deleting the material.
-    const [existing] = await db
-      .select({ image: material.image })
-      .from(material)
-      .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)));
+    // Delete the DB row first and only then the storage object, best-effort:
+    // if the DB delete fails, no reference is left dangling; if the storage
+    // delete fails, it's just an unreferenced (harmless) orphan object.
+    const [deleted] = await db
+      .delete(material)
+      .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)))
+      .returning({ image: material.image });
 
-    if (!existing) throw new Error("Material no encontrado");
+    if (!deleted) throw new Error("Material no encontrado");
 
-    if (existing.image) {
-      await removeItemSafe(existing.image);
+    if (deleted.image) {
+      await removeItemSafe(deleted.image);
     }
 
-    await db
-      .delete(material)
-      .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)));
     return { success: true };
   });
