@@ -172,7 +172,7 @@ export const updateBudget = createServerFn({ method: "POST" })
   .handler(
     async ({
       data: { id, data },
-      context: { activeOrganizationId, db, storage, createEntityPresignedUrl },
+      context: { activeOrganizationId, db, removeItemSafe, createEntityPresignedUrl },
     }) => {
       const [existing] = await db
         .select({ image: schema.budget.image, slug: schema.budget.slug })
@@ -242,9 +242,10 @@ export const updateBudget = createServerFn({ method: "POST" })
         return row;
       });
 
-      // Delete old image from storage after successful DB update
+      // Delete old image from storage after successful DB update. Best-effort:
+      // a stale or corrupt previous object must not surface as an update failure.
       if (existing?.image && (data.deleteImage || data.imageContentType)) {
-        await storage.removeItem(existing.image);
+        await removeItemSafe(existing.image);
       }
 
       if (data.imageContentType) {
@@ -263,8 +264,9 @@ export const updateBudget = createServerFn({ method: "POST" })
 export const deleteBudget = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware, storageMiddleware])
   .validator(z.object({ id: z.uuid() }))
-  .handler(async ({ data: { id }, context: { activeOrganizationId, db, storage } }) => {
-    // Delete the image from storage before removing the record
+  .handler(async ({ data: { id }, context: { activeOrganizationId, db, removeItemSafe } }) => {
+    // Delete the image from storage before removing the record. Best-effort:
+    // a missing/corrupt image object must not prevent deleting the budget.
     const [existing] = await db
       .select({ image: schema.budget.image })
       .from(schema.budget)
@@ -273,7 +275,7 @@ export const deleteBudget = createServerFn({ method: "POST" })
     if (!existing) throw new Error("Presupuesto no encontrado");
 
     if (existing.image) {
-      await storage.removeItem(existing.image);
+      await removeItemSafe(existing.image);
     }
 
     await db

@@ -33,7 +33,7 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
   const { env } = context;
   _storage ??= createStorage({ driver: s3Driver({ binding: env.STORAGE }) });
   const storage = _storage;
-  return next({ context: { storage, moveObject, createEntityPresignedUrl } });
+  return next({ context: { storage, moveObject, removeItemSafe, createEntityPresignedUrl } });
 
   /**
    * Moves an object from sourceKey to destKey within the same bucket
@@ -48,6 +48,20 @@ export const storageMiddleware = createMiddleware().server(async ({ next, contex
     }
     await storage.setItemRaw(destKey, data);
     await storage.removeItem(sourceKey);
+  }
+
+  /**
+   * Best-effort delete of an object no longer referenced by an entity
+   * (e.g. the previous image after a replace/delete). A stale or corrupt
+   * object here must never block the entity update/delete itself, so
+   * failures are logged and swallowed instead of thrown.
+   */
+  async function removeItemSafe(key: string): Promise<void> {
+    try {
+      await storage.removeItem(key);
+    } catch (err) {
+      console.warn(`Failed to remove storage object "${key}":`, err);
+    }
   }
 
   // ── Presigned URL ────────────────────────────────────────
