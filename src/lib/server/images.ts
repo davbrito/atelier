@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 import { budget, material } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
-import { MoveObjectSourceNotFoundError, storageMiddleware } from "../storage";
+import { storageMiddleware } from "../storage";
 
 const entityTypesTableMap = {
   budgets: budget,
@@ -26,7 +26,7 @@ export const setEntityImage = createServerFn({ method: "POST" })
     }),
   )
   .middleware([storageMiddleware])
-  .handler(async ({ data, context: { activeOrganizationId, db, moveObject } }) => {
+  .handler(async ({ data, context: { activeOrganizationId, db, moveObjectSafe } }) => {
     const table = entityTypesTableMap[data.entityType];
 
     // The key must match what createEntityPresignedUrl generates for this
@@ -48,15 +48,15 @@ export const setEntityImage = createServerFn({ method: "POST" })
 
     const permanentKey = `uploads/${data.entityType}/${data.entityId}.${ext}`;
 
-    // Move the object from temp to permanent in the bucket via unstorage.
-    // If this fails, do not update the DB so we don't point at a missing object.
-    try {
-      await moveObject(data.imageKey, permanentKey);
-    } catch (err) {
-      if (err instanceof MoveObjectSourceNotFoundError) {
-        throw new Error("La imagen no se subió correctamente, vuelve a intentarlo");
-      }
-      throw err;
+    // Move the object from temp to permanent in the bucket via unstorage. If the
+    // upload never actually landed (e.g. the client's PUT silently failed), this
+    // must not block saving the rest of the entity — just skip the image update.
+    const moved = await moveObjectSafe(data.imageKey, permanentKey);
+    if (!moved) {
+      return {
+        success: false as const,
+        error: "La imagen no se subió correctamente, vuelve a intentarlo",
+      };
     }
 
     // Persist the permanent key in the database only after the object exists there.
@@ -65,9 +65,15 @@ export const setEntityImage = createServerFn({ method: "POST" })
       .set({ image: permanentKey })
       .where(and(eq(table.id, data.entityId), eq(table.organizationId, activeOrganizationId)));
 
-    return { success: true, permanentKey };
+    return { success: true as const, permanentKey };
   });
 
+/**
+ * Uploads the file and commits it as the entity's image. A failure here
+ * (the PUT itself, or the server-side move) must not be treated as a hard
+ * error — the entity save already succeeded — so this resolves to `null`
+ * instead of throwing, and callers should surface a soft warning to the user.
+ */
 export async function uploadEntityImage({
   signedUrl,
   entityType,
@@ -80,7 +86,7 @@ export async function uploadEntityImage({
   entityId: string;
   file: File;
   key: string;
-}) {
+}): Promise<string | null> {
   const uploadResponse = await fetch(signedUrl, {
     method: "PUT",
     body: file,
@@ -88,7 +94,8 @@ export async function uploadEntityImage({
   });
 
   if (!uploadResponse.ok) {
-    throw new Error("Failed to upload image");
+    console.warn(`Image upload PUT failed for ${entityType}/${entityId}:`, uploadResponse.status);
+    return null;
   }
 
   const commit = await setEntityImage({
@@ -96,7 +103,8 @@ export async function uploadEntityImage({
   });
 
   if (!commit.success) {
-    throw new Error("Failed to save image");
+    console.warn(`Failed to commit image for ${entityType}/${entityId}:`, commit.error);
+    return null;
   }
 
   return commit.permanentKey;

@@ -346,6 +346,9 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
 
   const isEdit = !!editingMaterial;
 
+  // A failed image upload/commit must not block saving the material — the
+  // rest of the form data is already persisted by the time this runs. So
+  // this never throws; it resolves to null and callers show a soft warning.
   const commitFile = async ({
     signedUrl,
     entityId,
@@ -356,7 +359,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
     entityId: string;
     imageKey: string;
     file: File;
-  }) => {
+  }): Promise<string | null> => {
     const uploadResponse = await fetch(signedUrl, {
       method: "PUT",
       body: file,
@@ -364,7 +367,8 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
     });
 
     if (!uploadResponse.ok) {
-      throw new Error("No se pudo subir la imagen");
+      console.warn("Image upload PUT failed:", uploadResponse.status);
+      return null;
     }
 
     const commit = await setEntityImage({
@@ -372,7 +376,8 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
     });
 
     if (!commit.success) {
-      throw new Error("Error al subir la imagen");
+      console.warn("Failed to commit image:", commit.error);
+      return null;
     }
 
     return commit.permanentKey;
@@ -395,13 +400,17 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
           imageKey: result.imageKey,
           file,
         });
-        return { ...result, image: permanentKey };
+        return { ...result, image: permanentKey, imageFailed: permanentKey === null };
       }
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.materials });
-      toast.success("Material creado correctamente");
+      if ("imageFailed" in result && result.imageFailed) {
+        toast.warning("Material creado, pero no se pudo subir la imagen. Intenta editarlo.");
+      } else {
+        toast.success("Material creado correctamente");
+      }
       onOpenChange(false);
     },
     onError: () => toast.error("Error al crear el material"),
@@ -424,13 +433,17 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
           imageKey: result.imageKey,
           file,
         });
-        return { ...result, image: permanentKey };
+        return { ...result, image: permanentKey, imageFailed: permanentKey === null };
       }
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.materials });
-      toast.success("Material actualizado");
+      if ("imageFailed" in result && result.imageFailed) {
+        toast.warning("Material actualizado, pero no se pudo subir la imagen. Intenta de nuevo.");
+      } else {
+        toast.success("Material actualizado");
+      }
       onOpenChange(false);
     },
     onError: () => toast.error("Error al actualizar el material"),

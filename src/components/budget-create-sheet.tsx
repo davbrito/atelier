@@ -64,13 +64,17 @@ export function BudgetCreateSheet({ open, onOpenChange }: BudgetCreateSheetProps
           entityType: "budgets",
           key: result.imageKey,
         });
-        return { ...result, image: permanentKey };
+        return { ...result, image: permanentKey, imageFailed: permanentKey === null };
       }
       return result;
     },
     onSuccess: (newBudget) => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
-      toast.success("Presupuesto creado");
+      if ("imageFailed" in newBudget && newBudget.imageFailed) {
+        toast.warning("Presupuesto creado, pero no se pudo subir la imagen. Intenta editarlo.");
+      } else {
+        toast.success("Presupuesto creado");
+      }
       onOpenChange(false);
       form.reset();
       navigate({
