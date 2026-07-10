@@ -7,6 +7,7 @@ export const baseConfig = {
   appName: "Atelier",
   plugins: [admin({ ac, roles }), organization(), passkey(), oneTap(), lastLoginMethod()],
   emailAndPassword: { enabled: true },
+  trustedOrigins: ["https://*.davbrito.workers.dev"],
   telemetry: {
     enabled: false,
   },
