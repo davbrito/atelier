@@ -34,13 +34,13 @@ function QuotePage() {
 
   const { data: catalogMaterials = [] } = useQuery({
     queryKey: ["materials", "all"],
-    queryFn: async () => (await listMaterialsFn({ data: { page: 1, pageSize: 1000 } })).items,
+    queryFn: async () => (await listMaterialsFn({ data: { page: 1, pageSize: 100 } })).items,
     staleTime: 30_000,
   });
 
   const { data: catalogOperations = [] } = useQuery({
     queryKey: ["operations", "all"],
-    queryFn: async () => (await listOperationsFn({ data: { page: 1, pageSize: 1000 } })).items,
+    queryFn: async () => (await listOperationsFn({ data: { page: 1, pageSize: 100 } })).items,
     staleTime: 30_000,
   });
 
