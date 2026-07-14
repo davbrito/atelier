@@ -67,6 +67,8 @@ export const getBudgetBySlug = createServerFn({ method: "GET" })
       .select({
         ...getTableColumns(schema.budgetMaterial),
         name: schema.material.name,
+        unit: schema.material.unit,
+        currentPrice: schema.material.currentPrice,
       })
       .from(schema.budgetMaterial)
       .innerJoin(schema.material, eq(schema.material.id, schema.budgetMaterial.materialId))
@@ -106,6 +108,8 @@ export const getBudgetById = createServerFn({ method: "GET" })
       .select({
         ...getTableColumns(schema.budgetMaterial),
         name: schema.material.name,
+        unit: schema.material.unit,
+        currentPrice: schema.material.currentPrice,
       })
       .from(schema.budgetMaterial)
       .innerJoin(schema.material, eq(schema.material.id, schema.budgetMaterial.materialId))
