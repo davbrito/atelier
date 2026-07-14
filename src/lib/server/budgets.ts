@@ -103,13 +103,21 @@ export const getBudgetById = createServerFn({ method: "GET" })
     if (!budget) throw new Error("Presupuesto no encontrado");
 
     const mats = await db
-      .select()
+      .select({
+        ...getTableColumns(schema.budgetMaterial),
+        name: schema.material.name,
+      })
       .from(schema.budgetMaterial)
+      .innerJoin(schema.material, eq(schema.material.id, schema.budgetMaterial.materialId))
       .where(eq(schema.budgetMaterial.budgetId, data.id));
 
     const ops = await db
-      .select()
+      .select({
+        ...getTableColumns(schema.budgetOperation),
+        name: schema.operation.name,
+      })
       .from(schema.budgetOperation)
+      .innerJoin(schema.operation, eq(schema.operation.id, schema.budgetOperation.operationId))
       .where(eq(schema.budgetOperation.budgetId, data.id));
 
     return {
