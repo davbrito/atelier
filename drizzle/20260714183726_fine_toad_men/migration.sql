@@ -1,0 +1,2 @@
+ALTER TABLE "quotations" ADD COLUMN "client_id" uuid;--> statement-breakpoint
+ALTER TABLE "quotations" ADD CONSTRAINT "quotations_client_id_clients_id_fkey" FOREIGN KEY ("client_id") REFERENCES "clients"("id") ON DELETE SET NULL;

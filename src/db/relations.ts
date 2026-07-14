@@ -77,6 +77,10 @@ export const relations = {
         from: r.quotation.organizationId,
         to: r.organization.id,
       }),
+      client: r.one.client({
+        from: r.quotation.clientId,
+        to: r.client.id,
+      }),
     },
     clients: {
       organization: r.one.organization({
@@ -86,6 +90,10 @@ export const relations = {
       measurements: r.many.clientMeasurement({
         from: r.client.id,
         to: r.clientMeasurement.clientId,
+      }),
+      quotations: r.many.quotation({
+        from: r.client.id,
+        to: r.quotation.clientId,
       }),
     },
   })),

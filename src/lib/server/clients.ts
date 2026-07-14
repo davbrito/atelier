@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, ilike } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
@@ -27,22 +27,25 @@ export const listClients = createServerFn({ method: "GET" })
     z.object({
       page: z.number().int().min(1).default(1),
       pageSize: z.number().int().min(1).max(100).default(20),
+      search: z.string().trim().optional(),
     }),
   )
   .middleware([organizationMiddleware])
-  .handler(async ({ data: { page, pageSize }, context: { activeOrganizationId, db } }) => {
+  .handler(async ({ data: { page, pageSize, search }, context: { activeOrganizationId, db } }) => {
+    const whereClause = and(
+      eq(schema.client.organizationId, activeOrganizationId),
+      search ? ilike(schema.client.name, `%${search}%`) : undefined,
+    );
+
     const [items, [{ total }]] = await Promise.all([
       db
         .select()
         .from(schema.client)
-        .where(eq(schema.client.organizationId, activeOrganizationId))
+        .where(whereClause)
         .orderBy(asc(schema.client.name))
         .limit(pageSize)
         .offset((page - 1) * pageSize),
-      db
-        .select({ total: count() })
-        .from(schema.client)
-        .where(eq(schema.client.organizationId, activeOrganizationId)),
+      db.select({ total: count() }).from(schema.client).where(whereClause),
     ]);
 
     return { items, total, page, pageSize };

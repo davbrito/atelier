@@ -53,7 +53,7 @@ export const createQuotation = createServerFn({ method: "POST" })
   .validator(
     z.object({
       budgetId: z.uuid(),
-      clientTitle: z.string().min(1),
+      clientId: z.uuid(),
     }),
   )
   .middleware([organizationMiddleware])
@@ -66,6 +66,12 @@ export const createQuotation = createServerFn({ method: "POST" })
 
       if (!budget) throw new Error("Presupuesto no encontrado");
 
+      const client = await tx.query.client.findFirst({
+        where: { id: data.clientId, organizationId },
+      });
+
+      if (!client) throw new Error("Cliente no encontrado");
+
       const budgetMats = await tx
         .select()
         .from(schema.budgetMaterial)
@@ -76,7 +82,7 @@ export const createQuotation = createServerFn({ method: "POST" })
         .from(schema.budgetOperation)
         .where(eq(schema.budgetOperation.budgetId, data.budgetId));
 
-      const titleSlug = slugify(data.clientTitle);
+      const titleSlug = slugify(client.name);
       let slug = titleSlug;
       while (
         await tx.$count(
@@ -86,14 +92,16 @@ export const createQuotation = createServerFn({ method: "POST" })
         slug = `${titleSlug}_${generateRandomString(4)}`;
       }
 
-      // Create the quotation
+      // Create the quotation, freezing the client's name at generation time
+      // so the quotation stays immutable even if the client is later renamed.
       const [quotation] = await tx
         .insert(schema.quotation)
         .values({
           organizationId,
           slug,
           budgetId: data.budgetId,
-          clientTitle: data.clientTitle,
+          clientId: client.id,
+          clientTitle: client.name,
         })
         .returning();
 

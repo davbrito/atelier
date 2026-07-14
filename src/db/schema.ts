@@ -147,6 +147,7 @@ export const quotation = snakeCase.table(
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
     budgetId: uuid().references(() => budget.id, { onDelete: "set null" }),
+    clientId: uuid().references(() => client.id, { onDelete: "set null" }),
     clientTitle: varchar({ length: 255 }).notNull(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

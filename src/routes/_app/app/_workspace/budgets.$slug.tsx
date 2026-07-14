@@ -1,4 +1,3 @@
-import { Field } from "@base-ui/react/field";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -6,10 +5,10 @@ import { ArrowLeftIcon, Loader2Icon, PencilIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { BudgetEditSheet } from "#/components/budget-edit-sheet";
+import { ClientCombobox } from "#/components/client-combobox";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import * as StyledField from "#/components/ui/field";
-import { Input } from "#/components/ui/input";
 import { budgetBySlugQueryOptions } from "#/lib/query-options";
 import { createQuotation } from "#/lib/server/quotations";
 
@@ -24,7 +23,7 @@ function QuotePage() {
   const queryClient = useQueryClient();
   const createQuotationFn = useServerFn(createQuotation);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
-  const [clientTitle, setClientTitle] = useState("");
+  const [clientId, setClientId] = useState("");
 
   const { data: budget, isLoading } = useQuery(budgetBySlugQueryOptions(slug));
 
@@ -33,16 +32,16 @@ function QuotePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
       toast.success("Cotización creada correctamente");
-      setClientTitle("");
+      setClientId("");
     },
     onError: () => toast.error("Error al crear la cotización"),
   });
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!clientTitle.trim() || !budget?.id) return;
+    if (!clientId || !budget?.id) return;
     createMutation.mutate({
-      data: { budgetId: budget.id, clientTitle: clientTitle.trim() },
+      data: { budgetId: budget.id, clientId },
     });
   }
 
@@ -204,24 +203,17 @@ function QuotePage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <StyledField.FieldGroup>
-              <Field.Root name="clientTitle" render={<StyledField.Field />}>
-                <Field.Label render={<StyledField.FieldLabel />}>Nombre del cliente</Field.Label>
-                <Field.Control
-                  value={clientTitle}
-                  onChange={(e) => setClientTitle((e.target as HTMLInputElement).value)}
-                  placeholder="Ej: María García"
-                  required
-                  render={<Input />}
-                />
-                <Field.Error render={<StyledField.FieldError />} />
-              </Field.Root>
+              <StyledField.Field>
+                <StyledField.FieldLabel>Cliente</StyledField.FieldLabel>
+                <ClientCombobox value={clientId} onChange={setClientId} />
+              </StyledField.Field>
             </StyledField.FieldGroup>
 
             <div className="flex gap-3">
               <Button variant="outline" nativeButton={false} render={<Link to="/app/budgets" />}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createMutation.isPending || !clientTitle.trim()}>
+              <Button type="submit" disabled={createMutation.isPending || !clientId}>
                 {createMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
                 Generar cotización
               </Button>
