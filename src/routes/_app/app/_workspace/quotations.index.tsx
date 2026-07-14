@@ -1,4 +1,3 @@
-import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -6,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ClipboardListIcon, Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ClientCombobox } from "#/components/client-combobox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +18,6 @@ import {
 } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
-import { Input } from "#/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -63,6 +62,7 @@ function QuotationsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
   const [selectedBudgetId, setSelectedBudgetId] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState("");
 
   const { data: quotations, isLoading } = useQuery({
     queryKey: ["quotations"],
@@ -103,6 +103,7 @@ function QuotationsPage() {
 
   function openCreate() {
     setSelectedBudgetId("");
+    setSelectedClientId("");
     setFormKey((k) => k + 1);
     setIsSheetOpen(true);
   }
@@ -178,24 +179,28 @@ function QuotationsPage() {
           </SheetHeader>
           <Form
             key={formKey}
-            onFormSubmit={(values: { clientTitle: string }) => {
+            onFormSubmit={() => {
               if (!selectedBudgetId) {
                 toast.error("Selecciona un presupuesto");
+                return;
+              }
+              if (!selectedClientId) {
+                toast.error("Selecciona un cliente");
                 return;
               }
               createMutation.mutate({
                 data: {
                   budgetId: selectedBudgetId,
-                  clientTitle: values.clientTitle,
+                  clientId: selectedClientId,
                 },
               });
             }}
             className="flex flex-1 flex-col gap-6 p-6"
           >
-            <Field.Root name="clientTitle">
-              <Field.Label className="font-medium text-sm">Cliente</Field.Label>
-              <Field.Control placeholder="Ej: María García" required render={<Input />} />
-            </Field.Root>
+            <div className="grid gap-2">
+              <span className="font-medium text-sm">Cliente</span>
+              <ClientCombobox value={selectedClientId} onChange={setSelectedClientId} />
+            </div>
 
             <div className="grid gap-2">
               <span className="font-medium text-sm">Presupuesto base</span>
@@ -223,7 +228,10 @@ function QuotationsPage() {
                   Cancelar
                 </Button>
               </SheetClose>
-              <Button type="submit" disabled={createMutation.isPending || !selectedBudgetId}>
+              <Button
+                type="submit"
+                disabled={createMutation.isPending || !selectedBudgetId || !selectedClientId}
+              >
                 {createMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
                 Generar cotización
               </Button>
