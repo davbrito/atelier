@@ -189,7 +189,9 @@ function MaterialsPage() {
                               className="size-3 shrink-0 rounded-full border"
                               style={{ backgroundColor: material.color }}
                             />
-                            <span className="text-muted-foreground">{material.color}</span>
+                            <span className="text-muted-foreground">
+                              {material.colorName || material.color}
+                            </span>
                           </div>
                         ) : (
                           <span className="text-muted-foreground">—</span>

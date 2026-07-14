@@ -33,6 +33,7 @@ export const material = snakeCase.table("materials", {
   unit: varchar({ length: 50 }).notNull(),
   currentPrice: decimal({ precision: 12, scale: 2 }).notNull(),
   color: varchar({ length: 50 }),
+  colorName: varchar({ length: 100 }),
   image: text(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true })

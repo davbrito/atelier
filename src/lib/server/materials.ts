@@ -89,6 +89,7 @@ export const createMaterial = createServerFn({ method: "POST" })
       unit: z.string().trim().min(1),
       currentPrice: z.string(),
       color: z.string().trim().optional(),
+      colorName: z.string().trim().optional(),
       /** When provided (with imageSize), returns a presigned upload URL scoped to the new material. */
       imageContentType: z.string().optional(),
       imageSize: z.number().int().positive().max(MAX_IMAGE_SIZE).optional(),
@@ -105,6 +106,7 @@ export const createMaterial = createServerFn({ method: "POST" })
           unit: data.unit,
           currentPrice: data.currentPrice,
           color: data.color || null,
+          colorName: data.colorName || null,
         })
         .returning();
 
@@ -148,6 +150,7 @@ export const updateMaterial = createServerFn({ method: "POST" })
       unit: z.string().trim().min(1),
       currentPrice: z.string(),
       color: z.string().trim().optional(),
+      colorName: z.string().trim().optional(),
       /** When true, deletes the current image from storage and sets image to null. */
       deleteImage: z.boolean().optional(),
       /** When provided (with imageSize), returns a presigned upload URL scoped to this material. */
@@ -175,6 +178,7 @@ export const updateMaterial = createServerFn({ method: "POST" })
           .set({
             ...updateData,
             color: updateData.color || null,
+            colorName: updateData.colorName || null,
             image: deleteImage ? null : undefined,
           })
           .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)))

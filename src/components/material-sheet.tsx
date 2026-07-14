@@ -53,6 +53,7 @@ type MaterialFormValues = {
   currentPrice: string;
   unit: Unit;
   color: string;
+  colorName: string;
   deleteImage: boolean;
   file: File | null;
 };
@@ -341,6 +342,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
       currentPrice: editingMaterial?.currentPrice ?? "",
       unit: editingMaterial ? unitSchema.catch("unit").parse(editingMaterial.unit) : "unit",
       color: editingMaterial?.color ?? "",
+      colorName: editingMaterial?.colorName ?? "",
       deleteImage: false,
       file: null,
     },
@@ -472,6 +474,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
           unit: values.unit,
           currentPrice: values.currentPrice,
           color: values.color,
+          colorName: values.colorName,
           deleteImage: values.deleteImage,
         };
         const id = editingMaterial?.id;
@@ -570,6 +573,31 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
             <Field.Root name={name} invalid={invalid} render={<StyledField.Field />}>
               <Field.Label render={<StyledField.FieldLabel />}>Color (opcional)</Field.Label>
               <ColorPicker value={value} onValueChange={onChange} placeholder="Ej: #1E3A8A" />
+              <Field.Error render={<StyledField.FieldError />}>{error?.message}</Field.Error>
+            </Field.Root>
+          )}
+        />
+
+        {/* Color name */}
+        <Controller
+          name="colorName"
+          control={control}
+          render={({
+            field: { name, ref, value, onBlur, onChange },
+            fieldState: { invalid, error },
+          }) => (
+            <Field.Root name={name} invalid={invalid} render={<StyledField.Field />}>
+              <Field.Label render={<StyledField.FieldLabel />}>
+                Nombre del color (opcional)
+              </Field.Label>
+              <Field.Control
+                value={value}
+                onBlur={onBlur}
+                onValueChange={onChange}
+                ref={ref}
+                placeholder="Ej: Azul marino"
+                render={<Input />}
+              />
               <Field.Error render={<StyledField.FieldError />}>{error?.message}</Field.Error>
             </Field.Root>
           )}
