@@ -196,7 +196,7 @@ function MaterialDetailPage() {
                     className="size-3 rounded-full border"
                     style={{ backgroundColor: material.color }}
                   />
-                  {material.color}
+                  {material.colorName || material.color}
                 </span>
               </div>
             )}
