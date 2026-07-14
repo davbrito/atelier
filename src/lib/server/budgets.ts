@@ -1,7 +1,7 @@
 import slugify from "@sindresorhus/slugify";
 import { createServerFn } from "@tanstack/react-start";
 import { generateRandomString } from "better-auth/crypto";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, getTableColumns } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
@@ -64,13 +64,21 @@ export const getBudgetBySlug = createServerFn({ method: "GET" })
     if (!budget) throw new Error("Presupuesto no encontrado");
 
     const mats = await db
-      .select()
+      .select({
+        ...getTableColumns(schema.budgetMaterial),
+        name: schema.material.name,
+      })
       .from(schema.budgetMaterial)
+      .innerJoin(schema.material, eq(schema.material.id, schema.budgetMaterial.materialId))
       .where(eq(schema.budgetMaterial.budgetId, budget.id));
 
     const ops = await db
-      .select()
+      .select({
+        ...getTableColumns(schema.budgetOperation),
+        name: schema.operation.name,
+      })
       .from(schema.budgetOperation)
+      .innerJoin(schema.operation, eq(schema.operation.id, schema.budgetOperation.operationId))
       .where(eq(schema.budgetOperation.budgetId, budget.id));
 
     return {

@@ -12,7 +12,6 @@ import * as StyledField from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { budgetBySlugQueryOptions } from "#/lib/query-options";
 import { listMaterials } from "#/lib/server/materials";
-import { listOperations } from "#/lib/server/operations";
 import { createQuotation } from "#/lib/server/quotations";
 
 export const Route = createFileRoute("/_app/app/_workspace/budgets/$slug")({
@@ -25,7 +24,6 @@ function QuotePage() {
   const { slug } = Route.useParams();
   const queryClient = useQueryClient();
   const listMaterialsFn = useServerFn(listMaterials);
-  const listOperationsFn = useServerFn(listOperations);
   const createQuotationFn = useServerFn(createQuotation);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [clientTitle, setClientTitle] = useState("");
@@ -37,15 +35,6 @@ function QuotePage() {
     queryFn: async () => (await listMaterialsFn({ data: { page: 1, pageSize: 100 } })).items,
     staleTime: 30_000,
   });
-
-  const { data: catalogOperations = [] } = useQuery({
-    queryKey: ["operations", "all"],
-    queryFn: async () => (await listOperationsFn({ data: { page: 1, pageSize: 100 } })).items,
-    staleTime: 30_000,
-  });
-
-  const getOperationName = (id: string) =>
-    catalogOperations.find((o: { id: string; name: string }) => o.id === id)?.name ?? id;
 
   const createMutation = useMutation({
     mutationFn: createQuotationFn,
@@ -147,7 +136,7 @@ function QuotePage() {
                     className="flex items-center justify-between rounded-lg border p-3 text-sm"
                   >
                     <div className="flex-1">
-                      <span className="font-medium">{mat?.name ?? "—"}</span>
+                      <span className="font-medium">{m.name}</span>
                       <span className="ml-2 text-muted-foreground text-xs">
                         {m.quantity} {unit} × ${price.toFixed(2)}
                       </span>
@@ -180,7 +169,7 @@ function QuotePage() {
                     className="flex items-center justify-between rounded-lg border p-3 text-sm"
                   >
                     <div className="flex-1">
-                      <span className="font-medium">{getOperationName(o.operationId)}</span>
+                      <span className="font-medium">{o.name}</span>
                       <span className="ml-2 text-muted-foreground text-xs">
                         {o.durationMinutes} min × ${rate.toFixed(2)}/h
                       </span>
