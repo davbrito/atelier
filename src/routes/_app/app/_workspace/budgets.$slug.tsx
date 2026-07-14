@@ -11,8 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/com
 import * as StyledField from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { budgetBySlugQueryOptions } from "#/lib/query-options";
-import { listMaterials } from "#/lib/server/materials";
-import { listOperations } from "#/lib/server/operations";
 import { createQuotation } from "#/lib/server/quotations";
 
 export const Route = createFileRoute("/_app/app/_workspace/budgets/$slug")({
@@ -24,28 +22,11 @@ export const Route = createFileRoute("/_app/app/_workspace/budgets/$slug")({
 function QuotePage() {
   const { slug } = Route.useParams();
   const queryClient = useQueryClient();
-  const listMaterialsFn = useServerFn(listMaterials);
-  const listOperationsFn = useServerFn(listOperations);
   const createQuotationFn = useServerFn(createQuotation);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [clientTitle, setClientTitle] = useState("");
 
   const { data: budget, isLoading } = useQuery(budgetBySlugQueryOptions(slug));
-
-  const { data: catalogMaterials = [] } = useQuery({
-    queryKey: ["materials", "all"],
-    queryFn: async () => (await listMaterialsFn({ data: { page: 1, pageSize: 1000 } })).items,
-    staleTime: 30_000,
-  });
-
-  const { data: catalogOperations = [] } = useQuery({
-    queryKey: ["operations", "all"],
-    queryFn: async () => (await listOperationsFn({ data: { page: 1, pageSize: 1000 } })).items,
-    staleTime: 30_000,
-  });
-
-  const getOperationName = (id: string) =>
-    catalogOperations.find((o: { id: string; name: string }) => o.id === id)?.name ?? id;
 
   const createMutation = useMutation({
     mutationFn: createQuotationFn,
@@ -90,8 +71,7 @@ function QuotePage() {
   }
 
   const materialCost = budget.materials.reduce((sum, m) => {
-    const mat = catalogMaterials.find((cm) => cm.id === m.materialId);
-    return sum + Number(mat?.currentPrice ?? 0) * Number(m.quantity);
+    return sum + Number(m.currentPrice) * Number(m.quantity);
   }, 0);
 
   const laborCost = budget.operations.reduce((sum, o) => {
@@ -137,9 +117,8 @@ function QuotePage() {
             <h3 className="mb-2 font-medium text-muted-foreground text-sm">Materiales</h3>
             <div className="space-y-2">
               {budget.materials.map((m) => {
-                const mat = catalogMaterials.find((cm) => cm.id === m.materialId);
-                const unit = mat?.unit ?? "";
-                const price = Number(mat?.currentPrice ?? 0);
+                const unit = m.unit;
+                const price = Number(m.currentPrice);
                 const qty = Number(m.quantity);
                 return (
                   <div
@@ -147,7 +126,7 @@ function QuotePage() {
                     className="flex items-center justify-between rounded-lg border p-3 text-sm"
                   >
                     <div className="flex-1">
-                      <span className="font-medium">{mat?.name ?? "—"}</span>
+                      <span className="font-medium">{m.name}</span>
                       <span className="ml-2 text-muted-foreground text-xs">
                         {m.quantity} {unit} × ${price.toFixed(2)}
                       </span>
@@ -180,7 +159,7 @@ function QuotePage() {
                     className="flex items-center justify-between rounded-lg border p-3 text-sm"
                   >
                     <div className="flex-1">
-                      <span className="font-medium">{getOperationName(o.operationId)}</span>
+                      <span className="font-medium">{o.name}</span>
                       <span className="ml-2 text-muted-foreground text-xs">
                         {o.durationMinutes} min × ${rate.toFixed(2)}/h
                       </span>
