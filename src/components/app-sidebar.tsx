@@ -73,7 +73,7 @@ export function AppSidebar() {
                       to={to}
                       activeOptions={{ exact: true }}
                       activeProps={{ isActive: true }}
-                      nativeButton={false}
+                      // biome-ignore lint/a11y/useValidAnchor: its passed from the Link
                       render={<a />}
                     >
                       <Icon className="size-4" />

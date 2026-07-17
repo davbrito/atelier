@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -33,6 +33,12 @@ export const Route = createFileRoute("/_app/app/_workspace/materials/$id")({
   component: MaterialDetailPage,
   loader: ({ context: { queryClient }, params: { id } }) =>
     void queryClient.prefetchQuery(materialByIdQueryOptions(id)),
+  pendingComponent: () => (
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6">
+      <div className="h-24 animate-pulse rounded-lg bg-muted" />
+      <div className="h-40 animate-pulse rounded-lg bg-muted" />
+    </div>
+  ),
 });
 
 function MaterialDetailPage() {
@@ -45,7 +51,7 @@ function MaterialDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
-  const { data: material, isLoading } = useQuery(materialByIdQueryOptions(id));
+  const { data: material } = useSuspenseQuery(materialByIdQueryOptions(id));
 
   const deleteMutation = useMutation({
     mutationFn: deleteFn,
@@ -56,15 +62,6 @@ function MaterialDetailPage() {
     },
     onError: () => toast.error("Error al eliminar el material"),
   });
-
-  if (isLoading) {
-    return (
-      <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6">
-        <div className="h-24 animate-pulse rounded-lg bg-muted" />
-        <div className="h-40 animate-pulse rounded-lg bg-muted" />
-      </div>
-    );
-  }
 
   if (!material) {
     return (
