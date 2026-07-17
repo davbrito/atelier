@@ -1,6 +1,7 @@
 import { type OrganizationAuthClient, useActiveOrganization, useAuth } from "@better-auth-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Navigate, Outlet, redirect } from "@tanstack/react-router";
+import { Loader2Icon } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { ensureActiveOrganization } from "#/lib/auth/functions";
 import { queryKeys } from "#/lib/query-options";
@@ -17,6 +18,11 @@ export const Route = createFileRoute("/_app/app/_workspace")({
 
     return { organization: organization as typeof organization | null };
   },
+  pendingComponent: () => (
+    <div className="flex h-64 items-center justify-center p-6">
+      <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
+    </div>
+  ),
 });
 
 // react-query cache keys don't include the active organization id, so cached

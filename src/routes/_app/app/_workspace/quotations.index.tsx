@@ -27,14 +27,6 @@ import {
 import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "#/components/ui/sheet";
-import { Skeleton } from "#/components/ui/skeleton";
-import {
   Table,
   TableBody,
   TableCell,
@@ -42,10 +34,8 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table";
-import { useIsMobile } from "#/hooks/use-mobile";
 import { quotationsListQueryOptions } from "#/lib/query-options";
-import { deleteQuotation, getQuotation } from "#/lib/server/quotations";
-import { cn } from "#/lib/utils";
+import { deleteQuotation } from "#/lib/server/quotations";
 
 const PAGE_SIZE = 20;
 
@@ -66,14 +56,8 @@ function QuotationsPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
   const deleteFn = useServerFn(deleteQuotation);
-  const getFn = useServerFn(getQuotation);
-  const isMobile = useIsMobile();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [detailData, setDetailData] = useState<Awaited<ReturnType<typeof getQuotation>> | null>(
-    null,
-  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery(quotationsListQueryOptions({ page, pageSize: PAGE_SIZE }));
@@ -90,13 +74,6 @@ function QuotationsPage() {
     },
     onError: () => toast.error("Error al eliminar la cotización"),
   });
-
-  async function viewDetails(id: string) {
-    setDetailData(null);
-    setIsDetailOpen(true);
-    const detail = await getFn({ data: { id } });
-    setDetailData(detail);
-  }
 
   function goToPage(nextPage: number) {
     navigate({ search: { page: nextPage } });
@@ -141,7 +118,13 @@ function QuotationsPage() {
               </TableHeader>
               <TableBody>
                 {quotations.map((q) => (
-                  <TableRow key={q.id} className="cursor-pointer" onClick={() => viewDetails(q.id)}>
+                  <TableRow
+                    key={q.id}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      navigate({ to: "/app/quotations/$slug", params: { slug: q.slug } })
+                    }
+                  >
                     <TableCell className="font-medium">{q.clientTitle}</TableCell>
                     <TableCell>
                       {q.budgetSlug ? (
@@ -195,136 +178,6 @@ function QuotationsPage() {
       )}
 
       <QuotationCreateSheet open={isCreateOpen} onOpenChange={setIsCreateOpen} />
-
-      {/* Detail Sheet */}
-      <Sheet open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <SheetContent
-          side={isMobile ? "bottom" : "right"}
-          className={cn("w-full sm:max-w-lg", isMobile && "max-h-[85dvh]")}
-        >
-          <SheetHeader>
-            {detailData ? (
-              <>
-                <SheetTitle>{detailData.clientTitle}</SheetTitle>
-                <SheetDescription>
-                  Cotización generada el{" "}
-                  {new Date(detailData.createdAt).toLocaleDateString("es-VE", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </SheetDescription>
-              </>
-            ) : (
-              <>
-                <SheetTitle className="sr-only">Cargando cotización</SheetTitle>
-                <SheetDescription className="sr-only">Cargando cotización</SheetDescription>
-                <Skeleton className="h-4 w-48" />
-              </>
-            )}
-          </SheetHeader>
-
-          {!detailData ? (
-            <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
-              <div>
-                <Skeleton className="mb-2 h-4 w-24" />
-                <div className="space-y-2">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                </div>
-              </div>
-              <div>
-                <Skeleton className="mb-2 h-4 w-24" />
-                <div className="space-y-2">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                </div>
-              </div>
-              <div className="border-t pt-4">
-                <div className="flex justify-between">
-                  <Skeleton className="h-6 w-16" />
-                  <Skeleton className="h-6 w-20" />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
-              {detailData?.materials.length ? (
-                <div>
-                  <h3 className="mb-2 font-medium text-sm">Materiales</h3>
-                  <div className="space-y-2">
-                    {detailData.materials.map((m) => (
-                      <div
-                        key={m.id}
-                        className="flex justify-between rounded-lg border p-3 text-sm"
-                      >
-                        <div className="flex-1">
-                          <span className="font-medium">{m.frozenName}</span>
-                          <span className="ml-2 text-muted-foreground text-xs">
-                            {m.quantity} {m.frozenUnit} × ${Number(m.frozenPrice).toFixed(2)}
-                          </span>
-                        </div>
-                        <span className="font-medium">
-                          ${(Number(m.frozenPrice) * Number(m.quantity)).toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              {detailData?.operations.length ? (
-                <div>
-                  <h3 className="mb-2 font-medium text-sm">Mano de obra</h3>
-                  <div className="space-y-2">
-                    {detailData.operations.map((o) => {
-                      const hours = o.durationMinutes / 60;
-                      const cost = hours * Number(o.frozenHourlyRate);
-                      return (
-                        <div
-                          key={o.id}
-                          className="flex justify-between rounded-lg border p-3 text-sm"
-                        >
-                          <div className="flex-1">
-                            <span className="font-medium">{o.frozenName}</span>
-                            <span className="ml-2 text-muted-foreground text-xs">
-                              {o.durationMinutes} min × ${Number(o.frozenHourlyRate).toFixed(2)}/h
-                            </span>
-                          </div>
-                          <span className="font-medium">${cost.toFixed(2)}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-
-              {/* Total */}
-              <div className="border-t pt-4">
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total</span>
-                  <span>
-                    $
-                    {detailData
-                      ? (
-                          detailData.materials.reduce(
-                            (sum, m) => sum + Number(m.frozenPrice) * Number(m.quantity),
-                            0,
-                          ) +
-                          detailData.operations.reduce((sum, o) => {
-                            const hours = o.durationMinutes / 60;
-                            return sum + hours * Number(o.frozenHourlyRate);
-                          }, 0)
-                        ).toFixed(2)
-                      : "0.00"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
