@@ -21,6 +21,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "#/components/ui/sidebar";
 import { authClient } from "#/lib/auth/client";
 
@@ -55,6 +56,11 @@ const SidebarLink = createLink(SidebarMenuButton);
 export function AppSidebar() {
   const { data: session } = useSession<typeof authClient>(authClient);
   const isAdmin = session?.user?.role === "admin";
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  function closeIfMobile() {
+    if (isMobile) setOpenMobile(false);
+  }
 
   return (
     <Sidebar>
@@ -73,6 +79,7 @@ export function AppSidebar() {
                       to={to}
                       activeOptions={{ exact: true }}
                       activeProps={{ isActive: true }}
+                      onClick={closeIfMobile}
                       // biome-ignore lint/a11y/useValidAnchor: its passed from the Link
                       render={<a />}
                     >
@@ -95,6 +102,7 @@ export function AppSidebar() {
                     to="/app/admin/whitelist"
                     activeOptions={{ exact: true }}
                     activeProps={{ isActive: true }}
+                    onClick={closeIfMobile}
                   >
                     <Shield className="size-4" />
                     <span>Usuarios Permitidos</span>

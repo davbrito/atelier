@@ -29,8 +29,8 @@ function App() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main className="flex-1">
-        <header className="flex items-center justify-between border-border border-b px-3 py-1.5">
+      <main className="flex min-w-0 flex-1 flex-col">
+        <header className="flex min-w-0 items-center justify-between border-border border-b px-3 py-1.5">
           <SidebarTrigger />
           <div className="flex items-center gap-2">
             <UserButton size="icon" />

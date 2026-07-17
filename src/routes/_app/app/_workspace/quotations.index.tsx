@@ -43,6 +43,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "#/components/ui/sheet";
+import { Skeleton } from "#/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -140,8 +141,8 @@ function QuotationsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="flex min-w-0 flex-col gap-6 overflow-auto p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl">Cotizaciones</h1>
           <p className="mt-1 text-muted-foreground">Cotizaciones enviadas a clientes.</p>
@@ -341,88 +342,126 @@ function QuotationsPage() {
           className={cn("w-full sm:max-w-lg", isMobile && "max-h-[85dvh]")}
         >
           <SheetHeader>
-            <SheetTitle>{detailData?.clientTitle}</SheetTitle>
-            <SheetDescription>
-              Cotización generada el{" "}
-              {detailData &&
-                new Date(detailData.createdAt).toLocaleDateString("es-VE", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-            </SheetDescription>
+            {detailData ? (
+              <>
+                <SheetTitle>{detailData.clientTitle}</SheetTitle>
+                <SheetDescription>
+                  Cotización generada el{" "}
+                  {new Date(detailData.createdAt).toLocaleDateString("es-VE", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </SheetDescription>
+              </>
+            ) : (
+              <>
+                <SheetTitle className="sr-only">Cargando cotización</SheetTitle>
+                <SheetDescription className="sr-only">Cargando cotización</SheetDescription>
+                <Skeleton className="h-4 w-48" />
+              </>
+            )}
           </SheetHeader>
 
-          <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
-            {detailData?.materials.length ? (
+          {!detailData ? (
+            <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
               <div>
-                <h3 className="mb-2 font-medium text-sm">Materiales</h3>
+                <Skeleton className="mb-2 h-4 w-24" />
                 <div className="space-y-2">
-                  {detailData.materials.map((m) => (
-                    <div key={m.id} className="flex justify-between rounded-lg border p-3 text-sm">
-                      <div className="flex-1">
-                        <span className="font-medium">{m.frozenName}</span>
-                        <span className="ml-2 text-muted-foreground text-xs">
-                          {m.quantity} {m.frozenUnit} × ${Number(m.frozenPrice).toFixed(2)}
-                        </span>
-                      </div>
-                      <span className="font-medium">
-                        ${(Number(m.frozenPrice) * Number(m.quantity)).toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
                 </div>
               </div>
-            ) : null}
-
-            {detailData?.operations.length ? (
               <div>
-                <h3 className="mb-2 font-medium text-sm">Mano de obra</h3>
+                <Skeleton className="mb-2 h-4 w-24" />
                 <div className="space-y-2">
-                  {detailData.operations.map((o) => {
-                    const hours = o.durationMinutes / 60;
-                    const cost = hours * Number(o.frozenHourlyRate);
-                    return (
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              </div>
+              <div className="border-t pt-4">
+                <div className="flex justify-between">
+                  <Skeleton className="h-6 w-16" />
+                  <Skeleton className="h-6 w-20" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
+              {detailData?.materials.length ? (
+                <div>
+                  <h3 className="mb-2 font-medium text-sm">Materiales</h3>
+                  <div className="space-y-2">
+                    {detailData.materials.map((m) => (
                       <div
-                        key={o.id}
+                        key={m.id}
                         className="flex justify-between rounded-lg border p-3 text-sm"
                       >
                         <div className="flex-1">
-                          <span className="font-medium">{o.frozenName}</span>
+                          <span className="font-medium">{m.frozenName}</span>
                           <span className="ml-2 text-muted-foreground text-xs">
-                            {o.durationMinutes} min × ${Number(o.frozenHourlyRate).toFixed(2)}/h
+                            {m.quantity} {m.frozenUnit} × ${Number(m.frozenPrice).toFixed(2)}
                           </span>
                         </div>
-                        <span className="font-medium">${cost.toFixed(2)}</span>
+                        <span className="font-medium">
+                          ${(Number(m.frozenPrice) * Number(m.quantity)).toFixed(2)}
+                        </span>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {detailData?.operations.length ? (
+                <div>
+                  <h3 className="mb-2 font-medium text-sm">Mano de obra</h3>
+                  <div className="space-y-2">
+                    {detailData.operations.map((o) => {
+                      const hours = o.durationMinutes / 60;
+                      const cost = hours * Number(o.frozenHourlyRate);
+                      return (
+                        <div
+                          key={o.id}
+                          className="flex justify-between rounded-lg border p-3 text-sm"
+                        >
+                          <div className="flex-1">
+                            <span className="font-medium">{o.frozenName}</span>
+                            <span className="ml-2 text-muted-foreground text-xs">
+                              {o.durationMinutes} min × ${Number(o.frozenHourlyRate).toFixed(2)}/h
+                            </span>
+                          </div>
+                          <span className="font-medium">${cost.toFixed(2)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Total */}
+              <div className="border-t pt-4">
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total</span>
+                  <span>
+                    $
+                    {detailData
+                      ? (
+                          detailData.materials.reduce(
+                            (sum, m) => sum + Number(m.frozenPrice) * Number(m.quantity),
+                            0,
+                          ) +
+                          detailData.operations.reduce((sum, o) => {
+                            const hours = o.durationMinutes / 60;
+                            return sum + hours * Number(o.frozenHourlyRate);
+                          }, 0)
+                        ).toFixed(2)
+                      : "0.00"}
+                  </span>
                 </div>
               </div>
-            ) : null}
-
-            {/* Total */}
-            <div className="border-t pt-4">
-              <div className="flex justify-between font-bold text-lg">
-                <span>Total</span>
-                <span>
-                  $
-                  {detailData
-                    ? (
-                        detailData.materials.reduce(
-                          (sum, m) => sum + Number(m.frozenPrice) * Number(m.quantity),
-                          0,
-                        ) +
-                        detailData.operations.reduce((sum, o) => {
-                          const hours = o.durationMinutes / 60;
-                          return sum + hours * Number(o.frozenHourlyRate);
-                        }, 0)
-                      ).toFixed(2)
-                    : "0.00"}
-                </span>
-              </div>
             </div>
-          </div>
+          )}
         </SheetContent>
       </Sheet>
 
