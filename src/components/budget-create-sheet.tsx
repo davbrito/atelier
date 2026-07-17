@@ -17,8 +17,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "#/components/ui/sheet";
+import { useIsMobile } from "#/hooks/use-mobile";
 import { budgetFormSchema, createBudget } from "#/lib/server/budgets";
 import { uploadEntityImage } from "#/lib/server/images";
+import { cn } from "#/lib/utils";
 import { BudgetFormFields } from "./budget-form-fields";
 
 type BudgetCreateSheetProps = {
@@ -29,6 +31,7 @@ type BudgetCreateSheetProps = {
 export function BudgetCreateSheet({ open, onOpenChange }: BudgetCreateSheetProps) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const form = useForm({
     resolver: zodResolver(
@@ -87,7 +90,10 @@ export function BudgetCreateSheet({ open, onOpenChange }: BudgetCreateSheetProps
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={cn("w-full sm:max-w-lg", isMobile && "max-h-[85dvh]")}
+      >
         <SheetHeader>
           <SheetTitle>Nuevo presupuesto</SheetTitle>
           <SheetDescription>Define los datos básicos del presupuesto.</SheetDescription>

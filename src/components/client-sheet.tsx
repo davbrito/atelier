@@ -26,9 +26,11 @@ import {
   SheetTitle,
 } from "#/components/ui/sheet";
 import { Textarea } from "#/components/ui/textarea";
+import { useIsMobile } from "#/hooks/use-mobile";
 import { STANDARD_MEASUREMENT_NAMES } from "#/lib/constants/measurements";
 import { queryKeys } from "#/lib/query-options";
 import { createClient, type getClientById, updateClient } from "#/lib/server/clients";
+import { cn } from "#/lib/utils";
 
 type ClientSheetProps = {
   open: boolean;
@@ -69,6 +71,7 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
   const queryClient = useQueryClient();
   const createFn = useServerFn(createClient);
   const updateFn = useServerFn(updateClient);
+  const isMobile = useIsMobile();
 
   const { control, handleSubmit, reset } = useForm<ClientFormValues>({
     values: {
@@ -134,7 +137,10 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="right">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={cn(isMobile && "max-h-[85dvh]")}
+      >
         <SheetHeader>
           <SheetTitle>{isEdit ? "Editar cliente" : "Nuevo cliente"}</SheetTitle>
           <SheetDescription>

@@ -122,7 +122,7 @@ function ClientDetailPage() {
           </Button>
           <Button
             variant="outline"
-            size="icon"
+            size="icon-sm"
             className="text-destructive hover:text-destructive"
             onClick={() => setConfirmDelete(true)}
           >
@@ -164,18 +164,33 @@ function ClientDetailPage() {
       {/* Measurements */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <RulerIcon className="size-4 text-muted-foreground" />
-            Medidas
+          <CardTitle className="flex items-center justify-between gap-2 text-base">
+            <span className="flex items-center gap-2">
+              <RulerIcon className="size-4 text-muted-foreground" />
+              Medidas
+            </span>
+            {client.measurements.length > 0 && (
+              <span className="font-normal text-muted-foreground text-xs tabular-nums">
+                {client.measurements.length}
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {client.measurements.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-1.5">
               {client.measurements.map((m) => (
-                <div key={m.id} className="border-b p-3">
-                  <p className="text-muted-foreground text-xs uppercase tracking-wider">{m.name}</p>
-                  <p className="mt-1 font-semibold text-lg tabular-nums">{m.value}</p>
+                <div
+                  key={m.id}
+                  className="rounded-md border bg-muted/40 px-2 py-1.5 transition-colors hover:bg-muted/70"
+                >
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                    {m.name}
+                  </p>
+                  <p className="font-semibold text-sm tabular-nums">
+                    {m.value}
+                    <span className="ml-1 font-normal text-[10px] text-muted-foreground">cm</span>
+                  </p>
                 </div>
               ))}
             </div>

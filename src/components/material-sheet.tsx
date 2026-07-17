@@ -33,6 +33,7 @@ import {
   SheetTitle,
 } from "#/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { useIsMobile } from "#/hooks/use-mobile";
 import { materialInventoryQueryOptions, queryKeys } from "#/lib/query-options";
 import { setEntityImage } from "#/lib/server/images";
 import { registerMovement } from "#/lib/server/inventory";
@@ -334,6 +335,7 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
 export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialSheetProps) {
   const queryClient = useQueryClient();
   const createFn = useServerFn(createMaterial);
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<"general" | "inventario">("general");
 
   const { control, handleSubmit, reset, setValue } = useForm<MaterialFormValues>({
@@ -624,7 +626,10 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="right">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={cn(isMobile && "max-h-[85dvh]")}
+      >
         <SheetHeader>
           <SheetTitle>{isEdit ? "Editar material" : "Nuevo material"}</SheetTitle>
           <SheetDescription>

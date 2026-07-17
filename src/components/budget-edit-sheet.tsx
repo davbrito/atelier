@@ -16,9 +16,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "#/components/ui/sheet";
+import { useIsMobile } from "#/hooks/use-mobile";
 import { budgetByIdQueryOptions, queryKeys } from "#/lib/query-options";
 import { budgetFormSchema, updateBudget } from "#/lib/server/budgets";
 import { uploadEntityImage } from "#/lib/server/images";
+import { cn } from "#/lib/utils";
 
 type BudgetEditSheetProps = {
   budgetId: string | null;
@@ -28,6 +30,7 @@ type BudgetEditSheetProps = {
 
 export function BudgetEditSheet({ budgetId, open, onOpenChange }: BudgetEditSheetProps) {
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   // Fetch the full budget data when the sheet opens
   const { data: budgetData } = useQuery({
@@ -113,7 +116,10 @@ export function BudgetEditSheet({ budgetId, open, onOpenChange }: BudgetEditShee
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={cn("w-full sm:max-w-lg", isMobile && "max-h-[85dvh]")}
+      >
         <SheetHeader>
           <SheetTitle>Editar presupuesto</SheetTitle>
         </SheetHeader>

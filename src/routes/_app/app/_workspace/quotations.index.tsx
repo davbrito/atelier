@@ -34,6 +34,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "#/components/ui/sheet";
+import { useIsMobile } from "#/hooks/use-mobile";
 import { listBudgets } from "#/lib/server/budgets";
 import {
   createQuotation,
@@ -41,6 +42,7 @@ import {
   getQuotation,
   listQuotations,
 } from "#/lib/server/quotations";
+import { cn } from "#/lib/utils";
 
 export const Route = createFileRoute("/_app/app/_workspace/quotations/")({
   component: QuotationsPage,
@@ -53,6 +55,7 @@ function QuotationsPage() {
   const deleteFn = useServerFn(deleteQuotation);
   const getFn = useServerFn(getQuotation);
   const listBudgetsFn = useServerFn(listBudgets);
+  const isMobile = useIsMobile();
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -170,7 +173,10 @@ function QuotationsPage() {
 
       {/* Create Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right">
+        <SheetContent
+          side={isMobile ? "bottom" : "right"}
+          className={cn(isMobile && "max-h-[85dvh]")}
+        >
           <SheetHeader>
             <SheetTitle>Nueva cotización</SheetTitle>
             <SheetDescription>
@@ -242,7 +248,10 @@ function QuotationsPage() {
 
       {/* Detail Sheet */}
       <Sheet open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-lg">
+        <SheetContent
+          side={isMobile ? "bottom" : "right"}
+          className={cn("w-full sm:max-w-lg", isMobile && "max-h-[85dvh]")}
+        >
           <SheetHeader>
             <SheetTitle>{detailData?.clientTitle}</SheetTitle>
             <SheetDescription>

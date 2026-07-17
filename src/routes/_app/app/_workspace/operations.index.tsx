@@ -46,6 +46,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table";
+import { useIsMobile } from "#/hooks/use-mobile";
 import { operationsListQueryOptions } from "#/lib/query-options";
 import {
   createOperation,
@@ -53,6 +54,7 @@ import {
   type listOperations,
   updateOperation,
 } from "#/lib/server/operations";
+import { cn } from "#/lib/utils";
 
 const PAGE_SIZE = 20;
 
@@ -77,6 +79,7 @@ function OperationsPage() {
   const createFn = useServerFn(createOperation);
   const updateFn = useServerFn(updateOperation);
   const deleteFn = useServerFn(deleteOperation);
+  const isMobile = useIsMobile();
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingOperation, setEditingOperation] = useState<Operation | null>(null);
@@ -237,7 +240,10 @@ function OperationsPage() {
           if (!open) setEditingOperation(null);
         }}
       >
-        <SheetContent side="right">
+        <SheetContent
+          side={isMobile ? "bottom" : "right"}
+          className={cn(isMobile && "max-h-[85dvh]")}
+        >
           <SheetHeader>
             <SheetTitle>{editingOperation ? "Editar operación" : "Nueva operación"}</SheetTitle>
             <SheetDescription>Ingresa el nombre de la operación de mano de obra.</SheetDescription>
