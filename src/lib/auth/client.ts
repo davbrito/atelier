@@ -18,8 +18,8 @@ export const authClient = createAuthClient({
   ],
 });
 
-// declare module "@better-auth-ui/core" {
-//   interface AuthConfig {
-//     authClient: typeof authClient;
-//   }
-// }
+declare module "@better-auth-ui/core" {
+  interface AuthConfig {
+    authClient: typeof authClient;
+  }
+}

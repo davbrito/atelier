@@ -31,7 +31,7 @@ export type UserAvatarProps = {
 export function UserAvatar({ className, user, isPending, fallback }: UserAvatarProps) {
   const { authClient } = useAuth();
   const { data: session, isPending: sessionPending } = useSession(
-    authClient as UsernameAuthClient,
+    authClient as unknown as UsernameAuthClient,
     { enabled: !user && !isPending },
   );
 

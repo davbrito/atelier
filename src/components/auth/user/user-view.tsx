@@ -34,7 +34,7 @@ export type UserViewProps = {
 export function UserView({ className, isPending, hideSubtitle = false, user }: UserViewProps) {
   const { authClient } = useAuth();
   const { data: session, isPending: sessionPending } = useSession(
-    authClient as UsernameAuthClient,
+    authClient as unknown as UsernameAuthClient,
     { enabled: !user && !isPending },
   );
 

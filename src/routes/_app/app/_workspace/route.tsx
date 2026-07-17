@@ -1,4 +1,4 @@
-import { type OrganizationAuthClient, useActiveOrganization, useAuth } from "@better-auth-ui/react";
+import { useActiveOrganization, useAuth } from "@better-auth-ui/react";
 import { createFileRoute, Navigate, Outlet, redirect } from "@tanstack/react-router";
 import type { Organization } from "better-auth/plugins";
 import { Loader2Icon } from "lucide-react";
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_app/app/_workspace")({
 function RouteComponent() {
   const { authClient } = useAuth();
 
-  const { data: active, isFetching } = useActiveOrganization(authClient as OrganizationAuthClient);
+  const { data: active, isFetching } = useActiveOrganization(authClient);
   useReloadOnOrganizationChange(active, isFetching);
 
   if (!active) {

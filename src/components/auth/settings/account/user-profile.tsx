@@ -28,7 +28,7 @@ export type UserProfileProps = {
  */
 export function UserProfile({ className }: UserProfileProps) {
   const { additionalFields, authClient, localization } = useAuth();
-  const { data: session } = useSession(authClient as UsernameAuthClient);
+  const { data: session } = useSession(authClient as unknown as UsernameAuthClient);
 
   const { mutate: updateUser, isPending } = useUpdateUser(authClient, {
     onSuccess: () => toast.success(localization.settings.profileUpdatedSuccess),

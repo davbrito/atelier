@@ -1,5 +1,5 @@
 import { organizationMutationKeys } from "@better-auth-ui/core/plugins";
-import { type OrganizationAuthClient, useActiveOrganization, useAuth } from "@better-auth-ui/react";
+import { useActiveOrganization, useAuth } from "@better-auth-ui/react";
 import { useIsMutating, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { OrganizationOnboarding } from "#/components/organization-onboarding";
@@ -30,7 +30,7 @@ function RouteComponent() {
   // Gate the redirect on isFetching too, so we don't navigate to the
   // workspace (whose server functions require an active organization)
   // until the query has actually settled with a fetch.
-  const { data: active, isFetching } = useActiveOrganization(authClient as OrganizationAuthClient);
+  const { data: active, isFetching } = useActiveOrganization(authClient);
   const isMutating = useIsMutating({
     mutationKey: organizationMutationKeys.setActive,
   });

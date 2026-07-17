@@ -96,7 +96,7 @@ export function UserButton({
   const { authClient, basePaths, viewPaths, localization, plugins, navigate } = useAuth();
 
   const { isPending: settingActiveSession } = useSetActiveSession(
-    authClient as MultiSessionAuthClient,
+    authClient as unknown as MultiSessionAuthClient,
   );
   const { data: session, isPending: sessionPending } = useSession(authClient);
 

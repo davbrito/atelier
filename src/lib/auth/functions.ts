@@ -18,9 +18,7 @@ export const ensureSession = createIsomorphicFn()
   .server((queryClient: QueryClient) =>
     ensureSessionServer(queryClient, getAuth(), { headers: getRequestHeaders() }),
   )
-  .client((queryClient: QueryClient) =>
-    ensureSessionClient<typeof authClient>(queryClient, authClient),
-  );
+  .client((queryClient: QueryClient) => ensureSessionClient(queryClient, authClient));
 
 export const ensureActiveOrganization = createIsomorphicFn()
   .server((queryClient: QueryClient, userId: string) =>
@@ -29,7 +27,7 @@ export const ensureActiveOrganization = createIsomorphicFn()
     }),
   )
   .client((queryClient: QueryClient, userId: string) =>
-    ensureActiveOrganizationClient<typeof authClient>(queryClient, authClient, userId),
+    ensureActiveOrganizationClient(queryClient, authClient, userId),
   );
 
 export const ensureOrganizationList = createIsomorphicFn()
@@ -37,7 +35,7 @@ export const ensureOrganizationList = createIsomorphicFn()
     ensureListOrganizationsServer(queryClient, getAuth(), userId, { headers: getRequestHeaders() }),
   )
   .client((queryClient: QueryClient, userId: string) =>
-    ensureListOrganizationsClient<typeof authClient>(queryClient, authClient, userId),
+    ensureListOrganizationsClient(queryClient, authClient, userId),
   );
 
 export const authenticatedMiddleware = createMiddleware().server(
