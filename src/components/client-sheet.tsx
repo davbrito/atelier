@@ -4,11 +4,18 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2Icon, MinusIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { NumericFormat } from "react-number-format";
 import { toast } from "sonner";
 import { MeasurementNameCombobox } from "#/components/measurement-name-combobox";
 import { Button } from "#/components/ui/button";
 import * as StyledField from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "#/components/ui/input-group";
 import {
   Sheet,
   SheetClose,
@@ -29,24 +36,33 @@ type ClientSheetProps = {
   editingClient: Awaited<ReturnType<typeof getClientById>> | null;
 };
 
+type MeasurementFormValue = { name: string; value: number | "" };
+
 type ClientFormValues = {
   name: string;
   phone: string;
   email: string;
   notes: string;
-  measurements: { name: string; value: string }[];
+  measurements: MeasurementFormValue[];
 };
 
-function buildInitialMeasurements(existing: { name: string; value: string }[] | undefined) {
+function buildInitialMeasurements(
+  existing: { name: string; value: number }[] | undefined,
+): MeasurementFormValue[] {
   const byName = new Map((existing ?? []).map((m) => [m.name.trim().toLowerCase(), m]));
 
-  const standard = STANDARD_MEASUREMENT_NAMES.map((name) => {
+  const standard: MeasurementFormValue[] = STANDARD_MEASUREMENT_NAMES.map((name) => {
     const match = byName.get(name.toLowerCase());
     byName.delete(name.toLowerCase());
-    return { name: match?.name ?? name, value: match?.value ?? "" };
+    return { name: match?.name ?? name, value: match ? match.value : "" };
   });
 
-  return [...standard, ...byName.values()];
+  const custom: MeasurementFormValue[] = [...byName.values()].map((m) => ({
+    name: m.name,
+    value: m.value,
+  }));
+
+  return [...standard, ...custom];
 }
 
 export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetProps) {
@@ -70,9 +86,14 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
     remove: removeMeasurement,
   } = useFieldArray({ control, name: "measurements" });
 
-  const [draftMeasurement, setDraftMeasurement] = useState({ name: "", value: "" });
+  const [draftMeasurement, setDraftMeasurement] = useState<MeasurementFormValue>({
+    name: "",
+    value: "",
+  });
   const draftMeasurementValid =
-    draftMeasurement.name.trim() !== "" && draftMeasurement.value.trim() !== "";
+    draftMeasurement.name.trim() !== "" &&
+    draftMeasurement.value !== "" &&
+    Number.isFinite(draftMeasurement.value);
 
   function commitMeasurement() {
     if (!draftMeasurementValid) return;
@@ -130,9 +151,9 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
               phone: values.phone,
               email: values.email,
               notes: values.notes,
-              measurements: values.measurements.filter(
-                (m) => m.name.trim() !== "" && m.value.trim() !== "",
-              ),
+              measurements: values.measurements
+                .filter((m) => m.name.trim() !== "" && m.value !== "" && Number.isFinite(m.value))
+                .map((m) => ({ name: m.name.trim(), value: m.value as number })),
             };
             const id = editingClient?.id;
             if (isEdit && id) {
@@ -235,27 +256,33 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
                 <Controller
                   name={`measurements.${i}.name`}
                   control={control}
-                  render={({ field: { value, onChange, onBlur } }) => (
-                    <MeasurementNameCombobox
-                      value={value}
-                      onChange={onChange}
-                      onBlur={onBlur}
-                      placeholder="Ej: Busto"
-                    />
+                  render={({ field: { value } }) => (
+                    <span className="flex-1 truncate text-xs">{value}</span>
                   )}
                 />
                 <Controller
                   name={`measurements.${i}.value`}
                   control={control}
                   render={({ field: { value, onChange, onBlur, ref } }) => (
-                    <Input
-                      value={value}
-                      onChange={(e) => onChange(e.target.value)}
-                      onBlur={onBlur}
-                      ref={ref}
-                      placeholder="Ej: 92 cm"
-                      className="w-32"
-                    />
+                    <InputGroup className="w-24">
+                      <InputGroupInput
+                        render={
+                          <NumericFormat
+                            value={value}
+                            onValueChange={(v) => onChange(v.floatValue ?? "")}
+                            onBlur={onBlur}
+                            getInputRef={ref}
+                            decimalScale={2}
+                            allowNegative={false}
+                            decimalSeparator=","
+                            inputMode="decimal"
+                          />
+                        }
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupText>cm</InputGroupText>
+                      </InputGroupAddon>
+                    </InputGroup>
                   )}
                 />
                 <Button
@@ -280,19 +307,33 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
                   }
                 }}
                 placeholder="Ej: Busto"
+                className="flex-1"
               />
-              <Input
-                value={draftMeasurement.value}
-                onChange={(e) => setDraftMeasurement((d) => ({ ...d, value: e.target.value }))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    commitMeasurement();
+              <InputGroup className="w-24">
+                <InputGroupInput
+                  render={
+                    <NumericFormat
+                      value={draftMeasurement.value}
+                      onValueChange={(v) =>
+                        setDraftMeasurement((d) => ({ ...d, value: v.floatValue ?? "" }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          commitMeasurement();
+                        }
+                      }}
+                      decimalScale={2}
+                      allowNegative={false}
+                      decimalSeparator=","
+                      inputMode="decimal"
+                    />
                   }
-                }}
-                placeholder="Ej: 92 cm"
-                className="w-32"
-              />
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupText>cm</InputGroupText>
+                </InputGroupAddon>
+              </InputGroup>
               <Button
                 type="button"
                 variant="ghost"

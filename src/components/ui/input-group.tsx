@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Input as InputPrimitive } from "@base-ui/react/input";
 
 import { cn } from "#/lib/utils.ts";
 import { Button } from "#/components/ui/button.tsx";
@@ -111,7 +112,7 @@ function InputGroupText({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
-function InputGroupInput({ className, ...props }: React.ComponentProps<"input">) {
+function InputGroupInput({ className, ...props }: InputPrimitive.Props) {
   return (
     <Input
       data-slot="input-group-control"

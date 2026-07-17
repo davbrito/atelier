@@ -15,7 +15,7 @@ export const clientFormSchema = z.object({
   measurements: z.array(
     z.object({
       name: z.string().trim().min(1),
-      value: z.string().trim().min(1),
+      value: z.coerce.number(),
     }),
   ),
 });

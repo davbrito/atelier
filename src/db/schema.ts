@@ -5,6 +5,7 @@ import {
   integer,
   pgEnum,
   pgPolicy,
+  real,
   snakeCase,
   text,
   timestamp,
@@ -224,7 +225,7 @@ export const clientMeasurement = snakeCase.table("client_measurements", {
     .notNull()
     .references(() => client.id, { onDelete: "cascade" }),
   name: varchar({ length: 255 }).notNull(),
-  value: varchar({ length: 100 }).notNull(),
+  value: real().notNull(),
 });
 
 // ── Whitelist ────────────────────────────────────────────
