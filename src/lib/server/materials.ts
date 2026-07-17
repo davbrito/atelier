@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, count, eq, getTableColumns, ilike, sql } from "drizzle-orm";
+import { and, asc, count, eq, getColumns, ilike, sql } from "drizzle-orm";
 import * as z from "zod";
 import { material, materialInventoryMovement, materialPriceHistory } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
@@ -34,7 +34,7 @@ export const listMaterials = createServerFn({ method: "GET" })
     const [items, [{ total }]] = await Promise.all([
       db
         .select({
-          ...getTableColumns(material),
+          ...getColumns(material),
           currentStock: sql<string>`COALESCE(${stockSq.stock}, '0')`,
         })
         .from(material)
@@ -70,7 +70,7 @@ export const getMaterialById = createServerFn({ method: "GET" })
 
     const [found] = await db
       .select({
-        ...getTableColumns(material),
+        ...getColumns(material),
         currentStock: sql<string>`COALESCE(${stockSq.stock}, '0')`,
       })
       .from(material)

@@ -1,7 +1,7 @@
 import slugify from "@sindresorhus/slugify";
 import { createServerFn } from "@tanstack/react-start";
 import { generateRandomString } from "better-auth/crypto";
-import { and, asc, eq, getTableColumns } from "drizzle-orm";
+import { and, asc, eq, getColumns } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
@@ -65,7 +65,7 @@ export const getBudgetBySlug = createServerFn({ method: "GET" })
 
     const mats = await db
       .select({
-        ...getTableColumns(schema.budgetMaterial),
+        ...getColumns(schema.budgetMaterial),
         name: schema.material.name,
         unit: schema.material.unit,
         currentPrice: schema.material.currentPrice,
@@ -76,7 +76,7 @@ export const getBudgetBySlug = createServerFn({ method: "GET" })
 
     const ops = await db
       .select({
-        ...getTableColumns(schema.budgetOperation),
+        ...getColumns(schema.budgetOperation),
         name: schema.operation.name,
       })
       .from(schema.budgetOperation)
@@ -106,7 +106,7 @@ export const getBudgetById = createServerFn({ method: "GET" })
 
     const mats = await db
       .select({
-        ...getTableColumns(schema.budgetMaterial),
+        ...getColumns(schema.budgetMaterial),
         name: schema.material.name,
         unit: schema.material.unit,
         currentPrice: schema.material.currentPrice,
@@ -117,7 +117,7 @@ export const getBudgetById = createServerFn({ method: "GET" })
 
     const ops = await db
       .select({
-        ...getTableColumns(schema.budgetOperation),
+        ...getColumns(schema.budgetOperation),
         name: schema.operation.name,
       })
       .from(schema.budgetOperation)
