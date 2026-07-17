@@ -1,19 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  Loader2Icon,
-  PackageIcon,
-  PencilIcon,
-  PlusIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { Loader2Icon, PackageIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 import { MaterialSheet } from "#/components/material-sheet";
+import { Pagination } from "#/components/pagination";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -229,31 +222,7 @@ function MaterialsPage() {
               </TableBody>
             </Table>
           </Card>
-          <div className="flex items-center justify-between">
-            <p className="text-muted-foreground text-sm">
-              Página {page} de {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => goToPage(page - 1)}
-              >
-                <ChevronLeftIcon className="mr-1 size-4" />
-                Anterior
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => goToPage(page + 1)}
-              >
-                Siguiente
-                <ChevronRightIcon className="ml-1 size-4" />
-              </Button>
-            </div>
-          </div>
+          <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
         </>
       )}
       {/* Form Sheet */}

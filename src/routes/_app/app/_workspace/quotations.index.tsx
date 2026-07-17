@@ -2,8 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
   ClipboardListIcon,
   ExternalLinkIcon,
   Loader2Icon,
@@ -13,6 +11,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
+import { Pagination } from "#/components/pagination";
 import { QuotationCreateSheet } from "#/components/quotation-create-sheet";
 import {
   AlertDialog,
@@ -194,31 +193,7 @@ function QuotationsPage() {
               </TableBody>
             </Table>
           </div>
-          <div className="flex items-center justify-between">
-            <p className="text-muted-foreground text-sm">
-              Página {page} de {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => goToPage(page - 1)}
-              >
-                <ChevronLeftIcon className="mr-1 size-4" />
-                Anterior
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => goToPage(page + 1)}
-              >
-                Siguiente
-                <ChevronRightIcon className="ml-1 size-4" />
-              </Button>
-            </div>
-          </div>
+          <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
         </>
       )}
 
