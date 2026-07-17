@@ -1,15 +1,26 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2Icon, PencilIcon } from "lucide-react";
+import { CalculatorIcon, Loader2Icon, PencilIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { BudgetEditSheet } from "#/components/budget-edit-sheet";
 import { ClientCombobox } from "#/components/client-combobox";
 import { PageHeader } from "#/components/page-header";
+import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import * as StyledField from "#/components/ui/field";
+import { Skeleton } from "#/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "#/components/ui/table";
+import { formatMoney } from "#/lib/format";
 import { budgetBySlugQueryOptions } from "#/lib/query-options";
 import { createQuotation } from "#/lib/server/quotations";
 
@@ -18,8 +29,16 @@ export const Route = createFileRoute("/_app/app/_workspace/budgets/$slug")({
   loader: ({ context: { queryClient }, params: { slug } }) =>
     void queryClient.prefetchQuery(budgetBySlugQueryOptions(slug)),
   pendingComponent: () => (
-    <div className="flex h-64 items-center justify-center p-6">
-      <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
+    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
+      <div className="flex items-center gap-4">
+        <Skeleton className="size-9 shrink-0 rounded-md" />
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+      </div>
+      <Skeleton className="h-48 w-full rounded-lg" />
+      <Skeleton className="h-32 w-full rounded-lg" />
     </div>
   ),
 });
@@ -43,7 +62,7 @@ function QuotePage() {
     onError: () => toast.error("Error al crear la cotización"),
   });
 
-  function handleSubmit(e: React.SubmitEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!clientId || !budget?.id) return;
     createMutation.mutate({
@@ -72,97 +91,108 @@ function QuotePage() {
   const total = materialCost + laborCost;
 
   return (
-    <div className="container mx-auto flex flex-col gap-8 p-6">
-      {/* Header */}
-      <PageHeader title={budget.name} description="Resumen del presupuesto" back>
-        <Button variant="outline" size="sm" onClick={() => setEditSheetOpen(true)}>
-          <PencilIcon className="mr-1 size-3" />
-          Editar
-        </Button>
+    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
+      <PageHeader title={budget.name} description={budget.description ?? undefined} back>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="gap-1.5">
+            <CalculatorIcon className="size-3" />
+            Presupuesto
+          </Badge>
+          <Button variant="outline" size="sm" onClick={() => setEditSheetOpen(true)}>
+            <PencilIcon className="mr-1 size-3" />
+            Editar
+          </Button>
+        </div>
       </PageHeader>
 
-      {/* Budget preview */}
-      <div className="space-y-4">
-        {budget.description && <p className="text-muted-foreground">{budget.description}</p>}
+      {/* Materials */}
+      {budget.materials.length > 0 && (
+        <Card className="gap-0 p-0">
+          <div className="border-b px-4 py-3">
+            <h3 className="font-medium text-sm">Materiales</h3>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Concepto</TableHead>
+                <TableHead>Cantidad</TableHead>
+                <TableHead className="text-right">Precio unit.</TableHead>
+                <TableHead className="text-right">Subtotal</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {budget.materials.map((m) => (
+                <TableRow key={m.id}>
+                  <TableCell className="font-medium">{m.name}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {m.quantity} {m.unit}
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {formatMoney(Number(m.currentPrice))}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {formatMoney(Number(m.amount))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <div className="flex justify-end border-t px-4 py-3 text-sm">
+            <span className="text-muted-foreground">Subtotal materiales:&nbsp;</span>
+            <span className="font-medium">{formatMoney(materialCost)}</span>
+          </div>
+        </Card>
+      )}
 
-        {/* Materials */}
-        {budget.materials.length > 0 && (
+      {/* Labor */}
+      {budget.operations.length > 0 && (
+        <Card className="gap-0 p-0">
+          <div className="border-b px-4 py-3">
+            <h3 className="font-medium text-sm">Mano de obra</h3>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Concepto</TableHead>
+                <TableHead>Duración</TableHead>
+                <TableHead className="text-right">Tarifa</TableHead>
+                <TableHead className="text-right">Subtotal</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {budget.operations.map((o) => (
+                <TableRow key={o.id}>
+                  <TableCell className="font-medium">{o.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{o.durationMinutes} min</TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {formatMoney(Number(budget.hourlyRate))}/h
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {formatMoney(Number(o.amount))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <div className="flex justify-end border-t px-4 py-3 text-sm">
+            <span className="text-muted-foreground">Subtotal mano de obra:&nbsp;</span>
+            <span className="font-medium">{formatMoney(laborCost)}</span>
+          </div>
+        </Card>
+      )}
+
+      {/* Total */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="flex items-center justify-between">
           <div>
-            <h3 className="mb-2 font-medium text-muted-foreground text-sm">Materiales</h3>
-            <div className="space-y-2">
-              {budget.materials.map((m) => {
-                const unit = m.unit;
-                const price = Number(m.currentPrice);
-                const qty = Number(m.quantity);
-                return (
-                  <div
-                    key={m.id}
-                    className="flex items-center justify-between rounded-lg border p-3 text-sm"
-                  >
-                    <div className="flex-1">
-                      <span className="font-medium">{m.name}</span>
-                      <span className="ml-2 text-muted-foreground text-xs">
-                        {m.quantity} {unit} × ${price.toFixed(2)}
-                      </span>
-                    </div>
-                    <span className="font-semibold">${(price * qty).toFixed(2)}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Materials subtotal */}
-            <div className="flex items-center justify-between rounded-lg border border-earth/10 bg-earth/3 p-3 font-semibold text-sm">
-              <span>Total materiales</span>
-              <span>${materialCost.toFixed(2)}</span>
-            </div>
+            <span className="font-semibold text-base">Total</span>
+            <p className="text-muted-foreground text-xs">
+              Tarifa horaria: {formatMoney(Number(budget.hourlyRate))}/h
+            </p>
           </div>
-        )}
-
-        {/* Labor */}
-        {budget.operations.length > 0 && (
-          <div>
-            <h3 className="mb-2 font-medium text-muted-foreground text-sm">Mano de obra</h3>
-            <div className="space-y-2">
-              {budget.operations.map((o) => {
-                const hours = o.durationMinutes / 60;
-                const rate = Number(budget.hourlyRate);
-                return (
-                  <div
-                    key={o.id}
-                    className="flex items-center justify-between rounded-lg border p-3 text-sm"
-                  >
-                    <div className="flex-1">
-                      <span className="font-medium">{o.name}</span>
-                      <span className="ml-2 text-muted-foreground text-xs">
-                        {o.durationMinutes} min × ${rate.toFixed(2)}/h
-                      </span>
-                    </div>
-                    <span className="font-semibold">${(hours * rate).toFixed(2)}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Labor subtotal */}
-            <div className="flex items-center justify-between rounded-lg border border-earth/10 bg-earth/3 p-3 font-semibold text-sm">
-              <span>Total mano de obra</span>
-              <span>${laborCost.toFixed(2)}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Total */}
-        <div className="rounded-lg border-2 border-earth/20 bg-earth/5 p-4">
-          <div className="flex justify-between font-bold text-lg">
-            <span>Total</span>
-            <span>${total.toFixed(2)}</span>
-          </div>
-          <div className="mt-1 flex justify-between text-muted-foreground text-xs">
-            <span>Tarifa horaria: ${budget.hourlyRate}/h</span>
-          </div>
-        </div>
-      </div>
+          <span className="font-bold text-2xl tracking-tight">{formatMoney(total)}</span>
+        </CardContent>
+      </Card>
 
       {/* Client form */}
       <Card>

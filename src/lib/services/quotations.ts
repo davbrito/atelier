@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, sql } from "drizzle-orm";
 import type { Db } from "#/db/client";
 import * as schema from "#/db/schema";
 
@@ -52,7 +52,7 @@ export function quotationsQuery(db: Db, filters: QuotationFilters) {
     .leftJoin(materialTotals, eq(materialTotals.quotationId, schema.quotation.id))
     .leftJoin(operationTotals, eq(operationTotals.quotationId, schema.quotation.id))
     .where(quotationsWhereClause(filters))
-    .orderBy(asc(schema.quotation.createdAt));
+    .orderBy(desc(schema.quotation.createdAt));
 
   if (filters.page || filters.pageSize) {
     const page = filters.page || 1;
