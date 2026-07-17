@@ -19,6 +19,7 @@ import {
   SheetTitle,
 } from "#/components/ui/sheet";
 import { Textarea } from "#/components/ui/textarea";
+import { STANDARD_MEASUREMENT_NAMES } from "#/lib/constants/measurements";
 import { queryKeys } from "#/lib/query-options";
 import { createClient, type getClientById, updateClient } from "#/lib/server/clients";
 
@@ -36,6 +37,18 @@ type ClientFormValues = {
   measurements: { name: string; value: string }[];
 };
 
+function buildInitialMeasurements(existing: { name: string; value: string }[] | undefined) {
+  const byName = new Map((existing ?? []).map((m) => [m.name.trim().toLowerCase(), m]));
+
+  const standard = STANDARD_MEASUREMENT_NAMES.map((name) => {
+    const match = byName.get(name.toLowerCase());
+    byName.delete(name.toLowerCase());
+    return { name: match?.name ?? name, value: match?.value ?? "" };
+  });
+
+  return [...standard, ...byName.values()];
+}
+
 export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetProps) {
   const queryClient = useQueryClient();
   const createFn = useServerFn(createClient);
@@ -47,7 +60,7 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
       phone: editingClient?.phone ?? "",
       email: editingClient?.email ?? "",
       notes: editingClient?.notes ?? "",
-      measurements: editingClient?.measurements ?? [],
+      measurements: buildInitialMeasurements(editingClient?.measurements),
     },
   });
 
@@ -117,7 +130,9 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
               phone: values.phone,
               email: values.email,
               notes: values.notes,
-              measurements: values.measurements,
+              measurements: values.measurements.filter(
+                (m) => m.name.trim() !== "" && m.value.trim() !== "",
+              ),
             };
             const id = editingClient?.id;
             if (isEdit && id) {
