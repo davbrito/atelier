@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import { Button } from "#/components/ui/button";
 
 type PageHeaderProps = {
-  title: string;
-  description?: string;
+  title: ReactNode;
+  description?: ReactNode;
   /** When true, renders a back button before the title that navigates to the previous entry in history. */
   back?: boolean;
   children?: ReactNode;

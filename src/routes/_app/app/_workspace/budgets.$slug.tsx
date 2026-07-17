@@ -1,11 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeftIcon, Loader2Icon, PencilIcon } from "lucide-react";
+import { Loader2Icon, PencilIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { BudgetEditSheet } from "#/components/budget-edit-sheet";
 import { ClientCombobox } from "#/components/client-combobox";
+import { PageHeader } from "#/components/page-header";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import * as StyledField from "#/components/ui/field";
@@ -16,6 +17,11 @@ export const Route = createFileRoute("/_app/app/_workspace/budgets/$slug")({
   component: QuotePage,
   loader: ({ context: { queryClient }, params: { slug } }) =>
     void queryClient.prefetchQuery(budgetBySlugQueryOptions(slug)),
+  pendingComponent: () => (
+    <div className="flex h-64 items-center justify-center p-6">
+      <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
+    </div>
+  ),
 });
 
 function QuotePage() {
@@ -25,7 +31,7 @@ function QuotePage() {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [clientId, setClientId] = useState("");
 
-  const { data: budget, isLoading } = useQuery(budgetBySlugQueryOptions(slug));
+  const { data: budget } = useSuspenseQuery(budgetBySlugQueryOptions(slug));
 
   const createMutation = useMutation({
     mutationFn: createQuotationFn,
@@ -37,20 +43,12 @@ function QuotePage() {
     onError: () => toast.error("Error al crear la cotización"),
   });
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     if (!clientId || !budget?.id) return;
     createMutation.mutate({
       data: { budgetId: budget.id, clientId },
     });
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center p-6">
-        <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
-      </div>
-    );
   }
 
   if (!budget) {
@@ -69,46 +67,23 @@ function QuotePage() {
     );
   }
 
-  const materialCost = budget.materials.reduce((sum, m) => {
-    return sum + Number(m.currentPrice) * Number(m.quantity);
-  }, 0);
-
-  const laborCost = budget.operations.reduce((sum, o) => {
-    const hours = o.durationMinutes / 60;
-    return sum + hours * Number(budget.hourlyRate);
-  }, 0);
-
+  const materialCost = budget.materials.reduce((sum, m) => sum + Number(m.amount), 0);
+  const laborCost = budget.operations.reduce((sum, o) => sum + Number(o.amount), 0);
   const total = materialCost + laborCost;
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6">
+    <div className="container mx-auto flex flex-col gap-8 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            nativeButton={false}
-            render={<Link to="/app/budgets" />}
-          >
-            <ArrowLeftIcon className="size-4" />
-          </Button>
-          <div>
-            <h1 className="font-heading text-2xl">{budget.name}</h1>
-            <p className="mt-1 text-muted-foreground">
-              {budget.description ?? "Cotización desde presupuesto"}
-            </p>
-          </div>
-        </div>
+      <PageHeader title={budget.name} description="Resumen del presupuesto" back>
         <Button variant="outline" size="sm" onClick={() => setEditSheetOpen(true)}>
           <PencilIcon className="mr-1 size-3" />
           Editar
         </Button>
-      </div>
+      </PageHeader>
 
       {/* Budget preview */}
       <div className="space-y-4">
-        <h2 className="font-semibold text-lg">Resumen del presupuesto</h2>
+        {budget.description && <p className="text-muted-foreground">{budget.description}</p>}
 
         {/* Materials */}
         {budget.materials.length > 0 && (

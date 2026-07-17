@@ -1,7 +1,7 @@
 import slugify from "@sindresorhus/slugify";
 import { createServerFn } from "@tanstack/react-start";
 import { generateRandomString } from "better-auth/crypto";
-import { and, asc, count, eq, getColumns, ilike } from "drizzle-orm";
+import { and, asc, eq, getColumns, ilike, sql } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
@@ -50,7 +50,7 @@ export const listBudgets = createServerFn({ method: "GET" })
       search ? ilike(schema.budget.name, `%${search}%`) : undefined,
     );
 
-    const [rows, [{ total }]] = await Promise.all([
+    const [rows, total] = await Promise.all([
       db
         .select()
         .from(schema.budget)
@@ -58,7 +58,7 @@ export const listBudgets = createServerFn({ method: "GET" })
         .orderBy(asc(schema.budget.name))
         .limit(pageSize)
         .offset((page - 1) * pageSize),
-      db.select({ total: count() }).from(schema.budget).where(whereClause),
+      db.$count(schema.budget, whereClause),
     ]);
 
     const items = rows.map((b) => ({ ...b, image: b.image && storageUrl(b.image) }));
@@ -70,15 +70,12 @@ export const getBudgetBySlug = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .validator(z.object({ slug: z.string() }))
   .handler(async ({ data, context: { activeOrganizationId, db } }) => {
-    const [budget] = await db
-      .select()
-      .from(schema.budget)
-      .where(
-        and(
-          eq(schema.budget.slug, data.slug),
-          eq(schema.budget.organizationId, activeOrganizationId),
-        ),
-      );
+    const budget = await db.query.budget.findFirst({
+      where: {
+        slug: data.slug,
+        organizationId: activeOrganizationId,
+      },
+    });
 
     if (!budget) throw new Error("Presupuesto no encontrado");
 
@@ -88,6 +85,9 @@ export const getBudgetBySlug = createServerFn({ method: "GET" })
         name: schema.material.name,
         unit: schema.material.unit,
         currentPrice: schema.material.currentPrice,
+        amount: sql<string>`${schema.budgetMaterial.quantity} * ${schema.material.currentPrice}`.as(
+          "amount",
+        ),
       })
       .from(schema.budgetMaterial)
       .innerJoin(schema.material, eq(schema.material.id, schema.budgetMaterial.materialId))
@@ -97,9 +97,14 @@ export const getBudgetBySlug = createServerFn({ method: "GET" })
       .select({
         ...getColumns(schema.budgetOperation),
         name: schema.operation.name,
+        amount:
+          sql<string>`(${schema.budgetOperation.durationMinutes} / 60.0) * ${schema.budget.hourlyRate}`.as(
+            "amount",
+          ),
       })
       .from(schema.budgetOperation)
       .innerJoin(schema.operation, eq(schema.operation.id, schema.budgetOperation.operationId))
+      .innerJoin(schema.budget, eq(schema.budget.id, schema.budgetOperation.budgetId))
       .where(eq(schema.budgetOperation.budgetId, budget.id));
 
     return {

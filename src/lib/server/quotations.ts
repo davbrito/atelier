@@ -1,10 +1,11 @@
 import slugify from "@sindresorhus/slugify";
 import { createServerFn } from "@tanstack/react-start";
 import { generateRandomString } from "better-auth/crypto";
-import { and, asc, eq, getColumns, sql } from "drizzle-orm";
+import { and, eq, getColumns } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
+import { quotationsCountQuery, quotationsQuery } from "../services/quotations";
 
 // ── Queries ──────────────────────────────────────────────
 
@@ -17,55 +18,17 @@ export const listQuotations = createServerFn({ method: "GET" })
   )
   .middleware([organizationMiddleware])
   .handler(async ({ data: { page, pageSize }, context: { activeOrganizationId, db } }) => {
-    const whereClause = eq(schema.quotation.organizationId, activeOrganizationId);
-
-    const materialTotals = db.$with("materialTotals").as(
-      db
-        .select({
-          quotationId: schema.quotationMaterial.quotationId,
-          total:
-            sql<string>`sum(${schema.quotationMaterial.frozenPrice} * ${schema.quotationMaterial.quantity})`.as(
-              "total",
-            ),
-        })
-        .from(schema.quotationMaterial)
-        .groupBy(schema.quotationMaterial.quotationId),
-    );
-
-    const operationTotals = db.$with("operationTotals").as(
-      db
-        .select({
-          quotationId: schema.quotationOperation.quotationId,
-          total:
-            sql<string>`sum((${schema.quotationOperation.durationMinutes} / 60.0) * ${schema.quotationOperation.frozenHourlyRate})`.as(
-              "total",
-            ),
-        })
-        .from(schema.quotationOperation)
-        .groupBy(schema.quotationOperation.quotationId),
-    );
-
     const [items, total] = await Promise.all([
-      db
-        .with(materialTotals, operationTotals)
-        .select({
-          id: schema.quotation.id,
-          slug: schema.quotation.slug,
-          clientTitle: schema.quotation.clientTitle,
-          createdAt: schema.quotation.createdAt,
-          budgetName: schema.budget.name,
-          budgetSlug: schema.budget.slug,
-          total: sql<string>`coalesce(${materialTotals.total}, 0) + coalesce(${operationTotals.total}, 0)`,
-        })
-        .from(schema.quotation)
-        .leftJoin(schema.budget, eq(schema.quotation.budgetId, schema.budget.id))
-        .leftJoin(materialTotals, eq(materialTotals.quotationId, schema.quotation.id))
-        .leftJoin(operationTotals, eq(operationTotals.quotationId, schema.quotation.id))
-        .where(whereClause)
-        .orderBy(asc(schema.quotation.createdAt))
-        .limit(pageSize)
-        .offset((page - 1) * pageSize),
-      db.$count(schema.quotation, whereClause),
+      quotationsQuery(db, {
+        page,
+        pageSize,
+        organizationId: activeOrganizationId,
+      }),
+      quotationsCountQuery(db, {
+        page,
+        pageSize,
+        organizationId: activeOrganizationId,
+      }),
     ]);
 
     return { items, total, page, pageSize };

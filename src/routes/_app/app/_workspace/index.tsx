@@ -4,10 +4,10 @@ import {
   ArrowRightIcon,
   CalculatorIcon,
   ClipboardListIcon,
-  Loader2Icon,
   PackageIcon,
   PlusIcon,
   ScissorsIcon,
+  UsersIcon,
 } from "lucide-react";
 import { PageHeader } from "#/components/page-header";
 import { buttonVariants } from "#/components/ui/button";
@@ -19,44 +19,57 @@ export const Route = createFileRoute("/_app/app/_workspace/")({
   loader: async ({ context: { queryClient } }) => {
     await queryClient.prefetchQuery(dashboardStatsQueryOptions);
   },
+  pendingComponent: () => (
+    <div className="flex flex-col gap-8 p-6">
+      <div className="space-y-2">
+        <div className="h-7 w-32 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-72 animate-pulse rounded bg-muted" />
+      </div>
+      <div className="h-16 animate-pulse rounded-lg bg-muted" />
+    </div>
+  ),
 });
 
 const statsCards = [
   {
     key: "budgets" as const,
     label: "Presupuestos",
-    description: "Plantillas reusables",
     icon: CalculatorIcon,
     to: "/app/budgets",
-    color: "text-chart-1",
-    bg: "bg-chart-1/10",
+    color: "text-muted-foreground",
+    bg: "bg-muted",
+  },
+  {
+    key: "clients" as const,
+    label: "Clientes",
+    icon: UsersIcon,
+    to: "/app/clients",
+    color: "text-muted-foreground",
+    bg: "bg-muted",
   },
   {
     key: "materials" as const,
     label: "Materiales",
-    description: "Catálogo de insumos",
     icon: PackageIcon,
     to: "/app/materials",
-    color: "text-chart-2",
-    bg: "bg-chart-2/10",
+    color: "text-muted-foreground",
+    bg: "bg-muted",
   },
   {
     key: "operations" as const,
     label: "Operaciones",
-    description: "Mano de obra",
     icon: ScissorsIcon,
     to: "/app/operations",
-    color: "text-chart-3",
-    bg: "bg-chart-3/10",
+    color: "text-muted-foreground",
+    bg: "bg-muted",
   },
   {
     key: "quotations" as const,
     label: "Cotizaciones",
-    description: "Presupuestos emitidos",
     icon: ClipboardListIcon,
     to: "/app/quotations",
-    color: "text-chart-4",
-    bg: "bg-chart-4/10",
+    color: "text-muted-foreground",
+    bg: "bg-muted",
   },
 ];
 
@@ -67,16 +80,7 @@ const quickActions = [
 ];
 
 function DashboardPage() {
-  const { data, isLoading } = useSuspenseQuery(dashboardStatsQueryOptions);
-
-  if (isLoading) {
-    return (
-      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <Loader2Icon className="size-8 animate-spin text-muted-foreground/40" />
-      </div>
-    );
-  }
-
+  const { data } = useSuspenseQuery(dashboardStatsQueryOptions);
   const { counts, recentQuotations } = data;
 
   return (
@@ -86,21 +90,23 @@ function DashboardPage() {
         description="Bienvenida al sistema de gestión de modistería y costura."
       />
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {statsCards.map(({ key, label, description, icon: Icon, to, color, bg }) => (
-          <Link key={key} to={to} className="group">
-            <Card className="transition-shadow hover:shadow-md">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="font-medium text-muted-foreground text-sm">{label}</CardTitle>
-                <div className={`rounded-lg p-2 ${bg}`}>
-                  <Icon className={`size-4 ${color}`} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="font-bold text-3xl tracking-tight">{counts[key]}</div>
-                <p className="mt-1 text-muted-foreground text-xs">{description}</p>
-              </CardContent>
+      {/* Stats */}
+      <div className="flex flex-wrap gap-3 *:flex-1 sm:grid sm:grid-cols-[repeat(auto-fit,minmax(8rem,1fr))]">
+        {statsCards.map(({ key, label, icon: Icon, to, color, bg }) => (
+          <Link key={key} to={to}>
+            <Card
+              size="sm"
+              className="flex-row items-center gap-2 rounded-xl px-2 py-1 transition-shadow hover:shadow-md"
+            >
+              <div className={`shrink-0 rounded-lg p-1.5 ${bg}`}>
+                <Icon className={`size-4 ${color}`} />
+              </div>
+              <div>
+                <div className="font-bold text-lg leading-none tracking-tight">{counts[key]}</div>
+                <p className="whitespace-nowrap text-muted-foreground text-xs leading-tight">
+                  {label}
+                </p>
+              </div>
             </Card>
           </Link>
         ))}
@@ -150,12 +156,14 @@ function DashboardPage() {
                 {recentQuotations.map((q) => (
                   <Link
                     key={q.id}
-                    to="/app/quotations"
+                    to="/app/quotations/$slug"
+                    params={{ slug: q.slug }}
                     className="-mx-2 flex items-center justify-between rounded-md px-2 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-muted/50"
                   >
                     <div className="min-w-0">
                       <p className="truncate font-medium text-sm">{q.clientTitle}</p>
-                      <p className="text-muted-foreground text-xs">
+                      <p className="truncate text-muted-foreground text-xs">
+                        {q.budgetName ?? "Sin presupuesto"} ·{" "}
                         {new Date(q.createdAt).toLocaleDateString("es-VE", {
                           day: "numeric",
                           month: "short",
@@ -163,7 +171,16 @@ function DashboardPage() {
                         })}
                       </p>
                     </div>
-                    <ArrowRightIcon className="ml-2 size-4 shrink-0 text-muted-foreground/50" />
+                    <div className="ml-2 flex shrink-0 items-center gap-2">
+                      <span className="font-medium text-sm" suppressHydrationWarning>
+                        {Number(q.total).toLocaleString("es-VE", {
+                          style: "currency",
+                          currency: "USD",
+                          currencyDisplay: "narrowSymbol",
+                        })}
+                      </span>
+                      <ArrowRightIcon className="size-4 text-muted-foreground/50" />
+                    </div>
                   </Link>
                 ))}
               </div>

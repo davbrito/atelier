@@ -9,7 +9,9 @@
       "!**/build",
       "!src/components/ui",
       "!drizzle/**/*.json",
-      "!worker-configuration.d.ts"
+      "!worker-configuration.d.ts",
+      ".tanstack/**",
+      ".wrangler/**"
     ]
   },
   "vcs": {

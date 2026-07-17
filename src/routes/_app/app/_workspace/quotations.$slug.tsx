@@ -78,7 +78,7 @@ function QuotationDetailPage() {
       <PageHeader
         title={quotation.clientTitle}
         description={`Cotización generada el ${new Date(quotation.createdAt).toLocaleDateString(
-          "es-VE",
+          LOCALE,
           {
             day: "numeric",
             month: "long",
@@ -113,7 +113,7 @@ function QuotationDetailPage() {
                     </span>
                   </div>
                   <span className="font-medium">
-                    {Number(m.amount).toLocaleString("es-VE", {
+                    {Number(m.amount).toLocaleString(LOCALE, {
                       style: "currency",
                       currency: "USD",
                       currencyDisplay: "narrowSymbol",
@@ -139,7 +139,7 @@ function QuotationDetailPage() {
                       </span>
                     </div>
                     <span className="font-medium">
-                      {Number(o.amount).toLocaleString("es-VE", {
+                      {Number(o.amount).toLocaleString(LOCALE, {
                         style: "currency",
                         currency: "USD",
                         currencyDisplay: "narrowSymbol",
@@ -166,15 +166,15 @@ function formatUnit(value: string, unit: string) {
   const u = unitSchema.safeParse(unit).data;
   const numberValue = Number(value);
 
-  if (!u) return numberValue.toLocaleString("es-VE");
+  if (!u) return numberValue.toLocaleString(LOCALE);
 
   switch (u) {
     case "roll":
-      return `${numberValue.toLocaleString("es-VE")} rollos`;
+      return `${numberValue.toLocaleString(LOCALE)} rollos`;
     case "unit":
-      return `${numberValue.toLocaleString("es-VE")} rollos`;
+      return `${numberValue.toLocaleString(LOCALE)} rollos`;
     default:
-      return numberValue.toLocaleString("es-VE", {
+      return numberValue.toLocaleString(LOCALE, {
         style: "unit",
         unit: u === "m" ? "meter" : u === "cm" ? "centimeter" : "unit",
         unitDisplay: "long",
