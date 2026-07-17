@@ -34,6 +34,9 @@ overrides:
   '@better-auth/api-key': 1.7.0-rc.1
   kysely: ^0.28.17
 
+patchedDependencies:
+  better-auth: a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856
+
 importers:
 
   .:
@@ -43,16 +46,16 @@ importers:
         version: 1.6.0(@date-fns/tz@1.5.0)(@types/react@19.2.17)(date-fns@4.4.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@better-auth-ui/core':
         specifier: catalog:auth
-        version: 1.6.27(@mikkelscheike/email-provider-links@5.1.8)(better-auth@1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))
+        version: 1.6.27(@mikkelscheike/email-provider-links@5.1.8)(better-auth@1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))
       '@better-auth-ui/react':
         specifier: catalog:auth
-        version: 1.6.27(ad4c444f6c2cfdb0b6b82a4c5f9e4c4b)
+        version: 1.6.27(f11d4e4fd2cf076ed4c2412a99afa3c0)
       '@better-auth/drizzle-adapter':
         specifier: catalog:auth
         version: 1.7.0-rc.1(@better-auth/core@1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))
       '@better-auth/passkey':
         specifier: catalog:auth
-        version: 1.7.0-rc.1(@better-auth/core@1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))(better-call@1.3.7(zod@4.4.3))(nanostores@1.4.0)
+        version: 1.7.0-rc.1(@better-auth/core@1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))(better-call@1.3.7(zod@4.4.3))(nanostores@1.4.0)
       '@fontsource-variable/bodoni-moda':
         specifier: ^5.2.7
         version: 5.2.7
@@ -112,7 +115,7 @@ importers:
         version: 1.0.20
       better-auth:
         specifier: catalog:auth
-        version: 1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2))
+        version: 1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2))
       bowser:
         specifier: ^2.14.1
         version: 2.14.1
@@ -4912,11 +4915,6 @@ packages:
     resolution: {integrity: sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==}
     engines: {node: '>= 10.x'}
 
-  srvx@0.11.21:
-    resolution: {integrity: sha512-GWTHjKMeekX8CwJf4VU9Oo6mJpSGaflGMddbCvR+Cmmh9sslRMiGbAoqqZacE0r1ncARh6buCEETr2W52F8b1w==}
-    engines: {node: '>=20.16.0'}
-    hasBin: true
-
   srvx@0.11.22:
     resolution: {integrity: sha512-LqZxxBDMKuMAZzFzJnDCkFOrs9MZQZr0LvHiO/SuSZVdQaXD7xQ5UWTUxheJrQPve1qk9MG2B/yttUvJxw8egQ==}
     engines: {node: '>=20.16.0'}
@@ -4979,9 +4977,6 @@ packages:
 
   tailwind-merge@3.6.0:
     resolution: {integrity: sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w==}
-
-  tailwindcss@4.3.2:
-    resolution: {integrity: sha512-WtctNNSH8A9jlMIqxzuYumOHU5uGZyRv0Q5svQl+oEPy5w84YpBxdb7MdqyiSPQge5jTJ6zFQLq0PFygdccSBA==}
 
   tailwindcss@4.3.3:
     resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
@@ -5098,39 +5093,6 @@ packages:
   unpipe@1.0.0:
     resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==}
     engines: {node: '>= 0.8'}
-
-  unplugin@3.2.0:
-    resolution: {integrity: sha512-6nGlT7EHsS+tTcTdAkYFqXIUwDrMJyJvHFNYGSr4x2/2ySIcV4f5e1RAJUeDyfOJPR8TF0auE8l+82PLhKjqsA==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-    peerDependencies:
-      '@farmfe/core': '*'
-      '@rspack/core': '*'
-      bun-types-no-globals: '*'
-      esbuild: '*'
-      rolldown: '*'
-      rollup: '*'
-      unloader: '*'
-      vite: '*'
-      webpack: '*'
-    peerDependenciesMeta:
-      '@farmfe/core':
-        optional: true
-      '@rspack/core':
-        optional: true
-      bun-types-no-globals:
-        optional: true
-      esbuild:
-        optional: true
-      rolldown:
-        optional: true
-      rollup:
-        optional: true
-      unloader:
-        optional: true
-      vite:
-        optional: true
-      webpack:
-        optional: true
 
   unplugin@3.3.0:
     resolution: {integrity: sha512-qa66K+crbfyE6JK10GjvbJeRrOsuC/JpbnHctfyp/i4oBTxWOzJfRZyDiOk1PtErMFRu8JhsU/wPvOdBNWe5Rg==}
@@ -5871,20 +5833,20 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.17
 
-  '@better-auth-ui/core@1.6.27(@mikkelscheike/email-provider-links@5.1.8)(better-auth@1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))':
+  '@better-auth-ui/core@1.6.27(@mikkelscheike/email-provider-links@5.1.8)(better-auth@1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))':
     dependencies:
       '@mikkelscheike/email-provider-links': 5.1.8
-      better-auth: 1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2))
+      better-auth: 1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2))
 
-  '@better-auth-ui/react@1.6.27(ad4c444f6c2cfdb0b6b82a4c5f9e4c4b)':
+  '@better-auth-ui/react@1.6.27(f11d4e4fd2cf076ed4c2412a99afa3c0)':
     dependencies:
-      '@better-auth-ui/core': 1.6.27(@mikkelscheike/email-provider-links@5.1.8)(better-auth@1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))
-      '@better-auth/api-key': 1.7.0-rc.1(@better-auth/core@1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(better-auth@1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))(better-call@1.3.7(zod@4.4.3))
-      '@better-auth/passkey': 1.7.0-rc.1(@better-auth/core@1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))(better-call@1.3.7(zod@4.4.3))(nanostores@1.4.0)
+      '@better-auth-ui/core': 1.6.27(@mikkelscheike/email-provider-links@5.1.8)(better-auth@1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))
+      '@better-auth/api-key': 1.7.0-rc.1(@better-auth/core@1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(better-auth@1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))(better-call@1.3.7(zod@4.4.3))
+      '@better-auth/passkey': 1.7.0-rc.1(@better-auth/core@1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))(better-call@1.3.7(zod@4.4.3))(nanostores@1.4.0)
       '@react-email/components': 1.0.12(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/query-core': 5.101.2
       '@tanstack/react-query': 5.101.2(react@19.2.7)
-      better-auth: 1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2))
+      better-auth: 1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2))
       clsx: 2.1.1
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
@@ -5892,11 +5854,11 @@ snapshots:
       tailwindcss: 4.3.3
       zod: 4.4.3
 
-  '@better-auth/api-key@1.7.0-rc.1(@better-auth/core@1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(better-auth@1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))(better-call@1.3.7(zod@4.4.3))':
+  '@better-auth/api-key@1.7.0-rc.1(@better-auth/core@1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(better-auth@1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))(better-call@1.3.7(zod@4.4.3))':
     dependencies:
       '@better-auth/core': 1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0)
       '@better-auth/utils': 0.4.2
-      better-auth: 1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2))
+      better-auth: 1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2))
       better-call: 1.3.7(zod@4.4.3)
       zod: 4.4.3
 
@@ -5955,14 +5917,14 @@ snapshots:
       '@better-auth/core': 1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.28.17)(nanostores@1.4.0)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/passkey@1.7.0-rc.1(@better-auth/core@1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))(better-call@1.3.7(zod@4.4.3))(nanostores@1.4.0)':
+  '@better-auth/passkey@1.7.0-rc.1(@better-auth/core@1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)))(better-call@1.3.7(zod@4.4.3))(nanostores@1.4.0)':
     dependencies:
       '@better-auth/core': 1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
       '@simplewebauthn/browser': 13.3.0
       '@simplewebauthn/server': 13.3.1
-      better-auth: 1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2))
+      better-auth: 1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2))
       better-call: 1.3.7(zod@4.4.3)
       nanostores: 1.4.0
       zod: 4.4.3
@@ -6994,7 +6956,7 @@ snapshots:
   '@react-email/render@2.0.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       html-to-text: 9.0.5
-      prettier: 3.9.1
+      prettier: 3.9.5
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
 
@@ -7010,7 +6972,7 @@ snapshots:
     dependencies:
       '@react-email/text': 0.1.6(react@19.2.7)
       react: 19.2.7
-      tailwindcss: 4.3.2
+      tailwindcss: 4.3.3
     optionalDependencies:
       '@react-email/body': 0.3.0(react@19.2.7)
       '@react-email/button': 0.2.1(react@19.2.7)
@@ -8196,7 +8158,7 @@ snapshots:
       '@vue/shared': 3.5.38
       estree-walker: 2.0.2
       magic-string: 0.30.21
-      postcss: 8.5.16
+      postcss: 8.5.19
       source-map-js: 1.2.1
     optional: true
 
@@ -8306,7 +8268,7 @@ snapshots:
       '@better-auth/utils': 0.4.2
       '@clack/prompts': 1.6.0
       '@mrleebo/prisma-ast': 0.16.0
-      better-auth: 1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2))
+      better-auth: 1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2))
       c12: 4.0.0-beta.5(chokidar@5.0.0)(dotenv@17.4.2)(jiti@2.7.0)
       chalk: 5.6.2
       commander: 15.0.0
@@ -8366,7 +8328,7 @@ snapshots:
 
   baseline-browser-mapping@2.10.40: {}
 
-  better-auth@1.7.0-rc.1(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)):
+  better-auth@1.7.0-rc.1(patch_hash=a00f061ac9a9d762a188b39dbe9d8b2a7d2e24819ccd5eef50e454c3cef2d856)(@tanstack/react-start@1.168.28(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.1.5)(vite@8.1.5))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(solid-js@1.9.13)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.5))(vue@3.5.38(typescript@7.0.2)):
     dependencies:
       '@better-auth/core': 1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.28.17)(nanostores@1.4.0)
       '@better-auth/drizzle-adapter': 1.7.0-rc.1(@better-auth/core@1.7.0-rc.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.28.17)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(drizzle-orm@1.0.0-rc.4(@types/pg@8.20.0)(pg@8.22.0)(valibot@1.4.1(typescript@7.0.2))(zod@4.4.3))
@@ -9091,7 +9053,7 @@ snapshots:
   h3@2.0.1-rc.22(crossws@0.4.6(srvx@0.11.22)):
     dependencies:
       rou3: 0.8.1
-      srvx: 0.11.21
+      srvx: 0.11.22
     optionalDependencies:
       crossws: 0.4.6(srvx@0.11.22)
     optional: true
@@ -9458,7 +9420,7 @@ snapshots:
     dependencies:
       magic-string: 0.30.21
       oxc-parser: 0.132.0
-      unplugin: 3.2.0(esbuild@0.28.1)(rolldown@1.1.5)(vite@8.1.5)
+      unplugin: 3.3.0(esbuild@0.28.1)(rolldown@1.1.5)(vite@8.1.5)
     transitivePeerDependencies:
       - '@farmfe/core'
       - '@rspack/core'
@@ -9475,7 +9437,7 @@ snapshots:
     dependencies:
       magic-string: 0.30.21
       oxc-parser: 0.132.0
-      unplugin: 3.2.0(esbuild@0.28.1)(rolldown@1.1.5)(vite@8.1.5)
+      unplugin: 3.3.0(esbuild@0.28.1)(rolldown@1.1.5)(vite@8.1.5)
     transitivePeerDependencies:
       - '@farmfe/core'
       - '@rspack/core'
@@ -10127,9 +10089,6 @@ snapshots:
 
   split2@4.2.0: {}
 
-  srvx@0.11.21:
-    optional: true
-
   srvx@0.11.22: {}
 
   stackback@0.0.2: {}
@@ -10173,8 +10132,6 @@ snapshots:
   systeminformation@5.31.11: {}
 
   tailwind-merge@3.6.0: {}
-
-  tailwindcss@4.3.2: {}
 
   tailwindcss@4.3.3: {}
 
@@ -10302,17 +10259,6 @@ snapshots:
   universalify@2.0.1: {}
 
   unpipe@1.0.0: {}
-
-  unplugin@3.2.0(esbuild@0.28.1)(rolldown@1.1.5)(vite@8.1.5):
-    dependencies:
-      '@jridgewell/remapping': 2.3.5
-      picomatch: 4.0.5
-      webpack-virtual-modules: 0.6.2
-    optionalDependencies:
-      esbuild: 0.28.1
-      rolldown: 1.1.5
-      vite: 8.1.5(@types/node@26.1.1)(@vitejs/devtools@0.3.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)
-    optional: true
 
   unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.1.5)(vite@8.1.5):
     dependencies:

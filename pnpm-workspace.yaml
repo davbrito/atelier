@@ -27,3 +27,6 @@ overrides:
   drizzle-orm: catalog:drizzle
   "@better-auth/api-key": catalog:auth
   kysely: ^0.28.17 # https://github.com/better-auth/better-auth/issues/9901
+
+patchedDependencies:
+  better-auth: patches/better-auth.patch
