@@ -1,10 +1,9 @@
 import { type OrganizationAuthClient, useActiveOrganization, useAuth } from "@better-auth-ui/react";
-import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Navigate, Outlet, redirect } from "@tanstack/react-router";
+import type { Organization } from "better-auth/plugins";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { ensureActiveOrganization } from "#/lib/auth/functions";
-import { queryKeys } from "#/lib/query-options";
 
 export const Route = createFileRoute("/_app/app/_workspace")({
   component: RouteComponent,
@@ -25,37 +24,41 @@ export const Route = createFileRoute("/_app/app/_workspace")({
   ),
 });
 
-// react-query cache keys don't include the active organization id, so cached
-// data (budgets, materials, operations, dashboard, individual budget details)
-// would still be served from the previous org after switching. Clearing them
-// on org change forces a refetch scoped to the new org.
-const PER_ORG_KEYS = [
-  queryKeys.budgets,
-  queryKeys.materials,
-  queryKeys.operations,
-  queryKeys.dashboard,
-  ["budget"],
-];
-
 function RouteComponent() {
   const { authClient } = useAuth();
-  const queryClient = useQueryClient();
 
-  const { data: active } = useActiveOrganization(authClient as OrganizationAuthClient);
-
-  const previousOrgId = useRef(active?.id);
-  useEffect(() => {
-    if (active?.id && previousOrgId.current && active.id !== previousOrgId.current) {
-      for (const key of PER_ORG_KEYS) {
-        queryClient.removeQueries({ queryKey: key });
-      }
-    }
-    previousOrgId.current = active?.id;
-  }, [active?.id, queryClient]);
+  const { data: active, isFetching } = useActiveOrganization(authClient as OrganizationAuthClient);
+  useReloadOnOrganizationChange(active, isFetching);
 
   if (!active) {
     return <Navigate to="/app/onboarding" replace />;
   }
 
   return <Outlet />;
+}
+
+// Server data (budgets, materials, clients, etc.) is scoped to the active
+// organization via the session cookie. `useActiveOrganization` optimistically
+// writes the new organization into its query data the instant the switch
+// mutation starts (onMutate), well before the server has actually updated
+// the session cookie — reacting to that id change immediately reloads too
+// early and re-fetches everything against the still-stale cookie. Waiting
+// for `isFetching` to settle back to false means the query has resolved
+// against the server, so the cookie is authoritative by the time we reload.
+function useReloadOnOrganizationChange(
+  activeOrganization: Organization | null | undefined,
+  isFetching: boolean,
+) {
+  const settledOrgId = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (isFetching) return;
+
+    const currentOrgId = activeOrganization?.id ?? null;
+    if (settledOrgId.current !== undefined && settledOrgId.current !== currentOrgId) {
+      window.location.reload();
+      return;
+    }
+    settledOrgId.current = currentOrgId;
+  }, [activeOrganization?.id, isFetching]);
 }
