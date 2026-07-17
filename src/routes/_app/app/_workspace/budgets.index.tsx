@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 import { BudgetCreateSheet } from "#/components/budget-create-sheet";
+import { PageHeader } from "#/components/page-header";
 import { Pagination } from "#/components/pagination";
 import {
   AlertDialog,
@@ -66,16 +67,12 @@ function BudgetsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-2xl">Presupuestos</h1>
-          <p className="mt-1 text-muted-foreground">Plantillas reusables de presupuestos.</p>
-        </div>
+      <PageHeader title="Presupuestos" description="Plantillas reusables de presupuestos.">
         <Button onClick={() => setIsCreateOpen(true)}>
           <PlusIcon className="mr-2 size-4" />
           Nuevo presupuesto
         </Button>
-      </div>
+      </PageHeader>
 
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">

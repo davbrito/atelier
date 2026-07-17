@@ -9,6 +9,7 @@ import {
   PlusIcon,
   ScissorsIcon,
 } from "lucide-react";
+import { PageHeader } from "#/components/page-header";
 import { buttonVariants } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { dashboardStatsQueryOptions } from "#/lib/query-options";
@@ -80,13 +81,10 @@ function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8 p-6">
-      {/* Header */}
-      <div>
-        <h1 className="font-heading text-2xl">Panel</h1>
-        <p className="mt-1 text-muted-foreground">
-          Bienvenida al sistema de gestión de modistería y costura.
-        </p>
-      </div>
+      <PageHeader
+        title="Panel"
+        description="Bienvenida al sistema de gestión de modistería y costura."
+      />
 
       {/* Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

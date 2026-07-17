@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 import { ClientSheet } from "#/components/client-sheet";
+import { PageHeader } from "#/components/page-header";
 import { Pagination } from "#/components/pagination";
 import {
   AlertDialog,
@@ -89,16 +90,12 @@ function ClientsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-2xl">Clientes</h1>
-          <p className="mt-1 text-muted-foreground">Gestiona tus clientes, sus medidas y notas.</p>
-        </div>
+      <PageHeader title="Clientes" description="Gestiona tus clientes, sus medidas y notas.">
         <Button onClick={openCreate}>
           <UsersIcon className="mr-2 size-4" />
           Agregar cliente
         </Button>
-      </div>
+      </PageHeader>
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">
           <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />

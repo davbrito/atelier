@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
+import { PageHeader } from "#/components/page-header";
 import { Pagination } from "#/components/pagination";
 import { QuotationCreateSheet } from "#/components/quotation-create-sheet";
 import {
@@ -103,16 +104,12 @@ function QuotationsPage() {
 
   return (
     <div className="flex min-w-0 flex-col gap-6 overflow-auto p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-2xl">Cotizaciones</h1>
-          <p className="mt-1 text-muted-foreground">Cotizaciones enviadas a clientes.</p>
-        </div>
+      <PageHeader title="Cotizaciones" description="Cotizaciones enviadas a clientes.">
         <Button onClick={() => setIsCreateOpen(true)}>
           <PlusIcon className="mr-2 size-4" />
           Nueva cotización
         </Button>
-      </div>
+      </PageHeader>
 
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">

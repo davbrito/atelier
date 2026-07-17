@@ -7,6 +7,7 @@ import { Loader2Icon, PencilIcon, PlusIcon, ScissorsIcon, Trash2Icon } from "luc
 import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
+import { PageHeader } from "#/components/page-header";
 import { Pagination } from "#/components/pagination";
 import {
   AlertDialog,
@@ -133,16 +134,12 @@ function OperationsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-2xl">Operaciones</h1>
-          <p className="mt-1 text-muted-foreground">Catálogo de operaciones de mano de obra.</p>
-        </div>
+      <PageHeader title="Operaciones" description="Catálogo de operaciones de mano de obra.">
         <Button onClick={openCreate}>
           <PlusIcon className="mr-2 size-4" />
           Agregar operación
         </Button>
-      </div>
+      </PageHeader>
 
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">

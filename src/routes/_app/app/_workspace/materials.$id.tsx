@@ -90,7 +90,7 @@ function MaterialDetailPage() {
           <button
             type="button"
             onClick={() => setIsGalleryOpen(true)}
-            className="block aspect-[21/9] w-full cursor-zoom-in"
+            className="block aspect-21/9 w-full cursor-zoom-in"
           >
             <img
               src={material.image}
@@ -103,7 +103,7 @@ function MaterialDetailPage() {
             />
           </button>
         ) : (
-          <div className="flex aspect-[21/9] w-full items-center justify-center bg-gradient-to-br from-muted to-muted/40">
+          <div className="flex aspect-21/9 w-full items-center justify-center bg-linear-to-br from-muted to-muted/40">
             <PackageIcon className="size-10 text-muted-foreground/30" />
           </div>
         )}
@@ -144,7 +144,7 @@ function MaterialDetailPage() {
           </Button>
           <Button
             variant="outline"
-            size="icon"
+            size="icon-sm"
             className="text-destructive hover:text-destructive"
             onClick={() => setConfirmDelete(true)}
           >
