@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react";
 import { OrganizationSwitcher } from "#/components/auth/organization/organization-switcher";
+import { ThemeToggle } from "#/components/theme-toggle";
 import {
   Sidebar,
   SidebarContent,
@@ -113,7 +114,9 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
       </SidebarContent>
-      <SidebarFooter />
+      <SidebarFooter>
+        <ThemeToggle />
+      </SidebarFooter>
     </Sidebar>
   );
 }

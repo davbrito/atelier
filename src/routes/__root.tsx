@@ -50,7 +50,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         crossOrigin: "anonymous",
       },
     ],
-    scripts: [{ dangerouslySetInnerHTML: { __html: THEME_INIT_SCRIPT } }],
+    scripts: [{ children: THEME_INIT_SCRIPT }],
   }),
   shellComponent: RootDocument,
 });

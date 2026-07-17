@@ -298,6 +298,103 @@
   --sidebar-ring: oklch(0.709 0.01 56.259);
 }
 
+.dark {
+  --cream-dim: #3a3532;
+  --cream: #201d1b;
+  --dusty-rose-deep: #6b4a44;
+  --dusty-rose: #4a3733;
+  --earth-dark: #d7bdb4;
+  --earth-light: #b39283;
+  --earth: #c9a99c;
+  --gold-light: #fed65b;
+  --gold-soft: #e9c349;
+  --gold: #e9c349;
+  --ink-soft: #d4c9c5;
+  --ink: #f4f0ed;
+  --outline-soft: #4a4441;
+  --surface-high: #322d2b;
+  --surface-low: #1c1a18;
+  --surface-mid: #262220;
+  --white-warm: #201d1b;
+
+  --background: #1c1a18;
+  --foreground: oklch(0.96 0.004 49.25);
+  --error-container: #93000a;
+  --error: #ffb4ab;
+  --inverse-on-surface: #1c1b1a;
+  --inverse-primary: #72564c;
+  --inverse-surface: #e5e2df;
+  --on-background: #f4f0ed;
+  --on-error-container: #ffdad6;
+  --on-error: #690005;
+  --on-primary-container: #2b160f;
+  --on-primary-fixed-variant: #e4beb2;
+  --on-primary-fixed: #ffdbce;
+  --on-primary: #482a20;
+  --on-secondary-container: #ffe088;
+  --on-secondary-fixed-variant: #574500;
+  --on-secondary-fixed: #241a00;
+  --on-secondary: #3d2e00;
+  --on-surface-variant: #d4c3be;
+  --on-surface: #f4f0ed;
+  --on-tertiary-container: #f2ded9;
+  --on-tertiary-fixed-variant: #d5c3be;
+  --on-tertiary-fixed: #f2ded9;
+  --on-tertiary: #382e2b;
+  --outline-variant: #504441;
+  --outline: #9c8d89;
+  --primary-container: #5b4137;
+  --primary-fixed-dim: #e4beb2;
+  --primary-fixed: #ffdbce;
+  --primary: #e4beb2;
+  --secondary-container: #574500;
+  --secondary-fixed-dim: #e9c349;
+  --secondary-fixed: #ffe088;
+  --secondary: #e9c349;
+  --secondary-foreground: oklch(0.15 0 95);
+  --surface-bright: #443f3c;
+  --surface-container-high: #322d2b;
+  --surface-container-highest: #3d3835;
+  --surface-container-low: #24211f;
+  --surface-container-lowest: #171513;
+  --surface-container: #201d1b;
+  --surface-dim: #1c1a18;
+  --surface-tint: #e4beb2;
+  --surface-variant: #504441;
+  --surface: #1c1a18;
+  --tertiary-container: #514440;
+  --tertiary-fixed-dim: #d5c3be;
+  --tertiary-fixed: #f2ded9;
+  --tertiary: #d5c3be;
+
+  --card: oklch(0.2 0.004 49.25);
+  --card-foreground: oklch(0.96 0.004 49.25);
+  --popover: oklch(0.2 0.004 49.25);
+  --popover-foreground: oklch(0.96 0.004 49.25);
+  --primary-foreground: oklch(0.216 0.006 56.043);
+  --muted: oklab(25% 0.01482 0.01577);
+  --muted-foreground: oklch(0.709 0.01 56.259);
+  --accent: oklch(0.85 0.02 41.911);
+  --accent-foreground: oklch(0.216 0.006 56.043);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 18%);
+  --ring: oklch(0.553 0.013 58.071);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: var(--surface-container-low);
+  --sidebar-foreground: oklch(0.96 0.004 49.25);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.96 0.004 49.25);
+  --sidebar-accent: oklab(25% 0.01482 0.01577);
+  --sidebar-accent-foreground: oklch(0.96 0.004 49.25);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.553 0.013 58.071);
+}
+
 /* Shared-element view transitions for material images and titles (see
    materials.index.tsx / materials.$id.tsx viewTransitionName/Class).
    The group is the only thing that actually animates (position/size

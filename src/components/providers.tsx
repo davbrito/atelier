@@ -13,7 +13,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <AuthProvider
-      authClient={authClient as any}
+      authClient={authClient}
       redirectTo="/app"
       socialProviders={["google"]}
       emailAndPassword={{ requireEmailVerification: false }}
