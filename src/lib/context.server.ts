@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { createDb, type Db } from "#/db/client";
+import { createDb, type Db, type DbFull } from "#/db/client";
 import { type AppAuth, createAuth } from "./auth/server";
 
 const SERVER_CONTEXT = new AsyncLocalStorage<AppRequestContext>();
@@ -8,7 +8,7 @@ export type AppRequestContext = {
   url: URL;
   env: Cloudflare.Env;
   executionCtx: ExecutionContext;
-  db: Db;
+  db: DbFull;
   auth: AppAuth;
 };
 

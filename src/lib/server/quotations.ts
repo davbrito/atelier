@@ -1,11 +1,15 @@
 import slugify from "@sindresorhus/slugify";
 import { createServerFn } from "@tanstack/react-start";
 import { generateRandomString } from "better-auth/crypto";
-import { and, eq, getColumns } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
-import { quotationsCountQuery, quotationsQuery } from "../services/quotations";
+import {
+  quotationBySlugQuery,
+  quotationsCountQuery,
+  quotationsQuery,
+} from "../services/quotations";
 
 // ── Queries ──────────────────────────────────────────────
 
@@ -67,20 +71,10 @@ export const getQuotationBySlug = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .validator(z.object({ slug: z.string() }))
   .handler(async ({ data, context: { activeOrganizationId, db } }) => {
-    const [quotation] = await db
-      .select({
-        ...getColumns(schema.quotation),
-        budgetName: schema.budget.name,
-        budgetSlug: schema.budget.slug,
-      })
-      .from(schema.quotation)
-      .leftJoin(schema.budget, eq(schema.quotation.budgetId, schema.budget.id))
-      .where(
-        and(
-          eq(schema.quotation.slug, data.slug),
-          eq(schema.quotation.organizationId, activeOrganizationId),
-        ),
-      );
+    const [quotation] = await quotationBySlugQuery(db, {
+      slug: data.slug,
+      organizationId: activeOrganizationId,
+    });
 
     if (!quotation) throw new Error("Cotización no encontrada");
 
@@ -116,6 +110,7 @@ export const createQuotation = createServerFn({ method: "POST" })
     return await db.transaction(async (tx) => {
       // Load budget with its materials and operations
       const budget = await tx.query.budget.findFirst({
+        columns: { id: true, hourlyRate: true },
         where: { id: data.budgetId, organizationId },
       });
 
