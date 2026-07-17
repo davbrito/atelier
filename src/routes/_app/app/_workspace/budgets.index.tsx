@@ -1,9 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { CalculatorIcon, EyeIcon, Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react";
+import {
+  CalculatorIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  EyeIcon,
+  Loader2Icon,
+  PlusIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import * as z from "zod";
 import { BudgetCreateSheet } from "#/components/budget-create-sheet";
 import {
   AlertDialog,
@@ -20,20 +29,37 @@ import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { budgetsListQueryOptions } from "#/lib/query-options";
 import { deleteBudget } from "#/lib/server/budgets";
 
+const PAGE_SIZE = 20;
+
+const budgetsSearchSchema = z.object({
+  page: z.number().int().min(1).default(1).catch(1),
+});
+
 export const Route = createFileRoute("/_app/app/_workspace/budgets/")({
   component: BudgetsPage,
-  loader: ({ context: { queryClient } }) => void queryClient.prefetchQuery(budgetsListQueryOptions),
+  validateSearch: budgetsSearchSchema,
+  loaderDeps: ({ search: { page } }) => ({ page }),
+  loader: ({ context: { queryClient }, deps: { page } }) =>
+    void queryClient.prefetchQuery(budgetsListQueryOptions({ page, pageSize: PAGE_SIZE })),
 });
 
 function BudgetsPage() {
+  const { page } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
   const deleteFn = useServerFn(deleteBudget);
-  const navigate = useNavigate();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data: budgets, isLoading } = useQuery(budgetsListQueryOptions);
+  const { data, isLoading } = useQuery(budgetsListQueryOptions({ page, pageSize: PAGE_SIZE }));
+  const budgets = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  function goToPage(nextPage: number) {
+    navigate({ search: { page: nextPage } });
+  }
 
   const deleteMutation = useMutation({
     mutationFn: deleteFn,
@@ -62,7 +88,7 @@ function BudgetsPage() {
         <div className="flex h-64 items-center justify-center">
           <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
         </div>
-      ) : budgets?.length === 0 ? (
+      ) : budgets.length === 0 ? (
         <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
           <CalculatorIcon className="mb-4 size-12 text-muted-foreground/20" />
           <h3 className="font-medium text-lg">No hay presupuestos</h3>
@@ -74,54 +100,81 @@ function BudgetsPage() {
           </Button>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {budgets?.map((budget) => (
-            <Card key={budget.id} className="relative overflow-hidden pt-0">
-              <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
-              {budget.image ? (
-                <img
-                  src={budget.image}
-                  alt={budget.name}
-                  className="relative z-20 aspect-video w-full object-cover brightness-60 dark:brightness-40"
-                />
-              ) : (
-                <div className="relative z-20 flex aspect-video w-full items-center justify-center bg-gradient-to-br from-muted to-muted/40">
-                  <CalculatorIcon className="size-10 text-muted-foreground/30" />
-                </div>
-              )}
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="font-medium text-sm">{budget.name}</CardTitle>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() =>
-                      navigate({
-                        to: "/app/budgets/$slug",
-                        params: { slug: budget.slug },
-                      })
-                    }
-                  >
-                    <EyeIcon className="size-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => setDeletingId(budget.id)}
-                  >
-                    <Trash2Icon className="size-3" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-muted-foreground text-xs">
-                  Mano de obra: ${budget.hourlyRate}/hora
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {budgets.map((budget) => (
+              <Card key={budget.id} className="relative overflow-hidden pt-0">
+                <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
+                {budget.image ? (
+                  <img
+                    src={budget.image}
+                    alt={budget.name}
+                    className="relative z-20 aspect-video w-full object-cover brightness-60 dark:brightness-40"
+                  />
+                ) : (
+                  <div className="relative z-20 flex aspect-video w-full items-center justify-center bg-gradient-to-br from-muted to-muted/40">
+                    <CalculatorIcon className="size-10 text-muted-foreground/30" />
+                  </div>
+                )}
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="font-medium text-sm">{budget.name}</CardTitle>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        navigate({
+                          to: "/app/budgets/$slug",
+                          params: { slug: budget.slug },
+                        })
+                      }
+                    >
+                      <EyeIcon className="size-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setDeletingId(budget.id)}
+                    >
+                      <Trash2Icon className="size-3" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-muted-foreground text-xs">
+                    Mano de obra: ${budget.hourlyRate}/hora
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground text-sm">
+              Página {page} de {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => goToPage(page - 1)}
+              >
+                <ChevronLeftIcon className="mr-1 size-4" />
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => goToPage(page + 1)}
+              >
+                Siguiente
+                <ChevronRightIcon className="ml-1 size-4" />
+              </Button>
+            </div>
+          </div>
+        </>
       )}
 
       <BudgetCreateSheet open={isCreateOpen} onOpenChange={setIsCreateOpen} />

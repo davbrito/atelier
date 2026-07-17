@@ -1,4 +1,3 @@
-import { Form } from "@base-ui/react/form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -14,7 +13,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
-import { ClientCombobox } from "#/components/client-combobox";
+import { QuotationCreateSheet } from "#/components/quotation-create-sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,18 +27,9 @@ import {
 import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "#/components/ui/select";
-import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "#/components/ui/sheet";
@@ -54,8 +44,7 @@ import {
 } from "#/components/ui/table";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { quotationsListQueryOptions } from "#/lib/query-options";
-import { listBudgets } from "#/lib/server/budgets";
-import { createQuotation, deleteQuotation, getQuotation } from "#/lib/server/quotations";
+import { deleteQuotation, getQuotation } from "#/lib/server/quotations";
 import { cn } from "#/lib/utils";
 
 const PAGE_SIZE = 20;
@@ -76,41 +65,21 @@ function QuotationsPage() {
   const { page } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
-  const createFn = useServerFn(createQuotation);
   const deleteFn = useServerFn(deleteQuotation);
   const getFn = useServerFn(getQuotation);
-  const listBudgetsFn = useServerFn(listBudgets);
   const isMobile = useIsMobile();
 
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [detailData, setDetailData] = useState<Awaited<ReturnType<typeof getQuotation>> | null>(
     null,
   );
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [formKey, setFormKey] = useState(0);
-  const [selectedBudgetId, setSelectedBudgetId] = useState("");
-  const [selectedClientId, setSelectedClientId] = useState("");
 
   const { data, isLoading } = useQuery(quotationsListQueryOptions({ page, pageSize: PAGE_SIZE }));
   const quotations = data?.items ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
-  const { data: budgets } = useQuery({
-    queryKey: ["budgets"],
-    queryFn: () => listBudgetsFn(),
-  });
-
-  const createMutation = useMutation({
-    mutationFn: createFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["quotations"] });
-      toast.success("Cotización creada correctamente");
-      setIsSheetOpen(false);
-    },
-    onError: () => toast.error("Error al crear la cotización"),
-  });
 
   const deleteMutation = useMutation({
     mutationFn: deleteFn,
@@ -129,13 +98,6 @@ function QuotationsPage() {
     setDetailData(detail);
   }
 
-  function openCreate() {
-    setSelectedBudgetId("");
-    setSelectedClientId("");
-    setFormKey((k) => k + 1);
-    setIsSheetOpen(true);
-  }
-
   function goToPage(nextPage: number) {
     navigate({ search: { page: nextPage } });
   }
@@ -147,7 +109,7 @@ function QuotationsPage() {
           <h1 className="font-heading text-2xl">Cotizaciones</h1>
           <p className="mt-1 text-muted-foreground">Cotizaciones enviadas a clientes.</p>
         </div>
-        <Button onClick={openCreate}>
+        <Button onClick={() => setIsCreateOpen(true)}>
           <PlusIcon className="mr-2 size-4" />
           Nueva cotización
         </Button>
@@ -164,7 +126,7 @@ function QuotationsPage() {
           <p className="max-w-xs text-muted-foreground">
             Genera cotizaciones a partir de tus presupuestos para enviar a tus clientes.
           </p>
-          <Button variant="outline" className="mt-4" onClick={openCreate}>
+          <Button variant="outline" className="mt-4" onClick={() => setIsCreateOpen(true)}>
             Generar mi primera cotización
           </Button>
         </Card>
@@ -260,80 +222,7 @@ function QuotationsPage() {
         </>
       )}
 
-      {/* Create Sheet */}
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent
-          side={isMobile ? "bottom" : "right"}
-          className={cn(isMobile && "max-h-[85dvh]")}
-        >
-          <SheetHeader>
-            <SheetTitle>Nueva cotización</SheetTitle>
-            <SheetDescription>
-              Genera una cotización congelada a partir de un presupuesto.
-            </SheetDescription>
-          </SheetHeader>
-          <Form
-            key={formKey}
-            onFormSubmit={() => {
-              if (!selectedBudgetId) {
-                toast.error("Selecciona un presupuesto");
-                return;
-              }
-              if (!selectedClientId) {
-                toast.error("Selecciona un cliente");
-                return;
-              }
-              createMutation.mutate({
-                data: {
-                  budgetId: selectedBudgetId,
-                  clientId: selectedClientId,
-                },
-              });
-            }}
-            className="flex flex-1 flex-col gap-6 p-6"
-          >
-            <div className="grid gap-2">
-              <span className="font-medium text-sm">Cliente</span>
-              <ClientCombobox value={selectedClientId} onChange={setSelectedClientId} />
-            </div>
-
-            <div className="grid gap-2">
-              <span className="font-medium text-sm">Presupuesto base</span>
-              <Select
-                items={budgets?.map((b) => ({ value: b.id, label: b.name })) ?? []}
-                value={selectedBudgetId}
-                onValueChange={(val) => val && setSelectedBudgetId(val)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar presupuesto" />
-                </SelectTrigger>
-                <SelectContent>
-                  {budgets?.map((b) => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <SheetFooter className="mt-auto">
-              <SheetClose>
-                <Button variant="outline" type="button">
-                  Cancelar
-                </Button>
-              </SheetClose>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || !selectedBudgetId || !selectedClientId}
-              >
-                {createMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
-                Generar cotización
-              </Button>
-            </SheetFooter>
-          </Form>
-        </SheetContent>
-      </Sheet>
+      <QuotationCreateSheet open={isCreateOpen} onOpenChange={setIsCreateOpen} />
 
       {/* Detail Sheet */}
       <Sheet open={isDetailOpen} onOpenChange={setIsDetailOpen}>

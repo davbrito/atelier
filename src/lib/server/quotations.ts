@@ -102,13 +102,13 @@ export const getQuotation = createServerFn({ method: "GET" })
 
 // ── Mutations ────────────────────────────────────────────
 
+export const createQuotationSchema = z.object({
+  budgetId: z.uuid(),
+  clientId: z.uuid(),
+});
+
 export const createQuotation = createServerFn({ method: "POST" })
-  .validator(
-    z.object({
-      budgetId: z.uuid(),
-      clientId: z.uuid(),
-    }),
-  )
+  .validator(createQuotationSchema)
   .middleware([organizationMiddleware])
   .handler(async ({ data, context: { activeOrganizationId: organizationId, db } }) => {
     return await db.transaction(async (tx) => {

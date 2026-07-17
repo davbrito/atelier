@@ -1,7 +1,7 @@
 import slugify from "@sindresorhus/slugify";
 import { createServerFn } from "@tanstack/react-start";
 import { generateRandomString } from "better-auth/crypto";
-import { and, asc, eq, getColumns } from "drizzle-orm";
+import { and, asc, count, eq, getColumns, ilike } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
@@ -36,15 +36,34 @@ export const budgetFormSchema = z.object({
 // ── Queries ──────────────────────────────────────────────
 
 export const listBudgets = createServerFn({ method: "GET" })
+  .validator(
+    z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(20),
+      search: z.string().trim().optional(),
+    }),
+  )
   .middleware([organizationMiddleware])
-  .handler(async ({ context: { activeOrganizationId, db } }) => {
-    const budgets = await db
-      .select()
-      .from(schema.budget)
-      .where(eq(schema.budget.organizationId, activeOrganizationId))
-      .orderBy(asc(schema.budget.name));
+  .handler(async ({ data: { page, pageSize, search }, context: { activeOrganizationId, db } }) => {
+    const whereClause = and(
+      eq(schema.budget.organizationId, activeOrganizationId),
+      search ? ilike(schema.budget.name, `%${search}%`) : undefined,
+    );
 
-    return budgets.map((b) => ({ ...b, image: b.image && storageUrl(b.image) }));
+    const [rows, [{ total }]] = await Promise.all([
+      db
+        .select()
+        .from(schema.budget)
+        .where(whereClause)
+        .orderBy(asc(schema.budget.name))
+        .limit(pageSize)
+        .offset((page - 1) * pageSize),
+      db.select({ total: count() }).from(schema.budget).where(whereClause),
+    ]);
+
+    const items = rows.map((b) => ({ ...b, image: b.image && storageUrl(b.image) }));
+
+    return { items, total, page, pageSize };
   });
 
 export const getBudgetBySlug = createServerFn({ method: "GET" })

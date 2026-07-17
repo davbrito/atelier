@@ -11,6 +11,7 @@ import { listWhitelistedEmails } from "./server/whitelist";
 
 export const queryKeys = {
   budgets: ["budgets"],
+  budgetsPage: (params: { page: number; pageSize: number; search?: string }) => ["budgets", params],
   budget: (idOrSlug: string) => ["budget", idOrSlug],
   materials: ["materials"],
   materialsPage: (params: { page: number; pageSize: number }) => ["materials", params],
@@ -29,10 +30,15 @@ export const queryKeys = {
   whitelistEmails: ["whitelist-emails"],
 };
 
-export const budgetsListQueryOptions = queryOptions({
-  queryKey: queryKeys.budgets,
-  queryFn: ({ signal }) => listBudgets({ signal }),
-});
+export const budgetsListQueryOptions = (params: {
+  page: number;
+  pageSize: number;
+  search?: string;
+}) =>
+  queryOptions({
+    queryKey: queryKeys.budgetsPage(params),
+    queryFn: ({ signal }) => listBudgets({ data: params, signal }),
+  });
 
 export const budgetBySlugQueryOptions = (slug: string) =>
   queryOptions({
