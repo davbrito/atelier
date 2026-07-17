@@ -1,10 +1,19 @@
 import { Form } from "@base-ui/react/form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ClipboardListIcon, Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ClipboardListIcon,
+  ExternalLinkIcon,
+  Loader2Icon,
+  PlusIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import * as z from "zod";
 import { ClientCombobox } from "#/components/client-combobox";
 import {
   AlertDialog,
@@ -17,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { Card } from "#/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -34,23 +43,38 @@ import {
   SheetHeader,
   SheetTitle,
 } from "#/components/ui/sheet";
-import { useIsMobile } from "#/hooks/use-mobile";
-import { listBudgets } from "#/lib/server/budgets";
 import {
-  createQuotation,
-  deleteQuotation,
-  getQuotation,
-  listQuotations,
-} from "#/lib/server/quotations";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "#/components/ui/table";
+import { useIsMobile } from "#/hooks/use-mobile";
+import { quotationsListQueryOptions } from "#/lib/query-options";
+import { listBudgets } from "#/lib/server/budgets";
+import { createQuotation, deleteQuotation, getQuotation } from "#/lib/server/quotations";
 import { cn } from "#/lib/utils";
+
+const PAGE_SIZE = 20;
+
+const quotationsSearchSchema = z.object({
+  page: z.number().int().min(1).default(1).catch(1),
+});
 
 export const Route = createFileRoute("/_app/app/_workspace/quotations/")({
   component: QuotationsPage,
+  validateSearch: quotationsSearchSchema,
+  loaderDeps: ({ search: { page } }) => ({ page }),
+  loader: ({ context: { queryClient }, deps: { page } }) =>
+    void queryClient.prefetchQuery(quotationsListQueryOptions({ page, pageSize: PAGE_SIZE })),
 });
 
 function QuotationsPage() {
+  const { page } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
-  const listFn = useServerFn(listQuotations);
   const createFn = useServerFn(createQuotation);
   const deleteFn = useServerFn(deleteQuotation);
   const getFn = useServerFn(getQuotation);
@@ -67,10 +91,10 @@ function QuotationsPage() {
   const [selectedBudgetId, setSelectedBudgetId] = useState("");
   const [selectedClientId, setSelectedClientId] = useState("");
 
-  const { data: quotations, isLoading } = useQuery({
-    queryKey: ["quotations"],
-    queryFn: () => listFn(),
-  });
+  const { data, isLoading } = useQuery(quotationsListQueryOptions({ page, pageSize: PAGE_SIZE }));
+  const quotations = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const { data: budgets } = useQuery({
     queryKey: ["budgets"],
@@ -111,6 +135,10 @@ function QuotationsPage() {
     setIsSheetOpen(true);
   }
 
+  function goToPage(nextPage: number) {
+    navigate({ search: { page: nextPage } });
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
@@ -128,7 +156,7 @@ function QuotationsPage() {
         <div className="flex h-64 items-center justify-center">
           <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
         </div>
-      ) : quotations?.length === 0 ? (
+      ) : quotations.length === 0 ? (
         <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
           <ClipboardListIcon className="mb-4 size-12 text-muted-foreground/20" />
           <h3 className="font-medium text-lg">No hay cotizaciones</h3>
@@ -140,35 +168,95 @@ function QuotationsPage() {
           </Button>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {quotations?.map((q) => (
-            <Card key={q.id} className="cursor-pointer" onClick={() => viewDetails(q.id)}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="font-medium text-sm">{q.clientTitle}</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-destructive hover:text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDeletingId(q.id);
-                  }}
-                >
-                  <Trash2Icon className="size-3" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="text-muted-foreground text-xs">
-                  {new Date(q.createdAt).toLocaleDateString("es-ES", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <>
+          <div className="rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Presupuesto</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {quotations.map((q) => (
+                  <TableRow key={q.id} className="cursor-pointer" onClick={() => viewDetails(q.id)}>
+                    <TableCell className="font-medium">{q.clientTitle}</TableCell>
+                    <TableCell>
+                      {q.budgetSlug ? (
+                        <Link
+                          to="/app/budgets/$slug"
+                          params={{ slug: q.budgetSlug }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1.5 rounded bg-muted/50 px-1 text-xs hover:bg-muted/70 hover:underline"
+                        >
+                          <ExternalLinkIcon className="size-3" />
+                          {q.budgetName}
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground" suppressHydrationWarning>
+                      {new Date(q.createdAt).toLocaleDateString("es-VE", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </TableCell>
+                    <TableCell className="text-right font-medium" suppressHydrationWarning>
+                      $
+                      {Number(q.total).toLocaleString("es-VE", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeletingId(q.id);
+                        }}
+                      >
+                        <Trash2Icon className="size-3" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground text-sm">
+              Página {page} de {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => goToPage(page - 1)}
+              >
+                <ChevronLeftIcon className="mr-1 size-4" />
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => goToPage(page + 1)}
+              >
+                Siguiente
+                <ChevronRightIcon className="ml-1 size-4" />
+              </Button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Create Sheet */}
@@ -257,7 +345,7 @@ function QuotationsPage() {
             <SheetDescription>
               Cotización generada el{" "}
               {detailData &&
-                new Date(detailData.createdAt).toLocaleDateString("es-ES", {
+                new Date(detailData.createdAt).toLocaleDateString("es-VE", {
                   day: "numeric",
                   month: "long",
                   year: "numeric",

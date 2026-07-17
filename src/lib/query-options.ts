@@ -6,6 +6,7 @@ import { getMaterialInventory } from "./server/inventory";
 import { getMaterialById, listMaterials } from "./server/materials";
 import { getOperationById, listOperations } from "./server/operations";
 import { getUserOrganizationCount } from "./server/organizations";
+import { listQuotations } from "./server/quotations";
 import { listWhitelistedEmails } from "./server/whitelist";
 
 export const queryKeys = {
@@ -21,6 +22,8 @@ export const queryKeys = {
   clients: ["clients"],
   clientsPage: (params: { page: number; pageSize: number }) => ["clients", params],
   client: (id: string) => ["client", id],
+  quotations: ["quotations"],
+  quotationsPage: (params: { page: number; pageSize: number }) => ["quotations", params],
   dashboard: ["dashboard"],
   userOrganizationCount: ["userOrganizationCount"],
   whitelistEmails: ["whitelist-emails"],
@@ -83,6 +86,12 @@ export const clientByIdQueryOptions = (id: string) =>
   queryOptions({
     queryKey: queryKeys.client(id),
     queryFn: ({ signal }) => getClientById({ data: { id }, signal }),
+  });
+
+export const quotationsListQueryOptions = (params: { page: number; pageSize: number }) =>
+  queryOptions({
+    queryKey: queryKeys.quotationsPage(params),
+    queryFn: ({ signal }) => listQuotations({ data: params, signal }),
   });
 
 export const dashboardStatsQueryOptions = queryOptions({

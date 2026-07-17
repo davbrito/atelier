@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, count, eq, ilike } from "drizzle-orm";
+import { and, asc, eq, ilike } from "drizzle-orm";
 import * as z from "zod";
 import { operation } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
@@ -19,7 +19,7 @@ export const listOperations = createServerFn({ method: "GET" })
       search ? ilike(operation.name, `%${search}%`) : undefined,
     );
 
-    const [items, [{ total }]] = await Promise.all([
+    const [items, total] = await Promise.all([
       db
         .select()
         .from(operation)
@@ -27,7 +27,7 @@ export const listOperations = createServerFn({ method: "GET" })
         .orderBy(asc(operation.name))
         .limit(pageSize)
         .offset((page - 1) * pageSize),
-      db.select({ total: count() }).from(operation).where(whereClause),
+      db.$count(operation, whereClause),
     ]);
 
     return { items, total, page, pageSize };
