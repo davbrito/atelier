@@ -14,6 +14,7 @@ interface MyRouterContext {
 }
 
 const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('theme');var mode=(stored==='light'||stored==='dark'||stored==='auto')?stored:'auto';var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`;
+const APP_INSTALL_SCRIPT = `(function(){var deferredPrompt=null;var installButton=null;var hasBoundButton=false;function bindInstallButton(){if(hasBoundButton){return;}installButton=document.getElementById('install-app');if(!installButton){return;}hasBoundButton=true;installButton.hidden=true;installButton.addEventListener('click',function(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.finally(function(){deferredPrompt=null;});}});}bindInstallButton();document.addEventListener('DOMContentLoaded', bindInstallButton);window.addEventListener('beforeinstallprompt',function(event){event.preventDefault();deferredPrompt=event;bindInstallButton();if(installButton){installButton.hidden=false;}});window.addEventListener('appinstalled',function(){if(installButton){installButton.hidden=true;}deferredPrompt=null;});})();`;
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => ({
@@ -32,9 +33,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "theme-color", content: "#72564c" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.json" },
       {
         rel: "preload",
         as: "font",
@@ -50,7 +55,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         crossOrigin: "anonymous",
       },
     ],
-    scripts: [{ children: THEME_INIT_SCRIPT }],
+    scripts: [{ children: THEME_INIT_SCRIPT }, { children: APP_INSTALL_SCRIPT }],
   }),
   shellComponent: RootDocument,
 });
