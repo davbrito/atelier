@@ -22,7 +22,9 @@ export const Route = createFileRoute("/uploads/$")({
         }
 
         const object = await env.STORAGE.get(key, {
-          onlyIf: request.headers,
+          onlyIf: {
+            etagDoesNotMatch: request.headers.get("If-None-Match") ?? undefined,
+          },
         });
         if (!object) {
           return new Response("Image not found", { status: 404 });
