@@ -1,4 +1,5 @@
 // src/start.ts
+
 import { createCsrfMiddleware, createMiddleware, createStart } from "@tanstack/react-start";
 import { DrizzleError, DrizzleQueryError } from "drizzle-orm";
 
@@ -33,9 +34,22 @@ const dbErrorMiddleware = createMiddleware({ type: "function" }).server(async ({
   }
 });
 
+const tracingMiddleware = createMiddleware({ type: "function" }).server(
+  async ({ next, method, serverFnMeta, context: { executionCtx } }) => {
+    const { tracing } = executionCtx;
+
+    return tracing.enterSpan(`${method} ${serverFnMeta.name}`, async (span) => {
+      span.setAttribute("tasntack.start.server_fn.id", serverFnMeta.id);
+      span.setAttribute("tasntack.start.server_fn.name", serverFnMeta.name);
+      span.setAttribute("tasntack.start.server_fn.filename", serverFnMeta.filename);
+      return await next();
+    });
+  },
+);
+
 export const startInstance = createStart(() => {
   return {
     requestMiddleware: [csrfMiddleware],
-    functionMiddleware: [dbErrorMiddleware],
+    functionMiddleware: [tracingMiddleware, dbErrorMiddleware],
   };
 });
