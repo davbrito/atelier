@@ -96,7 +96,7 @@ export function UserButton({
   const { authClient, basePaths, viewPaths, localization, plugins, navigate } = useAuth();
 
   const { isPending: settingActiveSession } = useSetActiveSession(
-    authClient as unknown as MultiSessionAuthClient,
+    authClient as MultiSessionAuthClient,
   );
   const { data: session, isPending: sessionPending } = useSession(authClient);
 
@@ -109,6 +109,14 @@ export function UserButton({
     return [renderUserLink(link, navigate, `user-button-link-${index.toString()}`)];
   });
 
+  // Whether anything renders between the user info label and the
+  // sign-out item, so the leading separator isn't shown with nothing
+  // to separate (see #439).
+  const hasSessionMenuItems =
+    (userLinks?.length ?? 0) > 0 ||
+    !hideSettings ||
+    plugins.some((plugin) => (plugin.userMenuItems?.length ?? 0) > 0);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -116,7 +124,7 @@ export function UserButton({
         className={
           size === "icon"
             ? cn("rounded-full", className)
-            : cn(buttonVariants({ variant, size: "lg" }), "h-auto py-2.5 font-normal", className)
+            : cn(buttonVariants({ variant, size: "lg" }), "py-2.5 h-auto font-normal", className)
         }
       >
         {size === "icon" ? (
@@ -141,19 +149,19 @@ export function UserButton({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
-        className="min-w-40 max-w-[48svw] md:min-w-56"
+        className="min-w-40 md:min-w-56 max-w-[48svw]"
         sideOffset={sideOffset}
         align={align}
       >
         {session && (
           <>
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="font-normal text-sm">
+              <DropdownMenuLabel className="text-sm font-normal">
                 <UserView />
               </DropdownMenuLabel>
             </DropdownMenuGroup>
 
-            <DropdownMenuSeparator />
+            {hasSessionMenuItems && <DropdownMenuSeparator />}
           </>
         )}
 

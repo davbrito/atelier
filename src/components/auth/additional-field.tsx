@@ -1,5 +1,3 @@
-"use client";
-
 import {
   type AdditionalField as AdditionalFieldConfig,
   resolveInputType,
@@ -29,11 +27,11 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "#/components/ui/input-group.tsx";
-import { Label } from "#/components/ui/label.tsx";
 import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover.tsx";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -47,6 +45,8 @@ export type AdditionalFieldProps = {
   name: string;
   field: AdditionalFieldConfig;
   isPending?: boolean;
+  /** Complete suffix appended to labels for fields that are not required. */
+  optionalLabel?: string;
 };
 
 /** Convert a `defaultValue` into a `Date` for the calendar. */
@@ -106,12 +106,36 @@ function CopyButton({
 }
 
 /** Renders a single additional user field via shadcn primitives. */
-export function AdditionalField({ name, field, isPending }: AdditionalFieldProps) {
+export function AdditionalField({
+  name,
+  field: configuredField,
+  isPending,
+  optionalLabel,
+}: AdditionalFieldProps) {
+  const field =
+    optionalLabel && !configuredField.required
+      ? {
+          ...configuredField,
+          label: (
+            <>
+              {configuredField.label}
+              {optionalLabel}
+            </>
+          ),
+        }
+      : configuredField;
   const inputType = resolveInputType(field);
 
   if (field.render) {
     const FieldRenderer = field.render as ComponentType<AdditionalFieldProps>;
-    return <FieldRenderer name={name} field={field} isPending={isPending} />;
+    return (
+      <FieldRenderer
+        name={name}
+        field={field}
+        isPending={isPending}
+        optionalLabel={optionalLabel}
+      />
+    );
   }
 
   if (inputType === "hidden") {
@@ -133,7 +157,7 @@ export function AdditionalField({ name, field, isPending }: AdditionalFieldProps
   if (inputType === "textarea") {
     return (
       <Field>
-        <Label htmlFor={name}>{field.label}</Label>
+        <FieldLabel htmlFor={name}>{field.label}</FieldLabel>
 
         <Textarea
           id={name}
@@ -155,7 +179,7 @@ export function AdditionalField({ name, field, isPending }: AdditionalFieldProps
 
     return (
       <Field>
-        <Label htmlFor={name}>{field.label}</Label>
+        <FieldLabel htmlFor={name}>{field.label}</FieldLabel>
 
         <Input
           id={name}
@@ -225,9 +249,10 @@ export function AdditionalField({ name, field, isPending }: AdditionalFieldProps
   if (inputType === "select") {
     return (
       <Field>
-        <Label htmlFor={name}>{field.label}</Label>
+        <FieldLabel htmlFor={name}>{field.label}</FieldLabel>
 
         <Select
+          items={field.options ?? []}
           name={name}
           defaultValue={field.defaultValue != null ? String(field.defaultValue) : undefined}
           required={field.required}
@@ -238,11 +263,13 @@ export function AdditionalField({ name, field, isPending }: AdditionalFieldProps
           </SelectTrigger>
 
           <SelectContent>
-            {field.options?.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
+            <SelectGroup>
+              {field.options?.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
 
@@ -254,7 +281,7 @@ export function AdditionalField({ name, field, isPending }: AdditionalFieldProps
   if (inputType === "combobox") {
     return (
       <Field>
-        <Label htmlFor={name}>{field.label}</Label>
+        <FieldLabel htmlFor={name}>{field.label}</FieldLabel>
 
         <Combobox
           items={field.options ?? []}
@@ -305,7 +332,7 @@ function InputField({ name, field, isPending }: AdditionalFieldProps) {
   if (hasPrefix || hasSuffix) {
     return (
       <Field>
-        <Label htmlFor={name}>{field.label}</Label>
+        <FieldLabel htmlFor={name}>{field.label}</FieldLabel>
 
         <InputGroup>
           {hasPrefix && <InputGroupAddon align="inline-start">{field.prefix}</InputGroupAddon>}
@@ -342,7 +369,7 @@ function InputField({ name, field, isPending }: AdditionalFieldProps) {
 
   return (
     <Field>
-      <Label htmlFor={name}>{field.label}</Label>
+      <FieldLabel htmlFor={name}>{field.label}</FieldLabel>
 
       <Input
         id={name}
@@ -386,8 +413,8 @@ function SliderField({ name, field, isPending }: AdditionalFieldProps) {
   return (
     <Field>
       <div className="flex items-center justify-between gap-2">
-        <Label htmlFor={name}>{field.label}</Label>
-        <span className="text-muted-foreground text-sm tabular-nums">
+        <FieldLabel htmlFor={name}>{field.label}</FieldLabel>
+        <span className="text-sm text-muted-foreground tabular-nums">
           {formatter.format(value)}
         </span>
       </div>
@@ -446,7 +473,7 @@ function DateInput({ name, field, isPending }: AdditionalFieldProps) {
 
   return (
     <Field data-invalid={!!error}>
-      <Label htmlFor={`${name}-date`}>{field.label}</Label>
+      <FieldLabel htmlFor={`${name}-date`}>{field.label}</FieldLabel>
 
       <div className="relative flex gap-2">
         {/* Visually-hidden input so required constraint validation fires on submit.
@@ -454,14 +481,14 @@ function DateInput({ name, field, isPending }: AdditionalFieldProps) {
             through the styled <FieldError> below — matching the pattern used by
             the Name / Email / Password fields in the sign-up form. */}
         <input
+          aria-label={typeof field.label === "string" ? field.label : name}
           type="text"
           name={name}
           value={formValue}
           onChange={() => {}}
           required={field.required}
           tabIndex={-1}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
+          className="sr-only"
           onInvalid={(e) => {
             e.preventDefault();
             setError((e.target as HTMLInputElement).validationMessage);
@@ -502,9 +529,9 @@ function DateInput({ name, field, isPending }: AdditionalFieldProps) {
 
         {isDateTime && (
           <Field className="w-32">
-            <Label htmlFor={`${name}-time`} className="sr-only">
+            <FieldLabel htmlFor={`${name}-time`} className="sr-only">
               {localization.settings.time}
-            </Label>
+            </FieldLabel>
 
             <Input
               type="time"

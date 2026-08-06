@@ -1,8 +1,7 @@
-"use client";
-
 import { useAuth, useListAccounts } from "@better-auth-ui/react";
+import { Fragment } from "react";
 import { Card, CardContent } from "#/components/ui/card.tsx";
-import { Separator } from "#/components/ui/separator.tsx";
+import { Item, ItemContent, ItemGroup, ItemMedia, ItemSeparator } from "#/components/ui/item.tsx";
 import { Skeleton } from "#/components/ui/skeleton.tsx";
 import { cn } from "#/lib/utils.ts";
 import { LinkedAccount } from "./linked-account";
@@ -49,24 +48,25 @@ export function LinkedAccounts({ className }: LinkedAccountsProps) {
 
   return (
     <div>
-      <h2 className="mb-3 font-semibold text-sm">{localization.settings.linkedAccounts}</h2>
+      <h2 className="text-sm font-semibold mb-3">{localization.settings.linkedAccounts}</h2>
 
       <Card className={cn("p-0", className)}>
         <CardContent className="p-0">
-          {isPending
-            ? socialProviders?.map((provider, index) => (
-                <div key={provider}>
-                  {index > 0 && <Separator />}
-                  <AccountRowSkeleton />
-                </div>
-              ))
-            : allRows.map((row, index) => (
-                <div key={row.key}>
-                  {index > 0 && <Separator />}
-
-                  <LinkedAccount account={row.account} provider={row.provider} />
-                </div>
-              ))}
+          <ItemGroup className="gap-0">
+            {isPending
+              ? socialProviders?.map((provider, index) => (
+                  <Fragment key={provider}>
+                    {index > 0 && <ItemSeparator />}
+                    <AccountRowSkeleton />
+                  </Fragment>
+                ))
+              : allRows.map((row, index) => (
+                  <Fragment key={row.key}>
+                    {index > 0 && <ItemSeparator />}
+                    <LinkedAccount account={row.account} provider={row.provider} />
+                  </Fragment>
+                ))}
+          </ItemGroup>
         </CardContent>
       </Card>
     </div>
@@ -75,15 +75,14 @@ export function LinkedAccounts({ className }: LinkedAccountsProps) {
 
 function AccountRowSkeleton() {
   return (
-    <Card className="border-0 bg-transparent shadow-none ring-0">
-      <CardContent className="flex items-center gap-3">
+    <Item>
+      <ItemMedia>
         <Skeleton className="size-10 rounded-md" />
-
-        <div className="flex flex-col gap-1">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </CardContent>
-    </Card>
+      </ItemMedia>
+      <ItemContent>
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-3 w-32" />
+      </ItemContent>
+    </Item>
   );
 }

@@ -42,11 +42,11 @@ export function DeleteOrganization() {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p className="font-medium text-sm leading-tight">
+        <p className="text-sm font-medium leading-tight">
           {organizationLocalization.deleteOrganization}
         </p>
 
-        <p className="mt-0.5 text-muted-foreground text-xs">
+        <p className="text-muted-foreground mt-0.5 text-xs">
           {organizationLocalization.deleteOrganizationDescription}
         </p>
       </div>

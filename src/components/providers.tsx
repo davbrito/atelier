@@ -1,6 +1,8 @@
+import { oneTapPlugin } from "@better-auth-ui/react/plugins";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { authLocalization, organizationLocalization, passkeyLocalization } from "#/i18n/auth";
+import { adminPlugin } from "#/lib/auth/admin-plugin.ts";
 import { authClient } from "#/lib/auth/client";
 import { organizationPlugin } from "#/lib/auth/organization-plugin";
 import { passkeyPlugin } from "#/lib/auth/passkey-plugin";
@@ -22,6 +24,11 @@ export function Providers({ children }: { children: ReactNode }) {
       plugins={[
         passkeyPlugin({ localization: passkeyLocalization }),
         organizationPlugin({ localization: organizationLocalization }),
+        oneTapPlugin({
+          autoSelect: true,
+          views: ["signIn"],
+        }),
+        adminPlugin(),
       ]}
       Link={({ href, ...props }) => <Link to={href} {...props} />}
       localization={authLocalization}

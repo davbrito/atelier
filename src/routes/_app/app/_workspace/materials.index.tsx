@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Loader2Icon, PackageIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -60,7 +60,7 @@ type Material = Awaited<ReturnType<typeof listMaterials>>["items"][number];
 function MaterialsPage() {
   const { listOptions } = Route.useRouteContext();
   const { page } = Route.useSearch();
-  const navigate = useNavigate({ from: Route.fullPath });
+  const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);

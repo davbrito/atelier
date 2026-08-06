@@ -1,5 +1,3 @@
-"use client";
-
 import {
   type OrganizationAuthClient,
   useActiveOrganization,
@@ -12,9 +10,8 @@ import { toast } from "sonner";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent } from "#/components/ui/card.tsx";
-import { Field, FieldError } from "#/components/ui/field.tsx";
+import { Field, FieldError, FieldLabel } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
-import { Label } from "#/components/ui/label.tsx";
 import { Skeleton } from "#/components/ui/skeleton.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
@@ -65,7 +62,7 @@ export function OrganizationProfile({ className }: OrganizationProfileProps) {
 
   return (
     <div>
-      <h2 className={cn("mb-3 font-semibold text-sm")}>
+      <h2 className={cn("mb-3 text-sm font-semibold")}>
         {organizationLocalization.organizationProfile}
       </h2>
 
@@ -75,7 +72,7 @@ export function OrganizationProfile({ className }: OrganizationProfileProps) {
             <ChangeOrganizationLogo />
 
             <Field>
-              <Label htmlFor={nameInputId}>{organizationLocalization.name}</Label>
+              <FieldLabel htmlFor={nameInputId}>{organizationLocalization.name}</FieldLabel>
 
               {activeOrganization ? (
                 <Input
@@ -104,7 +101,7 @@ export function OrganizationProfile({ className }: OrganizationProfileProps) {
               />
             ) : (
               <Field>
-                <Label>{organizationLocalization.slug}</Label>
+                <FieldLabel>{organizationLocalization.slug}</FieldLabel>
                 <Skeleton className="h-8 w-full rounded-md" />
               </Field>
             )}

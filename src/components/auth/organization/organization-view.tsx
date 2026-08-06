@@ -82,7 +82,7 @@ export function OrganizationView({
 
       <div className="flex min-w-0 flex-col">
         <div className="flex min-w-0 items-center gap-2">
-          <p className="truncate font-medium text-foreground text-sm leading-tight">
+          <p className="truncate text-sm font-medium leading-tight text-foreground">
             {resolvedOrganization?.name}
           </p>
 
@@ -94,7 +94,7 @@ export function OrganizationView({
         </div>
 
         {!hideSlug && !!resolvedOrganization?.slug && (
-          <p className="overflow-x-hidden truncate font-mono text-muted-foreground text-xs leading-tight">
+          <p className="truncate overflow-x-hidden text-muted-foreground text-xs font-mono leading-tight">
             {slugPrefix}
             {resolvedOrganization.slug}
           </p>

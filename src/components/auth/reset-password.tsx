@@ -1,3 +1,4 @@
+import { getAuthLinkURL } from "@better-auth-ui/core";
 import { useAuth, useResetPassword } from "@better-auth-ui/react";
 import { Eye, EyeOff } from "lucide-react";
 import { type SyntheticEvent, useEffect, useState } from "react";
@@ -5,14 +6,19 @@ import { toast } from "sonner";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card.tsx";
-import { Field, FieldDescription, FieldError, FieldGroup } from "#/components/ui/field.tsx";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "#/components/ui/field.tsx";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
 } from "#/components/ui/input-group.tsx";
-import { Label } from "#/components/ui/label.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { cn } from "#/lib/utils.ts";
 
@@ -28,13 +34,22 @@ export type ResetPasswordProps = {
  * @returns The password reset form UI ready to be mounted in the app layout.
  */
 export function ResetPassword({ className }: ResetPasswordProps) {
-  const { authClient, basePaths, emailAndPassword, localization, viewPaths, navigate, Link } =
-    useAuth();
+  const {
+    authClient,
+    basePaths,
+    emailAndPassword,
+    localization,
+    navigate,
+    redirectTo,
+    viewPaths,
+    Link,
+  } = useAuth();
+  const signInURL = getAuthLinkURL(`${basePaths.auth}/${viewPaths.auth.signIn}`, redirectTo);
 
   const { mutate: resetPassword, isPending } = useResetPassword(authClient, {
     onSuccess: () => {
       toast.success(localization.auth.passwordResetSuccess);
-      navigate({ to: `${basePaths.auth}/${viewPaths.auth.signIn}` });
+      navigate({ to: signInURL });
     },
   });
 
@@ -52,14 +67,9 @@ export function ResetPassword({ className }: ResetPasswordProps) {
 
     if (!token) {
       toast.error(localization.auth.invalidResetPasswordToken);
-      navigate({ to: `${basePaths.auth}/${viewPaths.auth.signIn}` });
+      navigate({ to: signInURL });
     }
-  }, [
-    basePaths.auth,
-    localization.auth.invalidResetPasswordToken,
-    viewPaths.auth.signIn,
-    navigate,
-  ]);
+  }, [localization.auth.invalidResetPasswordToken, navigate, signInURL]);
 
   function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -69,7 +79,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
 
     if (!token) {
       toast.error(localization.auth.invalidResetPasswordToken);
-      navigate({ to: `${basePaths.auth}/${viewPaths.auth.signIn}` });
+      navigate({ to: signInURL });
       return;
     }
 
@@ -88,14 +98,14 @@ export function ResetPassword({ className }: ResetPasswordProps) {
   return (
     <Card className={cn("w-full max-w-sm", className)}>
       <CardHeader>
-        <CardTitle className="font-semibold text-xl">{localization.auth.resetPassword}</CardTitle>
+        <CardTitle className="text-xl font-semibold">{localization.auth.resetPassword}</CardTitle>
       </CardHeader>
 
       <CardContent>
         <form onSubmit={handleSubmit}>
           <FieldGroup>
             <Field data-invalid={!!fieldErrors.password}>
-              <Label htmlFor="password">{localization.auth.password}</Label>
+              <FieldLabel htmlFor="password">{localization.auth.password}</FieldLabel>
 
               <InputGroup>
                 <InputGroupInput
@@ -135,6 +145,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
 
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
+                    size="icon-xs"
                     aria-label={
                       isPasswordVisible
                         ? localization.auth.hidePassword
@@ -146,7 +157,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                         : localization.auth.showPassword
                     }
                     onClick={() => {
-                      setIsPasswordVisible(!isPasswordVisible);
+                      setIsPasswordVisible((visible) => !visible);
                     }}
                   >
                     {isPasswordVisible ? <EyeOff /> : <Eye />}
@@ -159,7 +170,9 @@ export function ResetPassword({ className }: ResetPasswordProps) {
 
             {emailAndPassword?.confirmPassword && (
               <Field data-invalid={!!fieldErrors.confirmPassword}>
-                <Label htmlFor="confirmPassword">{localization.auth.confirmPassword}</Label>
+                <FieldLabel htmlFor="confirmPassword">
+                  {localization.auth.confirmPassword}
+                </FieldLabel>
 
                 <InputGroup>
                   <InputGroupInput
@@ -199,6 +212,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
 
                   <InputGroupAddon align="inline-end">
                     <InputGroupButton
+                      size="icon-xs"
                       aria-label={
                         isConfirmPasswordVisible
                           ? localization.auth.hidePassword
@@ -210,7 +224,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                           : localization.auth.showPassword
                       }
                       onClick={() => {
-                        setIsConfirmPasswordVisible(!isConfirmPasswordVisible);
+                        setIsConfirmPasswordVisible((visible) => !visible);
                       }}
                     >
                       {isConfirmPasswordVisible ? <EyeOff /> : <Eye />}
@@ -232,11 +246,11 @@ export function ResetPassword({ className }: ResetPasswordProps) {
           </FieldGroup>
         </form>
 
-        <div className="mt-4 flex w-full flex-col items-center gap-3">
+        <div className="flex flex-col gap-3 items-center w-full mt-4">
           <FieldDescription className="text-center">
             {localization.auth.rememberYourPassword}{" "}
             <Link
-              href={`${basePaths.auth}/${viewPaths.auth.signIn}`}
+              href={getAuthLinkURL(`${basePaths.auth}/${viewPaths.auth.signIn}`, redirectTo)}
               className="underline underline-offset-4"
             >
               {localization.auth.signIn}

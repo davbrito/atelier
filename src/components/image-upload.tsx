@@ -1,5 +1,3 @@
-"use client";
-
 import { ImageIcon, TrashIcon, UploadIcon } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";

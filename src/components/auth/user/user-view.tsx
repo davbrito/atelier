@@ -1,5 +1,3 @@
-"use client";
-
 import { type UsernameAuthClient, useAuth, useSession } from "@better-auth-ui/react";
 import type { User } from "better-auth";
 
@@ -34,7 +32,7 @@ export type UserViewProps = {
 export function UserView({ className, isPending, hideSubtitle = false, user }: UserViewProps) {
   const { authClient } = useAuth();
   const { data: session, isPending: sessionPending } = useSession(
-    authClient as unknown as UsernameAuthClient,
+    authClient as UsernameAuthClient,
     { enabled: !user && !isPending },
   );
 
@@ -42,7 +40,7 @@ export function UserView({ className, isPending, hideSubtitle = false, user }: U
 
   if ((isPending || sessionPending) && !user) {
     return (
-      <div className={cn("flex min-w-0 items-center gap-2", className)}>
+      <div className={cn("flex items-center gap-2 min-w-0", className)}>
         <UserAvatar isPending />
 
         <div className="grid flex-1 gap-1 text-left text-sm">
@@ -55,7 +53,7 @@ export function UserView({ className, isPending, hideSubtitle = false, user }: U
   }
 
   return (
-    <div className={cn("flex min-w-0 items-center gap-2", className)}>
+    <div className={cn("flex items-center gap-2 min-w-0", className)}>
       <UserAvatar user={resolvedUser as User | undefined} />
 
       <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
@@ -64,7 +62,7 @@ export function UserView({ className, isPending, hideSubtitle = false, user }: U
         </span>
 
         {!hideSubtitle && (resolvedUser?.displayUsername || resolvedUser?.name) && (
-          <span className="truncate text-muted-foreground text-xs">{resolvedUser?.email}</span>
+          <span className="text-muted-foreground truncate text-xs">{resolvedUser?.email}</span>
         )}
       </div>
     </div>

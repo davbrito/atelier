@@ -4,11 +4,11 @@ import {
   useAuthPlugin,
   useListOrganizations,
 } from "@better-auth-ui/react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent } from "#/components/ui/card.tsx";
-import { Separator } from "#/components/ui/separator.tsx";
+import { Item, ItemGroup, ItemSeparator } from "#/components/ui/item.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
 import { CreateOrganizationDialog } from "./create-organization-dialog";
 import { OrganizationRow } from "./organization-row";
@@ -39,7 +39,7 @@ export function Organizations({ className }: OrganizationsProps) {
       <div className={className}>
         <div className="flex flex-col gap-3">
           <div className="flex items-end justify-between gap-3">
-            <h2 className="truncate font-semibold text-sm">
+            <h2 className="truncate text-sm font-semibold">
               {organizationLocalization.organizations}
             </h2>
 
@@ -56,21 +56,22 @@ export function Organizations({ className }: OrganizationsProps) {
           <Card className="p-0">
             <CardContent className="p-0">
               {organizationsPending ? (
-                <div className="p-4">
-                  <OrganizationViewSkeleton />
-                </div>
+                <ItemGroup>
+                  <Item>
+                    <OrganizationViewSkeleton />
+                  </Item>
+                </ItemGroup>
               ) : !organizations?.length ? (
                 <OrganizationsEmpty onCreatePress={() => setCreateOpen(true)} />
               ) : (
-                organizations.map((organization, index) => (
-                  <div key={organization.id}>
-                    {index > 0 && <Separator />}
-
-                    <div className="p-4">
+                <ItemGroup className="gap-0">
+                  {organizations.map((organization, index) => (
+                    <Fragment key={organization.id}>
+                      {index > 0 && <ItemSeparator />}
                       <OrganizationRow organization={organization} />
-                    </div>
-                  </div>
-                ))
+                    </Fragment>
+                  ))}
+                </ItemGroup>
               )}
             </CardContent>
           </Card>

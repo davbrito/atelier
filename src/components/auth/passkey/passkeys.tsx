@@ -1,16 +1,14 @@
-"use client";
-
 import {
   type PasskeyAuthClient,
   useAuth,
   useAuthPlugin,
   useListPasskeys,
 } from "@better-auth-ui/react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent } from "#/components/ui/card.tsx";
-import { Separator } from "#/components/ui/separator.tsx";
+import { ItemGroup, ItemSeparator } from "#/components/ui/item.tsx";
 import { passkeyPlugin } from "#/lib/auth/passkey-plugin.ts";
 import { cn } from "#/lib/utils.ts";
 
@@ -34,7 +32,7 @@ export function Passkeys({ className }: PasskeysProps) {
   return (
     <div className={cn("flex flex-col gap-3", className)}>
       <div className="flex items-end justify-between gap-3">
-        <h2 className="truncate font-semibold text-sm">{passkeyLocalization.passkeys}</h2>
+        <h2 className="truncate text-sm font-semibold">{passkeyLocalization.passkeys}</h2>
 
         <Button
           className="shrink-0"
@@ -53,13 +51,14 @@ export function Passkeys({ className }: PasskeysProps) {
           ) : !passkeys?.length ? (
             <PasskeysEmpty onAddPress={() => setAddOpen(true)} />
           ) : (
-            passkeys.map((passkey, index) => (
-              <div key={passkey.id}>
-                {index > 0 && <Separator />}
-
-                <Passkey passkey={passkey} />
-              </div>
-            ))
+            <ItemGroup className="gap-0">
+              {passkeys.map((passkey, index) => (
+                <Fragment key={passkey.id}>
+                  {index > 0 && <ItemSeparator />}
+                  <Passkey passkey={passkey} />
+                </Fragment>
+              ))}
+            </ItemGroup>
           )}
         </CardContent>
       </Card>

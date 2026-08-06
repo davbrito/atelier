@@ -1,5 +1,3 @@
-"use client";
-
 import { useDebouncer } from "@tanstack/react-pacer";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";

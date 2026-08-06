@@ -1,5 +1,3 @@
-"use client";
-
 import {
   type OrganizationAuthClient,
   useAuth,
@@ -9,24 +7,22 @@ import {
 import { UserPlus } from "lucide-react";
 import { type SyntheticEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
-
+import { Button, buttonVariants } from "#/components/ui/button.tsx";
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from "#/components/ui/alert-dialog.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { Field, FieldError } from "#/components/ui/field.tsx";
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "#/components/ui/dialog.tsx";
+import { Field, FieldError, FieldLabel } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
-import { Label } from "#/components/ui/label.tsx";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -52,6 +48,10 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
 
   const [role, setRole] = useState(() => pickDefaultRole(Object.keys(roles)));
   const [emailError, setEmailError] = useState<string>();
+  const roleItems = Object.entries(roles).map(([value, label]) => ({
+    label,
+    value,
+  }));
 
   useEffect(() => {
     setRole((current) => {
@@ -91,24 +91,23 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          <AlertDialogHeader>
-            <AlertDialogMedia>
+          <DialogHeader>
+            <DialogTitle>
               <UserPlus />
-            </AlertDialogMedia>
+              {organizationLocalization.inviteMember}
+            </DialogTitle>
 
-            <AlertDialogTitle>{organizationLocalization.inviteMember}</AlertDialogTitle>
-
-            <AlertDialogDescription>
+            <DialogDescription>
               {organizationLocalization.inviteMemberDescription}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+            </DialogDescription>
+          </DialogHeader>
 
           <div className="flex flex-col gap-4">
             <Field data-invalid={!!emailError}>
-              <Label htmlFor="invite-member-email">{localization.auth.email}</Label>
+              <FieldLabel htmlFor="invite-member-email">{localization.auth.email}</FieldLabel>
 
               <Input
                 id="invite-member-email"
@@ -134,9 +133,10 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
             </Field>
 
             <Field>
-              <Label htmlFor="invite-member-role">{organizationLocalization.role}</Label>
+              <FieldLabel htmlFor="invite-member-role">{organizationLocalization.role}</FieldLabel>
 
               <Select
+                items={roleItems}
                 value={role}
                 onValueChange={(value) => setRole(value ?? "")}
                 disabled={isInviting}
@@ -146,11 +146,13 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
                 </SelectTrigger>
 
                 <SelectContent>
-                  {Object.entries(roles).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
+                  <SelectGroup>
+                    {roleItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
 
@@ -158,19 +160,23 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
             </Field>
           </div>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isInviting}>
+          <DialogFooter>
+            <DialogClose
+              className={buttonVariants({ variant: "outline" })}
+              disabled={isInviting}
+              type="button"
+            >
               {localization.settings.cancel}
-            </AlertDialogCancel>
+            </DialogClose>
 
             <Button type="submit" disabled={isInviting || !isRoleValid}>
               {isInviting && <Spinner />}
 
               {organizationLocalization.inviteMember}
             </Button>
-          </AlertDialogFooter>
+          </DialogFooter>
         </form>
-      </AlertDialogContent>
-    </AlertDialog>
+      </DialogContent>
+    </Dialog>
   );
 }

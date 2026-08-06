@@ -8,9 +8,8 @@ import { useDebouncer } from "@tanstack/react-pacer";
 import { Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { Field, FieldError } from "#/components/ui/field.tsx";
+import { Field, FieldError, FieldLabel } from "#/components/ui/field.tsx";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group.tsx";
-import { Label } from "#/components/ui/label.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
 
@@ -75,7 +74,7 @@ export function SlugField({ value, onChange, currentSlug, disabled, id = "slug" 
 
   return (
     <Field data-invalid={!!slugError}>
-      <Label htmlFor={id}>{localization.slug}</Label>
+      <FieldLabel htmlFor={id}>{localization.slug}</FieldLabel>
 
       <InputGroup>
         {slugPrefix && <InputGroupAddon align="inline-start">{slugPrefix}</InputGroupAddon>}

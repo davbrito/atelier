@@ -4,9 +4,10 @@ import {
   useAuthPlugin,
   useListUserInvitations,
 } from "@better-auth-ui/react";
+import { Fragment } from "react";
 
 import { Card, CardContent } from "#/components/ui/card.tsx";
-import { Separator } from "#/components/ui/separator.tsx";
+import { ItemGroup, ItemSeparator } from "#/components/ui/item.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
 import { UserInvitationRow } from "./user-invitation-row";
 import { UserInvitationRowSkeleton } from "./user-invitation-row-skeleton";
@@ -31,26 +32,25 @@ export function UserInvitations({ className }: UserInvitationsProps) {
   return (
     <div className={className}>
       <div className="flex flex-col gap-3">
-        <h2 className="truncate font-semibold text-sm">{organizationLocalization.invitations}</h2>
+        <h2 className="truncate text-sm font-semibold">{organizationLocalization.invitations}</h2>
 
         <Card className="p-0">
           <CardContent className="p-0">
             {isPending ? (
-              <div className="p-4">
+              <ItemGroup>
                 <UserInvitationRowSkeleton />
-              </div>
+              </ItemGroup>
             ) : !invitations?.length ? (
               <UserInvitationsEmpty />
             ) : (
-              invitations.map((invitation, index) => (
-                <div key={invitation.id}>
-                  {index > 0 && <Separator />}
-
-                  <div className="p-4">
+              <ItemGroup className="gap-0">
+                {invitations.map((invitation, index) => (
+                  <Fragment key={invitation.id}>
+                    {index > 0 && <ItemSeparator />}
                     <UserInvitationRow invitation={invitation} />
-                  </div>
-                </div>
-              ))
+                  </Fragment>
+                ))}
+              </ItemGroup>
             )}
           </CardContent>
         </Card>

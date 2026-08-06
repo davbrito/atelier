@@ -1,5 +1,3 @@
-"use client";
-
 import type { ComponentProps } from "react";
 
 import { Skeleton } from "#/components/ui/skeleton.tsx";
@@ -29,7 +27,7 @@ export function OrganizationViewSkeleton({
         size={size === "lg" ? "md" : "sm"}
       />
 
-      <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex flex-col min-w-0 gap-1">
         <Skeleton className="h-3.5 w-20 rounded-md" />
 
         {!hideSlug && <Skeleton className="h-3 w-28 rounded-md" />}

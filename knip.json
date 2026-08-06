@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "tags": ["-lintignore"],
+  "tanstack-router": true,
+  "entry": ["src/routeTree.gen.{ts,js}", "src/{router,start,client,server}.{js,jsx,ts,tsx}"]
+}

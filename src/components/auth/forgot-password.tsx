@@ -1,14 +1,20 @@
+import { getViewURL } from "@better-auth-ui/core";
 import { useAuth, useFetchOptions, useRequestPasswordReset } from "@better-auth-ui/react";
 import { type SyntheticEvent, useState } from "react";
-import { toast } from "sonner";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card.tsx";
-import { Field, FieldDescription, FieldError, FieldGroup } from "#/components/ui/field.tsx";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
-import { Label } from "#/components/ui/label.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { cn } from "#/lib/utils.ts";
+import { RESET_LINK_SENT_STORAGE_KEY } from "./reset-link-sent";
 
 export type ForgotPasswordProps = {
   className?: string;
@@ -18,13 +24,16 @@ export type ForgotPasswordProps = {
  * Render a card-based "Forgot Password" form that sends a password-reset email.
  *
  * The form displays an email input, submit button, and a link back to sign-in.
- * Toasts are displayed on success or error via the `useForgotPassword` hook.
+ * After a successful request the submitted email is stored in `sessionStorage`
+ * and the user is redirected to the reset-link-sent view, which offers to open
+ * their email provider.
  *
  * @param className - Optional additional CSS class names applied to the card
  * @returns The forgot-password form UI as a JSX element
  */
 export function ForgotPassword({ className }: ForgotPasswordProps) {
-  const { authClient, baseURL, basePaths, localization, plugins, viewPaths, Link } = useAuth();
+  const { authClient, baseURL, basePaths, localization, navigate, plugins, viewPaths, Link } =
+    useAuth();
 
   const { fetchOptions, resetFetchOptions } = useFetchOptions();
 
@@ -32,7 +41,10 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
     onError: () => {
       resetFetchOptions();
     },
-    onSuccess: () => toast.success(localization.auth.passwordResetEmailSent),
+    onSuccess: (_data, { email }) => {
+      sessionStorage.setItem(RESET_LINK_SENT_STORAGE_KEY, email);
+      navigate({ to: `${basePaths.auth}/${viewPaths.auth.resetLinkSent}` });
+    },
   });
 
   function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
@@ -40,7 +52,7 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
     const formData = new FormData(e.currentTarget);
     requestPasswordReset({
       email: formData.get("email") as string,
-      redirectTo: `${baseURL}${basePaths.auth}/${viewPaths.auth.resetPassword}`,
+      redirectTo: getViewURL(baseURL, basePaths.auth, viewPaths.auth.resetPassword),
       fetchOptions,
     });
   }
@@ -54,14 +66,14 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
   return (
     <Card className={cn("w-full max-w-sm", className)}>
       <CardHeader>
-        <CardTitle className="font-semibold text-xl">{localization.auth.forgotPassword}</CardTitle>
+        <CardTitle className="text-xl font-semibold">{localization.auth.forgotPassword}</CardTitle>
       </CardHeader>
 
       <CardContent>
         <form onSubmit={handleSubmit}>
           <FieldGroup>
             <Field data-invalid={!!fieldErrors.email}>
-              <Label htmlFor="email">{localization.auth.email}</Label>
+              <FieldLabel htmlFor="email">{localization.auth.email}</FieldLabel>
 
               <Input
                 id="email"
@@ -107,7 +119,7 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
           </FieldGroup>
         </form>
 
-        <div className="mt-4 flex w-full flex-col items-center gap-3">
+        <div className="flex flex-col gap-3 items-center w-full mt-4">
           <FieldDescription className="text-center">
             {localization.auth.rememberYourPassword}{" "}
             <Link

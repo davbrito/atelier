@@ -7,7 +7,6 @@
       "!**/node_modules",
       "!**/dist",
       "!**/build",
-      "!src/components/ui",
       "!drizzle/**/*.json",
       "!worker-configuration.d.ts",
       ".tanstack/**",
@@ -68,5 +67,30 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/components/ui/**", "src/components/auth/**"],
+      "assist": {
+        "actions": {
+          "source": {
+            "organizeImports": "off"
+          }
+        }
+      },
+      "linter": {
+        "rules": {
+          "style": {
+            "useImportType": "off"
+          },
+          "a11y": {
+            "noLabelWithoutControl": "off"
+          },
+          "nursery": {
+            "useSortedClasses": "off"
+          }
+        }
+      }
+    }
+  ]
 }

@@ -1,4 +1,4 @@
-import { fileToBase64 } from "@better-auth-ui/core";
+import { fileToAvatarDataUrl } from "@better-auth-ui/core";
 import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react";
 import { Trash2, Upload } from "lucide-react";
 import { type ChangeEvent, useRef, useState } from "react";
@@ -11,8 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu.tsx";
-import { Field } from "#/components/ui/field.tsx";
-import { Label } from "#/components/ui/label.tsx";
+import { Field, FieldLabel } from "#/components/ui/field.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { cn } from "#/lib/utils.ts";
 
@@ -43,7 +42,7 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
     try {
       const resized = (await avatar.resize?.(file, avatar.size, avatar.extension)) || file;
 
-      const image = (await avatar.upload?.(resized)) || (await fileToBase64(resized));
+      const image = (await avatar.upload?.(resized)) || (await fileToAvatarDataUrl(resized));
 
       updateUser(
         { image },
@@ -84,7 +83,7 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
 
   return (
     <Field className={className}>
-      <Label>{localization.settings.avatar}</Label>
+      <FieldLabel>{localization.settings.avatar}</FieldLabel>
 
       <input
         ref={fileInputRef}
@@ -98,7 +97,7 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
         <Button
           type="button"
           variant="ghost"
-          className="h-auto w-auto rounded-full p-0"
+          className="p-0 h-auto w-auto rounded-full"
           disabled={isPending}
           onClick={() => fileInputRef.current?.click()}
         >

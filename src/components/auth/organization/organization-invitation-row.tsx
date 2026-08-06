@@ -1,5 +1,3 @@
-"use client";
-
 import {
   type OrganizationAuthClient,
   useAuth,
@@ -58,7 +56,7 @@ export function OrganizationInvitationRow({ invitation }: OrganizationInvitation
     <TableRow>
       <TableCell className="font-medium text-sm">{invitation.email}</TableCell>
 
-      <TableCell className="whitespace-nowrap text-muted-foreground text-xs tabular-nums">
+      <TableCell className="text-muted-foreground text-xs tabular-nums whitespace-nowrap">
         {new Date(invitation.createdAt).toLocaleString(undefined, {
           dateStyle: "short",
           timeStyle: "short",

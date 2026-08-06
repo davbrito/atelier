@@ -1,5 +1,5 @@
-import { authMutationKeys, parseAdditionalFieldValue } from "@better-auth-ui/core";
-import { useAuth, useFetchOptions, useSignUpEmail } from "@better-auth-ui/react";
+import { authMutationKeys, getAuthLinkURL, parseAdditionalFieldValue } from "@better-auth-ui/core";
+import { AuthPrompts, useAuth, useFetchOptions, useSignUpEmail } from "@better-auth-ui/react";
 import { useIsMutating } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
 import { type SyntheticEvent, useState } from "react";
@@ -11,6 +11,7 @@ import {
   FieldDescription,
   FieldError,
   FieldGroup,
+  FieldLabel,
   FieldSeparator,
 } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
@@ -20,7 +21,6 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "#/components/ui/input-group.tsx";
-import { Label } from "#/components/ui/label.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { cn } from "#/lib/utils.ts";
 import { AdditionalField } from "./additional-field";
@@ -30,6 +30,12 @@ export type SignUpProps = {
   className?: string;
   socialLayout?: SocialLayout;
   socialPosition?: "top" | "bottom";
+  /**
+   * Runs instead of the post-sign-up redirect, but only when the sign-up
+   * created an immediately usable session. Email verification still takes
+   * priority, and social sign-ups are unaffected.
+   */
+  onSignUpSuccess?: () => void;
 };
 
 /**
@@ -44,9 +50,15 @@ export type SignUpProps = {
  * @param className - Additional CSS classes applied to the outer container
  * @param socialLayout - Social layout to apply to the component
  * @param socialPosition - Social position to apply to the component
+ * @param onSignUpSuccess - Replaces the post-sign-up redirect when the new account is immediately usable
  * @returns The sign-up form React element.
  */
-export function SignUp({ className, socialLayout, socialPosition = "bottom" }: SignUpProps) {
+export function SignUp({
+  className,
+  socialLayout,
+  socialPosition = "bottom",
+  onSignUpSuccess,
+}: SignUpProps) {
   const {
     additionalFields,
     authClient,
@@ -76,8 +88,10 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
       if (emailAndPassword?.requireEmailVerification) {
         sessionStorage.setItem("better-auth-ui.verify-email", email);
         navigate({
-          to: `${basePaths.auth}/${viewPaths.auth.verifyEmail}`,
+          to: getAuthLinkURL(`${basePaths.auth}/${viewPaths.auth.verifyEmail}`, redirectTo),
         });
+      } else if (onSignUpSuccess) {
+        onSignUpSuccess();
       } else {
         navigate({ to: redirectTo });
       }
@@ -152,8 +166,9 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
 
   return (
     <Card className={cn("w-full max-w-sm", className)}>
+      <AuthPrompts view="signUp" />
       <CardHeader>
-        <CardTitle className="font-semibold text-xl">{localization.auth.signUp}</CardTitle>
+        <CardTitle className="text-xl font-semibold">{localization.auth.signUp}</CardTitle>
       </CardHeader>
 
       <CardContent>
@@ -161,11 +176,11 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
           {socialPosition === "top" && (
             <>
               {socialProviders && socialProviders.length > 0 && (
-                <ProviderButtons socialLayout={socialLayout} />
+                <ProviderButtons socialLayout={socialLayout} view="signUp" />
               )}
 
               {showSeparator && (
-                <FieldSeparator className="flex items-center text-xs *:data-[slot=field-separator-content]:bg-card">
+                <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card text-xs flex items-center">
                   {localization.auth.or}
                 </FieldSeparator>
               )}
@@ -177,7 +192,7 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
               <FieldGroup>
                 {emailAndPassword.name !== false && (
                   <Field data-invalid={!!fieldErrors.name}>
-                    <Label htmlFor="name">{localization.auth.name}</Label>
+                    <FieldLabel htmlFor="name">{localization.auth.name}</FieldLabel>
 
                     <Input
                       id="name"
@@ -209,7 +224,7 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
                 )}
 
                 <Field data-invalid={!!fieldErrors.email}>
-                  <Label htmlFor="email">{localization.auth.email}</Label>
+                  <FieldLabel htmlFor="email">{localization.auth.email}</FieldLabel>
 
                   <Input
                     id="email"
@@ -251,12 +266,13 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
                         name={field.name}
                         field={field}
                         isPending={isPending}
+                        optionalLabel={localization.auth.optional}
                       />
                     ),
                 )}
 
                 <Field data-invalid={!!fieldErrors.password}>
-                  <Label htmlFor="password">{localization.auth.password}</Label>
+                  <FieldLabel htmlFor="password">{localization.auth.password}</FieldLabel>
 
                   <InputGroup>
                     <InputGroupInput
@@ -298,6 +314,7 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
 
                     <InputGroupAddon align="inline-end">
                       <InputGroupButton
+                        size="icon-xs"
                         aria-label={
                           isPasswordVisible
                             ? localization.auth.hidePassword
@@ -309,7 +326,7 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
                             : localization.auth.showPassword
                         }
                         onClick={() => {
-                          setIsPasswordVisible(!isPasswordVisible);
+                          setIsPasswordVisible((visible) => !visible);
                         }}
                       >
                         {isPasswordVisible ? <EyeOff /> : <Eye />}
@@ -322,7 +339,9 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
 
                 {emailAndPassword?.confirmPassword && (
                   <Field data-invalid={!!fieldErrors.confirmPassword}>
-                    <Label htmlFor="confirmPassword">{localization.auth.confirmPassword}</Label>
+                    <FieldLabel htmlFor="confirmPassword">
+                      {localization.auth.confirmPassword}
+                    </FieldLabel>
 
                     <InputGroup>
                       <InputGroupInput
@@ -365,6 +384,7 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
 
                       <InputGroupAddon align="inline-end">
                         <InputGroupButton
+                          size="icon-xs"
                           aria-label={
                             isConfirmPasswordVisible
                               ? localization.auth.hidePassword
@@ -375,7 +395,7 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
                               ? localization.auth.hidePassword
                               : localization.auth.showPassword
                           }
-                          onClick={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
+                          onClick={() => setIsConfirmPasswordVisible((visible) => !visible)}
                         >
                           {isConfirmPasswordVisible ? <EyeOff /> : <Eye />}
                         </InputGroupButton>
@@ -395,6 +415,7 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
                         name={field.name}
                         field={field}
                         isPending={isPending}
+                        optionalLabel={localization.auth.optional}
                       />
                     ),
                 )}
@@ -421,24 +442,24 @@ export function SignUp({ className, socialLayout, socialPosition = "bottom" }: S
           {socialPosition === "bottom" && (
             <>
               {showSeparator && (
-                <FieldSeparator className="flex items-center text-xs *:data-[slot=field-separator-content]:bg-card">
+                <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card text-xs flex items-center">
                   {localization.auth.or}
                 </FieldSeparator>
               )}
 
               {socialProviders && socialProviders.length > 0 && (
-                <ProviderButtons socialLayout={socialLayout} />
+                <ProviderButtons socialLayout={socialLayout} view="signUp" />
               )}
             </>
           )}
         </div>
 
         {emailAndPassword?.enabled && (
-          <div className="mt-4 flex w-full flex-col items-center gap-3">
+          <div className="flex flex-col gap-3 items-center w-full mt-4">
             <FieldDescription className="text-center">
               {localization.auth.alreadyHaveAnAccount}{" "}
               <Link
-                href={`${basePaths.auth}/${viewPaths.auth.signIn}`}
+                href={getAuthLinkURL(`${basePaths.auth}/${viewPaths.auth.signIn}`, redirectTo)}
                 className="underline underline-offset-4"
               >
                 {localization.auth.signIn}

@@ -1,5 +1,3 @@
-"use client";
-
 import { type UsernameAuthClient, useAuth, useSession } from "@better-auth-ui/react";
 import type { User } from "better-auth";
 import { User2 } from "lucide-react";
@@ -31,7 +29,7 @@ export type UserAvatarProps = {
 export function UserAvatar({ className, user, isPending, fallback }: UserAvatarProps) {
   const { authClient } = useAuth();
   const { data: session, isPending: sessionPending } = useSession(
-    authClient as unknown as UsernameAuthClient,
+    authClient as UsernameAuthClient,
     { enabled: !user && !isPending },
   );
 
@@ -46,7 +44,7 @@ export function UserAvatar({ className, user, isPending, fallback }: UserAvatarP
     .toUpperCase();
 
   return (
-    <Avatar className={cn("size-8 rounded-full bg-muted text-foreground text-sm", className)}>
+    <Avatar className={cn("size-8 bg-muted text-foreground text-sm rounded-full", className)}>
       <AvatarImage
         src={resolvedUser?.image ?? undefined}
         alt={resolvedUser?.displayUsername || resolvedUser?.name || resolvedUser?.email}

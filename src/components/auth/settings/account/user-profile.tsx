@@ -1,5 +1,3 @@
-"use client";
-
 import { type AdditionalFieldValue, parseAdditionalFieldValue } from "@better-auth-ui/core";
 import { type UsernameAuthClient, useAuth, useSession, useUpdateUser } from "@better-auth-ui/react";
 import { type SyntheticEvent, useState } from "react";
@@ -7,9 +5,8 @@ import { toast } from "sonner";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent, CardFooter } from "#/components/ui/card.tsx";
-import { Field, FieldError } from "#/components/ui/field.tsx";
+import { Field, FieldError, FieldLabel } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
-import { Label } from "#/components/ui/label.tsx";
 import { Skeleton } from "#/components/ui/skeleton.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { cn } from "#/lib/utils.ts";
@@ -28,7 +25,7 @@ export type UserProfileProps = {
  */
 export function UserProfile({ className }: UserProfileProps) {
   const { additionalFields, authClient, localization } = useAuth();
-  const { data: session } = useSession(authClient as unknown as UsernameAuthClient);
+  const { data: session } = useSession(authClient as UsernameAuthClient);
 
   const { mutate: updateUser, isPending } = useUpdateUser(authClient, {
     onSuccess: () => toast.success(localization.settings.profileUpdatedSuccess),
@@ -73,7 +70,7 @@ export function UserProfile({ className }: UserProfileProps) {
 
   return (
     <div>
-      <h2 className="mb-3 font-semibold text-sm">{localization.settings.userProfile}</h2>
+      <h2 className="text-sm font-semibold mb-3">{localization.settings.userProfile}</h2>
 
       <form onSubmit={handleSubmit}>
         <Card className={cn(className)}>
@@ -81,7 +78,7 @@ export function UserProfile({ className }: UserProfileProps) {
             <ChangeAvatar />
 
             <Field data-invalid={!!fieldErrors.name}>
-              <Label htmlFor="name">{localization.auth.name}</Label>
+              <FieldLabel htmlFor="name">{localization.auth.name}</FieldLabel>
 
               {session ? (
                 <Input

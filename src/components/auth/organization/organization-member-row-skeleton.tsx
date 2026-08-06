@@ -1,5 +1,3 @@
-"use client";
-
 import { Skeleton } from "#/components/ui/skeleton.tsx";
 import { TableCell, TableRow } from "#/components/ui/table.tsx";
 import { UserView } from "../user/user-view";
