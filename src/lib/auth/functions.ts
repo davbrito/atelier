@@ -40,7 +40,7 @@ export const ensureOrganizationList = createIsomorphicFn()
 
 export const authenticatedMiddleware = createMiddleware().server(
   async ({ next, request, context: { auth, executionCtx } }) => {
-    const session = executionCtx.tracing.enterSpan("auth.getSession", async (span) => {
+    const session = await executionCtx.tracing.enterSpan("auth.getSession", async (span) => {
       const session = await auth.api.getSession({ headers: request.headers });
 
       if (session) {
