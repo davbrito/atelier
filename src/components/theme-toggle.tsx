@@ -14,7 +14,7 @@ export function ThemeToggle() {
       htmlFor={id}
     >
       <span className="flex items-center gap-2 text-sidebar-foreground">
-        {isDark ? <Moon className="size-4" /> : <Sun className="size-4" />}
+        {isDark ? <Moon key="moon" className="size-4" /> : <Sun key="sun" className="size-4" />}
         Modo oscuro
       </span>
       <Switch

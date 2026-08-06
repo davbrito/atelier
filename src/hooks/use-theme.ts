@@ -1,6 +1,34 @@
-import { useCallback, useEffect, useState } from "react";
+import { useLayoutEffect } from "react";
+import { create } from "zustand";
 
 type Theme = "light" | "dark";
+
+const useThemeStore = create<{
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
+}>((set, get) => {
+  const persistTheme = (next: Theme) => {
+    const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(next);
+    root.setAttribute("data-theme", next);
+    root.style.colorScheme = next;
+    window.localStorage.setItem("theme", next);
+    set({ theme: next });
+  };
+
+  return {
+    theme: "light",
+    setTheme: (theme) => {
+      persistTheme(theme);
+    },
+    toggleTheme: () => {
+      const next = get().theme === "dark" ? "light" : "dark";
+      persistTheme(next);
+    },
+  };
+});
 
 function resolveTheme(): Theme {
   if (typeof document === "undefined") return "light";
@@ -8,25 +36,11 @@ function resolveTheme(): Theme {
 }
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>(resolveTheme);
+  const state = useThemeStore();
 
-  useEffect(() => {
-    setTheme(resolveTheme());
+  useLayoutEffect(() => {
+    useThemeStore.setState({ theme: resolveTheme() });
   }, []);
 
-  const setThemeAndPersist = useCallback((next: Theme) => {
-    const root = document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(next);
-    root.setAttribute("data-theme", next);
-    root.style.colorScheme = next;
-    window.localStorage.setItem("theme", next);
-    setTheme(next);
-  }, []);
-
-  const toggleTheme = useCallback(() => {
-    setThemeAndPersist(theme === "dark" ? "light" : "dark");
-  }, [theme, setThemeAndPersist]);
-
-  return { theme, setTheme: setThemeAndPersist, toggleTheme };
+  return state;
 }

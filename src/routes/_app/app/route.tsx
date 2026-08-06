@@ -1,10 +1,13 @@
 import { useAuth, useAuthenticate } from "@better-auth-ui/react";
+import { noop } from "@tanstack/react-query";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { useLayoutEffect } from "react";
 import { AppSidebar } from "#/components/app-sidebar";
 import { UserButton } from "#/components/auth/user/user-button";
 import { Button } from "#/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "#/components/ui/sidebar";
-import { ensureSession } from "#/lib/auth/functions";
+import { ensureOrganizationList, ensureSession } from "#/lib/auth/functions";
+import { setupAppInstall, useAppInstallPrompt } from "#/lib/install";
 
 export const Route = createFileRoute("/_app/app")({
   beforeLoad: async ({ context: { queryClient }, location }) => {
@@ -20,6 +23,8 @@ export const Route = createFileRoute("/_app/app")({
 
     return { session };
   },
+  loader: ({ context: { queryClient, session } }) =>
+    ensureOrganizationList(queryClient, session.user.id).catch(noop),
   component: App,
 });
 
@@ -34,14 +39,32 @@ function App() {
         <header className="flex min-w-0 items-center justify-between border-border border-b px-3 py-1.5">
           <SidebarTrigger />
           <div className="flex items-center gap-2">
-            <Button id="install-app" type="button" hidden>
-              Instalar app
-            </Button>
+            <InstallButton />
             <UserButton size="icon" />
           </div>
         </header>
         <Outlet />
       </main>
     </SidebarProvider>
+  );
+}
+
+function InstallButton() {
+  const { installPrompt, clearInstallPrompt } = useAppInstallPrompt();
+  useLayoutEffect(() => setupAppInstall(), []);
+
+  const handleInstallClick = async () => {
+    if (installPrompt) {
+      await installPrompt.prompt();
+      const choiceResult = await installPrompt.userChoice;
+      console.log("User choice:", choiceResult.outcome);
+      clearInstallPrompt();
+    }
+  };
+
+  return (
+    <Button id="install-app" type="button" hidden={!installPrompt} onClick={handleInstallClick}>
+      Instalar app
+    </Button>
   );
 }

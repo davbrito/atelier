@@ -9,6 +9,7 @@ export const Route = createFileRoute("/_app/app/_workspace")({
   component: RouteComponent,
   async beforeLoad({ context }) {
     const { queryClient, session } = context;
+
     const organization = await ensureActiveOrganization(queryClient, session.user.id);
 
     if (!session.session.activeOrganizationId || !organization) {

@@ -3,18 +3,21 @@ import hankenFont from "@fontsource-variable/hanken-grotesk/files/hanken-grotesk
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
-import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
+import {
+  createRootRouteWithContext,
+  HeadContent,
+  ScriptOnce,
+  Scripts,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { PageInfo } from "#/data/info";
-
+import APP_INSTALL_SCRIPT from "../assets/js/install.js?raw";
+import THEME_INIT_SCRIPT from "../assets/js/theme.js?raw";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
   queryClient: QueryClient;
 }
-
-const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('theme');var mode=(stored==='light'||stored==='dark'||stored==='auto')?stored:'auto';var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`;
-const APP_INSTALL_SCRIPT = `(function(){var deferredPrompt=null;var installButton=null;var hasBoundButton=false;function bindInstallButton(){if(hasBoundButton){return;}installButton=document.getElementById('install-app');if(!installButton){return;}hasBoundButton=true;installButton.hidden=true;installButton.addEventListener('click',function(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.finally(function(){deferredPrompt=null;});}});}bindInstallButton();document.addEventListener('DOMContentLoaded', bindInstallButton);window.addEventListener('beforeinstallprompt',function(event){event.preventDefault();deferredPrompt=event;bindInstallButton();if(installButton){installButton.hidden=false;}});window.addEventListener('appinstalled',function(){if(installButton){installButton.hidden=true;}deferredPrompt=null;});})();`;
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => ({
@@ -55,7 +58,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         crossOrigin: "anonymous",
       },
     ],
-    scripts: [{ children: THEME_INIT_SCRIPT }, { children: APP_INSTALL_SCRIPT }],
   }),
   shellComponent: RootDocument,
 });
@@ -67,6 +69,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <ScriptOnce>{THEME_INIT_SCRIPT}</ScriptOnce>
+        <ScriptOnce>{APP_INSTALL_SCRIPT}</ScriptOnce>
         {children}
         <TanStackDevtools
           config={{

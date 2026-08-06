@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2Icon, PackageIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
@@ -42,29 +42,39 @@ export const Route = createFileRoute("/_app/app/_workspace/materials/")({
   component: MaterialsPage,
   validateSearch: materialsSearchSchema,
   loaderDeps: ({ search: { page } }) => ({ page }),
-  loader: ({ context: { queryClient }, deps: { page } }) =>
-    void queryClient.prefetchQuery(materialsListQueryOptions({ page, pageSize: PAGE_SIZE })),
+  context: ({ deps: { page } }) => {
+    return {
+      listOptions: materialsListQueryOptions({ page, pageSize: PAGE_SIZE }),
+    };
+  },
+  loader: ({ context: { queryClient, listOptions } }) =>
+    void queryClient.prefetchQuery(listOptions),
+  pendingComponent: () => (
+    <div className="flex h-64 items-center justify-center">
+      <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
+    </div>
+  ),
 });
 
 type Material = Awaited<ReturnType<typeof listMaterials>>["items"][number];
 
 function MaterialsPage() {
+  const { listOptions } = Route.useRouteContext();
   const { page } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
-  const deleteFn = useServerFn(deleteMaterial);
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery(materialsListQueryOptions({ page, pageSize: PAGE_SIZE }));
-  const materials = data?.items ?? [];
-  const total = data?.total ?? 0;
+  const { data } = useSuspenseQuery(listOptions);
+  const materials = data.items;
+  const total = data.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const deleteMutation = useMutation({
-    mutationFn: deleteFn,
+    mutationFn: deleteMaterial,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["materials"] });
       toast.success("Material eliminado");
@@ -95,11 +105,7 @@ function MaterialsPage() {
           Agregar material
         </Button>
       </PageHeader>
-      {isLoading ? (
-        <div className="flex h-64 items-center justify-center">
-          <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
-        </div>
-      ) : materials.length === 0 ? (
+      {materials.length === 0 ? (
         <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
           <PackageIcon className="mb-4 size-12 text-muted-foreground/20" />
           <h3 className="font-medium text-lg">No hay materiales</h3>

@@ -16,6 +16,7 @@ export const listMaterials = createServerFn({ method: "GET" })
   )
   .middleware([organizationMiddleware])
   .handler(async ({ data: { page, pageSize, search }, context: { activeOrganizationId, db } }) => {
+    console.log("listing materials");
     const stockSq = db
       .select({
         materialId: materialInventoryMovement.materialId,
