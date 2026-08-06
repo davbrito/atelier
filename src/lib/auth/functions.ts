@@ -39,8 +39,19 @@ export const ensureOrganizationList = createIsomorphicFn()
   );
 
 export const authenticatedMiddleware = createMiddleware().server(
-  async ({ next, request, context: { auth } }) => {
-    const session = await auth.api.getSession({ headers: request.headers });
+  async ({ next, request, context: { auth, executionCtx } }) => {
+    const session = executionCtx.tracing.enterSpan("auth.getSession", async (span) => {
+      const session = await auth.api.getSession({ headers: request.headers });
+
+      if (session) {
+        const sess = session.session;
+        span.setAttribute("session.id", sess.id);
+        span.setAttribute("session.user.id", sess.userId);
+        span.setAttribute("session.organization.id", sess.activeOrganizationId ?? undefined);
+      }
+
+      return session;
+    });
     if (!session) {
       return Response.json({ message: "Unauthorized" }, { status: 401 });
     }
