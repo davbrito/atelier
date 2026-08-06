@@ -62,9 +62,8 @@ export function createAuth(db: Db, env: Env, ctx: ExecutionContext) {
               const response = await fetch(profile.picture);
               if (response.ok) {
                 const url = googleAvatarUrl(profile.sub);
-                const buffer = await response.arrayBuffer();
                 const storageKey = url.slice(1); // Remove leading slash for storage
-                await env.STORAGE.put(storageKey, buffer, {
+                await env.STORAGE.put(storageKey, response.body, {
                   httpMetadata: { contentType: "image/jpeg" },
                   customMetadata: { source: "google-avatar" },
                 });
