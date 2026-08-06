@@ -1,4 +1,6 @@
+import { tracing } from "cloudflare:workers";
 import handler from "@tanstack/react-start/server-entry";
+import { patchPGWithTracing } from "./db/client";
 import { type AppRequestContext, createContext, withContext } from "./lib/context.server";
 
 declare module "@tanstack/react-router" {
@@ -18,6 +20,8 @@ declare module "@tanstack/react-start" {
 }
 
 const wellKnownPattern = new URLPattern({ pathname: "/.well-known/:path*" });
+
+patchPGWithTracing(tracing);
 
 export default {
   async fetch(request, env, ctx) {
