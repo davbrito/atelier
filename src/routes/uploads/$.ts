@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticatedMiddleware } from "#/lib/auth/functions";
 import { canAccessImage } from "#/lib/server/image-access";
+import { handleAccessUpload } from "#/lib/uploads";
 
 export const Route = createFileRoute("/uploads/$")({
   server: {
@@ -21,39 +22,7 @@ export const Route = createFileRoute("/uploads/$")({
           return new Response("Image not found", { status: 404 });
         }
 
-        let object: R2ObjectBody | R2Object | null;
-
-        try {
-          object = await env.STORAGE.get(key, {
-            onlyIf: {
-              etagDoesNotMatch: request.headers.get("If-None-Match") ?? undefined,
-            },
-          });
-        } catch (error) {
-          console.error("Error fetching image from R2:", error);
-
-          return Response.json({ error: "Failed to fetch image from storage" }, { status: 500 });
-        }
-
-        if (!object) return Response.json({ error: "Image not found" }, { status: 404 });
-
-        // R2 signals a match by returning an object without a body.
-        // Deterministic keys mean a replaced image reuses the same URL, so
-        // the browser must revalidate on every load — no-cache still lets it
-        // cache the bytes, so a fresh image only costs a 304, not a
-        // re-download. `private` keeps shared/CDN caches (this response is
-        // authorization-gated per user) from serving it to other users.
-        const headers = new Headers();
-        object.writeHttpMetadata(headers);
-        headers.set("Cache-Control", "private, no-cache");
-        headers.set("ETag", object.httpEtag);
-
-        if (!("body" in object) || object.body === null) {
-          return new Response(null, { status: 304, headers });
-        }
-
-        headers.set("Content-Length", object.size.toString());
-        return new Response(object.body, { status: 200, headers });
+        return handleAccessUpload(env.STORAGE, key, request.headers.get("If-None-Match"));
       },
     },
   },

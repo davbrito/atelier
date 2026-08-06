@@ -33,7 +33,13 @@
   "r2_buckets": [
     {
       "bucket_name": "atelier-storage",
-      "binding": "STORAGE"
+      "binding": "STORAGE",
+      "local_dev": {
+        "experimental_s3_credentials": {
+          "accessKeyId": "local-s3-key-id",
+          "secretAccessKey": "b8e57c0e191a050737445102d34caa44dbd2e292a322c2ef42d76c624dd663df"
+        }
+      }
     }
   ],
   /**
@@ -45,7 +51,8 @@
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      "id": "0bdd87ffb5734b3291ecc1033df70875"
+      "id": "0bdd87ffb5734b3291ecc1033df70875",
+      "localConnectionString": "postgres://user:pass@127.0.0.1/db" // Overridden in `vitest.config.mts`
     }
   ],
   "kv_namespaces": [
