@@ -37,14 +37,17 @@ export function createAuth(db: Db, env: Env, ctx: ExecutionContext) {
     },
     user: {
       async validateUserInfo(data) {
-        const allowed = await isWhitelistedEmail(db, data.user.email);
-        if (!allowed) {
-          return {
-            error: "Email no autorizado.",
-            errorDescription:
-              "No tienes permiso para acceder a esta aplicación. Por favor, contacta al administrador.",
-          };
-        }
+        return await ctx.tracing.enterSpan("auth.validateUserInfo", async (span) => {
+          const allowed = await isWhitelistedEmail(db, data.user.email);
+          span.setAttribute("auth.validateUserInfo.allowed", allowed);
+          if (!allowed) {
+            return {
+              error: "Email no autorizado.",
+              errorDescription:
+                "No tienes permiso para acceder a esta aplicación. Por favor, contacta al administrador.",
+            };
+          }
+        });
       },
     },
     socialProviders: {
