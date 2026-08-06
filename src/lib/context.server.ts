@@ -19,7 +19,7 @@ export function createContext(
   url: URL,
 ): AppRequestContext {
   const db = createDb(env.HYPERDRIVE.connectionString);
-  const auth = createAuth(db, env);
+  const auth = createAuth(db, env, ctx);
   return { db, auth, url, env, executionCtx: ctx };
 }
 

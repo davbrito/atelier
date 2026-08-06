@@ -15,7 +15,7 @@ function googleAvatarUrl(sub: string): string {
   return `/uploads/avatars/${hash}.jpg`;
 }
 
-export function createAuth(db: Db, env: Env) {
+export function createAuth(db: Db, env: Env, ctx: ExecutionContext) {
   return betterAuth({
     ...baseConfig,
     baseURL: env.BETTER_AUTH_URL,
@@ -52,27 +52,32 @@ export function createAuth(db: Db, env: Env) {
         clientId: env.PUBLIC_GOOGLE_CLIENT_ID,
         clientSecret: env.GOOGLE_CLIENT_SECRET,
         async mapProfileToUser(profile) {
-          // Download the Google profile picture and store it in our own S3 bucket
-          // so we don't depend on Google's URL staying valid forever.
-          try {
-            const response = await fetch(profile.picture);
-            if (response.ok) {
-              const buffer = await response.arrayBuffer();
-              const url = googleAvatarUrl(profile.sub);
-              const storageKey = url.slice(1); // Remove leading slash for storage
-              await env.STORAGE.put(storageKey, buffer, {
-                httpMetadata: { contentType: "image/jpeg" },
-                customMetadata: { source: "google-avatar" },
-              });
-              // Save the full URL directly for use in img src
-              return { image: url };
+          return ctx.tracing.enterSpan("auth.mapProfileToUser", async (span) => {
+            // Download the Google profile picture and store it in our own S3 bucket
+            // so we don't depend on Google's URL staying valid forever.
+            try {
+              const response = await fetch(profile.picture);
+              if (response.ok) {
+                const url = googleAvatarUrl(profile.sub);
+                const buffer = await response.arrayBuffer();
+                const storageKey = url.slice(1); // Remove leading slash for storage
+                await env.STORAGE.put(storageKey, buffer, {
+                  httpMetadata: { contentType: "image/jpeg" },
+                  customMetadata: { source: "google-avatar" },
+                });
+                // Save the full URL directly for use in img src
+                return { image: url };
+              } else {
+                span.setAttribute(
+                  "auth.mapProfileToUser.error",
+                  `Failed to fetch profile picture: ${response.statusText} (${response.status})`,
+                );
+              }
+            } catch (error) {
+              span.setAttribute("auth.mapProfileToUser.error", String(error));
+              // Fall through to store the Google URL as a fallback
             }
-          } catch {
-            // Fall through to store the Google URL as a fallback
-          }
-          return {
-            image: profile.picture,
-          };
+          });
         },
       },
     },
