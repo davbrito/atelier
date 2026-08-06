@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
-import { betterAuth } from "better-auth";
+import { betterAuth } from "better-auth/minimal";
 import type { Db } from "#/db/client";
 import * as schema from "#/db/schema";
 import { isWhitelistedEmail } from "#/lib/whitelist";
@@ -79,6 +79,8 @@ export function createAuth(db: Db, env: Env, ctx: ExecutionContext) {
               span.setAttribute("auth.mapProfileToUser.error", String(error));
               // Fall through to store the Google URL as a fallback
             }
+
+            return {};
           });
         },
       },

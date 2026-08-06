@@ -1,8 +1,8 @@
 diff --git a/dist/client/react/index.d.mts b/dist/client/react/index.d.mts
-index 27b2673ac7235ee43b946c595019667edc4f6f05..9084a036f4d508c8c4b80ef4eaa0ca3fffb52d10 100644
+index 403f25c63e78d258292f471857d25980fad63e1e..a8352a9e63ff63ebcdcc0a23f1665cf21bded27a 100644
 --- a/dist/client/react/index.d.mts
 +++ b/dist/client/react/index.d.mts
-@@ -22,7 +22,7 @@ type ClientSession<Option extends BetterAuthClientOptions> = InferClientAPI<Opti
+@@ -21,7 +21,7 @@ type ClientSession<Option extends BetterAuthClientOptions> = InferClientAPI<Opti
   * React client returned by `createAuthClient`.
   */
  type ReactAuthClient<Option extends BetterAuthClientOptions> = UnionToIntersection<InferResolvedHooks<Option>> & InferClientAPI<Option> & InferActions<Option> & {

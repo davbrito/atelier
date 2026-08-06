@@ -14,15 +14,15 @@ catalogs:
     drizzle-kit: 1.0.0-rc.4
 
   auth:
-    "@better-auth-ui/core": ^1.6.27
+    "@better-auth-ui/core": ^1.6.43
     "@better-auth-ui/react": ^1.6.27
 
-    "auth": 1.7.0-rc.1
-    "better-auth": 1.7.0-rc.1
-    "@better-auth/api-key": 1.7.0-rc.1
-    "@better-auth/drizzle-adapter": 1.7.0-rc.1
-    "@better-auth/kysely-adapter": 1.7.0-rc.1
-    "@better-auth/passkey": 1.7.0-rc.1
+    "auth": 1.7.0-rc.4
+    "better-auth": 1.7.0-rc.4
+    "@better-auth/api-key": 1.7.0-rc.4
+    "@better-auth/drizzle-adapter": 1.7.0-rc.4
+    "@better-auth/kysely-adapter": 1.7.0-rc.4
+    "@better-auth/passkey": 1.7.0-rc.4
 
 overrides:
   drizzle-orm: catalog:drizzle
