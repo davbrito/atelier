@@ -1,13 +1,12 @@
 import { authQueryKeys } from "@better-auth-ui/core";
 import { useAuth, useAuthenticate } from "@better-auth-ui/react";
-import { noop } from "@tanstack/react-query";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useLayoutEffect } from "react";
 import { AppSidebar } from "#/components/app-sidebar";
 import { UserButton } from "#/components/auth/user/user-button";
 import { Button } from "#/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "#/components/ui/sidebar";
-import { ensureOrganizationList, ensureSession } from "#/lib/auth/functions";
+import { ensureSession } from "#/lib/auth/functions";
 import { setupAppInstall, useAppInstallPrompt } from "#/lib/install";
 
 export const Route = createFileRoute("/_app/app")({
@@ -28,8 +27,6 @@ export const Route = createFileRoute("/_app/app")({
 
     return { session };
   },
-  loader: ({ context: { queryClient, session } }) =>
-    ensureOrganizationList(queryClient, session.user.id).catch(noop),
   component: App,
 });
 

@@ -1,8 +1,10 @@
 import { type OrganizationAuthClient, useActiveOrganization, useAuth } from "@better-auth-ui/react";
+import { noop } from "@tanstack/react-query";
 import { createFileRoute, Navigate, Outlet, redirect } from "@tanstack/react-router";
 import type { Organization } from "better-auth/plugins";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { ensureActiveOrganization } from "#/lib/auth/functions";
 
 export const Route = createFileRoute("/_app/app/_workspace")({
   component: RouteComponent,
@@ -23,8 +25,20 @@ export const Route = createFileRoute("/_app/app/_workspace")({
 function RouteComponent() {
   const { authClient } = useAuth();
 
-  const { data: active, isFetching } = useActiveOrganization(authClient as OrganizationAuthClient);
+  const {
+    data: active,
+    isFetching,
+    isPending,
+  } = useActiveOrganization(authClient as OrganizationAuthClient);
   useReloadOnOrganizationChange(active, isFetching);
+
+  if (isPending) {
+    return (
+      <div className="flex h-64 items-center justify-center p-6">
+        <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
+      </div>
+    );
+  }
 
   if (!active) {
     return <Navigate to="/app/onboarding" replace />;
