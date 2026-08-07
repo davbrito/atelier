@@ -31,9 +31,9 @@ export function patchPGWithTracing(tracing: Tracing) {
       typeof queryText === "string" ? queryText : queryText?.text || "unknown";
     const opName = `db: ${sqlText.slice(0, sqlText.indexOf(" ")).trim().toUpperCase()}`;
 
-    if (process.env.NODE_ENV === "development") {
-      console.log(`[DB] ${sqlText}`, `\n\t`, values, "\n");
-    }
+    // if (process.env.NODE_ENV === "development") {
+    //   console.log(`[DB] ${sqlText}`, `\n\t`, values, "\n");
+    // }
 
     // Abrimos el span nativo de Cloudflare de forma transparente
     return tracing.enterSpan(opName, async (span: any) => {
