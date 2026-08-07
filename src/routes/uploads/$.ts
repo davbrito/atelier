@@ -1,13 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticatedMiddleware } from "#/lib/auth/functions";
+import { authMiddleware, validateSession } from "#/lib/auth/functions";
 import { canAccessImage } from "#/lib/server/image-access";
 import { handleAccessUpload } from "#/lib/uploads";
 
 export const Route = createFileRoute("/uploads/$")({
   server: {
-    middleware: [authenticatedMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       GET: async ({ context, request }) => {
+        if (!validateSession(context)) {
+          return Response.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const { db, user, env } = context;
         // The route path already matches the literal R2 key (e.g.
         // "uploads/materials/<id>.png") — only the leading "/" from the URL

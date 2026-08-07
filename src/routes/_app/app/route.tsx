@@ -1,3 +1,4 @@
+import { authQueryKeys } from "@better-auth-ui/core";
 import { useAuth, useAuthenticate } from "@better-auth-ui/react";
 import { noop } from "@tanstack/react-query";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
@@ -10,7 +11,11 @@ import { ensureOrganizationList, ensureSession } from "#/lib/auth/functions";
 import { setupAppInstall, useAppInstallPrompt } from "#/lib/install";
 
 export const Route = createFileRoute("/_app/app")({
-  beforeLoad: async ({ context: { queryClient }, location }) => {
+  beforeLoad: async ({ context: { queryClient }, location, serverContext }) => {
+    if (serverContext) {
+      const session = await serverContext.getSession();
+      queryClient.setQueryData(authQueryKeys.session, session);
+    }
     const session = await ensureSession(queryClient);
 
     if (!session) {

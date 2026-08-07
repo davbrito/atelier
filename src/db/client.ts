@@ -13,12 +13,11 @@ export function createDb(connectionString: string) {
   return drizzle({ client, relations });
 }
 
-let isPatched = false;
 export function patchPGWithTracing(tracing: Tracing) {
-  if (isPatched) return;
-  isPatched = true;
-
   const originalQuery: any = Client.prototype.query;
+  if (originalQuery.isTraced) {
+    return;
+  }
 
   // Reemplazamos el método en esta instancia específica
   Client.prototype.query = function tracedQuery(
@@ -31,6 +30,10 @@ export function patchPGWithTracing(tracing: Tracing) {
     const sqlText: string =
       typeof queryText === "string" ? queryText : queryText?.text || "unknown";
     const opName = `db: ${sqlText.slice(0, sqlText.indexOf(" ")).trim().toUpperCase()}`;
+
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[DB] ${sqlText}`, `\n\t`, values, "\n");
+    }
 
     // Abrimos el span nativo de Cloudflare de forma transparente
     return tracing.enterSpan(opName, async (span: any) => {
@@ -47,4 +50,5 @@ export function patchPGWithTracing(tracing: Tracing) {
       }
     });
   };
+  (Client.prototype.query as any).isTraced = true;
 }

@@ -39,7 +39,7 @@ export default {
     const context = createContext(request, env, ctx, url);
     await context.db.$client.connect();
 
-    return withContext(context)(() => handler.fetch(request, { context }));
+    return withContext(context, () => handler.fetch(request, { context }));
   },
 } satisfies ExportedHandler<Cloudflare.Env>;
 

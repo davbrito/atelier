@@ -10,23 +10,31 @@ export type AppRequestContext = {
   executionCtx: ExecutionContext;
   db: DbFull;
   auth: AppAuth;
+  getSession: () => Promise<AppAuth["$Infer"]["Session"] | null>;
 };
 
 export function createContext(
-  _request: Request,
+  req: Request,
   env: Cloudflare.Env,
   ctx: ExecutionContext,
   url: URL,
 ): AppRequestContext {
   const db = createDb(env.HYPERDRIVE.connectionString);
   const auth = createAuth(db, env, ctx);
-  return { db, auth, url, env, executionCtx: ctx };
+  let session: AppAuth["$Infer"]["Session"] | null | undefined;
+  const getSession = async () =>
+    await ctx.tracing.enterSpan("ctx.getSession", async () => {
+      if (session === undefined) {
+        session = await auth.api.getSession({ headers: req.headers });
+      }
+      return session;
+    });
+
+  return { db, auth, url, env, executionCtx: ctx, getSession };
 }
 
-export function withContext(context: AppRequestContext) {
-  return function serverHandler<T>(handler: () => T): T {
-    return SERVER_CONTEXT.run(context, handler);
-  };
+export function withContext<T>(context: AppRequestContext, handler: () => T): T {
+  return SERVER_CONTEXT.run(context, handler);
 }
 
 export function getContext(): AppRequestContext {

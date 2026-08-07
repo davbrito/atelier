@@ -16,11 +16,11 @@ function googleAvatarUrl(sub: string): string {
 }
 
 export function createAuth(db: Db, env: Env, ctx: ExecutionContext) {
-  return betterAuth({
+  const auth = betterAuth({
     ...baseConfig,
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
-    advanced: { disableOriginCheck: true },
+    advanced: { disableOriginCheck: true, database: { joins: true } },
     database: drizzleAdapter(db, { provider: "pg", transaction: true, schema }),
     emailAndPassword: {
       enabled: true,
@@ -107,4 +107,20 @@ export function createAuth(db: Db, env: Env, ctx: ExecutionContext) {
       },
     },
   });
+
+  auth.api = new Proxy(auth.api, {
+    get: (target, prop, receiver) => {
+      const value = Reflect.get(target, prop, receiver);
+      if (typeof value === "function" && typeof prop === "string") {
+        return function (this: any, ...args: any[]) {
+          return ctx.tracing.enterSpan(`auth.api.${prop}`, async (span) => {
+            return Reflect.apply(value, this, args);
+          });
+        };
+      }
+      return value;
+    },
+  });
+
+  return auth;
 }

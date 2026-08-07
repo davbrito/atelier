@@ -9,7 +9,7 @@ const config = defineConfig({
   resolve: { tsconfigPaths: true },
   envPrefix: ["VITE_", "PUBLIC_"],
   plugins: [
-    devtools(),
+    devtools({ consolePiping: { enabled: false } }),
     tailwindcss(),
     cloudflare({ viteEnvironment: { name: "ssr" } }),
     tanstackStart(),

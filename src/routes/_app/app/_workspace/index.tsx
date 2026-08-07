@@ -16,8 +16,8 @@ import { dashboardStatsQueryOptions } from "#/lib/query-options";
 
 export const Route = createFileRoute("/_app/app/_workspace/")({
   component: DashboardPage,
-  loader: async ({ context: { queryClient } }) => {
-    await queryClient.prefetchQuery(dashboardStatsQueryOptions);
+  loader: ({ context: { queryClient } }) => {
+    queryClient.prefetchQuery(dashboardStatsQueryOptions);
   },
   pendingComponent: () => (
     <div className="flex flex-col gap-8 p-6">
