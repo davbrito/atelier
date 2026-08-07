@@ -14,7 +14,13 @@ export const authClient = createAuthClient({
     adminClient({ ac, roles }),
     organizationClient(),
     passkeyClient(),
-    oneTapClient({ clientId: import.meta.env.PUBLIC_GOOGLE_CLIENT_ID }),
+    oneTapClient({
+      clientId: import.meta.env.PUBLIC_GOOGLE_CLIENT_ID,
+      autoSelect: true,
+      promptOptions: {
+        fedCM: true,
+      },
+    }),
     lastLoginMethodClient(),
   ],
 }) satisfies AuthClient;

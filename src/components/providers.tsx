@@ -24,10 +24,7 @@ export function Providers({ children }: { children: ReactNode }) {
       plugins={[
         passkeyPlugin({ localization: passkeyLocalization }),
         organizationPlugin({ localization: organizationLocalization }),
-        oneTapPlugin({
-          autoSelect: true,
-          views: ["signIn"],
-        }),
+        oneTapPlugin(),
         adminPlugin(),
       ]}
       Link={({ href, ...props }) => <Link to={href} {...props} />}
