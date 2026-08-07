@@ -1,4 +1,5 @@
 import { passkeyClient } from "@better-auth/passkey/client";
+import type { AuthClient } from "@better-auth-ui/react";
 import {
   adminClient,
   lastLoginMethodClient,
@@ -16,10 +17,10 @@ export const authClient = createAuthClient({
     oneTapClient({ clientId: import.meta.env.PUBLIC_GOOGLE_CLIENT_ID }),
     lastLoginMethodClient(),
   ],
-});
+}) satisfies AuthClient;
 
 declare module "@better-auth-ui/core" {
   interface AuthConfig {
-    authClient: typeof authClient;
+    authClient: AuthClient;
   }
 }

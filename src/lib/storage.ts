@@ -28,7 +28,7 @@ export type PresignedError = {
 };
 
 /** Thrown by moveObject when the source object does not exist (e.g. the client's upload PUT failed). */
-export class MoveObjectSourceNotFoundError extends Error {
+class MoveObjectSourceNotFoundError extends Error {
   constructor(public readonly sourceKey: string) {
     super(`Source object not found: ${sourceKey}`);
     this.name = "MoveObjectSourceNotFoundError";
@@ -202,7 +202,7 @@ const EXT_TO_CONTENT_TYPE: Record<string, string> = {
 };
 
 /** Infer Content-Type from the file extension in the key. */
-export function contentTypeFromKey(key: string): string {
+function contentTypeFromKey(key: string): string {
   const ext = key.split(".").pop()?.toLowerCase() ?? "";
   return EXT_TO_CONTENT_TYPE[ext] ?? "application/octet-stream";
 }

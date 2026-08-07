@@ -42,7 +42,7 @@ export function LinkedAccount({ account, provider }: LinkedAccountProps) {
   const { authClient, baseURL, localization } = useAuth();
 
   const { data: accountInfo, isPending: isLoadingInfo } = useAccountInfo(authClient, {
-    query: { accountId: account?.accountId },
+    query: { accountId: account?.accountId ?? "" },
   });
 
   const { mutate: linkSocial, isPending: isLinking } = useLinkSocial(authClient);
@@ -55,8 +55,8 @@ export function LinkedAccount({ account, provider }: LinkedAccountProps) {
   const providerName = getProviderName(provider);
 
   const displayName =
-    accountInfo?.data?.login ||
-    accountInfo?.data?.username ||
+    (accountInfo?.data as any)?.login ||
+    (accountInfo?.data as any)?.username ||
     accountInfo?.user?.email ||
     accountInfo?.user?.name ||
     account?.accountId;

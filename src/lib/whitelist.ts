@@ -17,11 +17,6 @@ function isEnvWhitelistedEmail(email: string): boolean {
   return envWhitelistEmails.includes(email.toLowerCase());
 }
 
-/** True when the env-var whitelist has any entry (first-admin bootstrap mode). */
-export function hasEnvWhitelist(): boolean {
-  return envWhitelistEmails.length > 0;
-}
-
 /**
  * Checks whether an email is allowed to sign in.
  *

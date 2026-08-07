@@ -44,7 +44,8 @@
             }
           }
         }
-      }
+      },
+      "suspicious": { "noExplicitAny": "off" }
     }
   },
   "css": {
@@ -84,11 +85,14 @@
             "useImportType": "off"
           },
           "a11y": {
-            "noLabelWithoutControl": "off"
+            "noLabelWithoutControl": "off",
+            "useSemanticElements": "off",
+            "useKeyWithClickEvents": "off"
           },
           "nursery": {
             "useSortedClasses": "off"
-          }
+          },
+          "suspicious": { "noArrayIndexKey": "off", "noDocumentCookie": "off" }
         }
       }
     }
