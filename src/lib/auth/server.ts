@@ -113,9 +113,7 @@ export function createAuth(db: Db, env: Env, ctx: ExecutionContext) {
       const value = Reflect.get(target, prop, receiver);
       if (typeof value === "function" && typeof prop === "string") {
         return function (this: any, ...args: any[]) {
-          return ctx.tracing.enterSpan(`auth.api.${prop}`, async (span) => {
-            return Reflect.apply(value, this, args);
-          });
+          return ctx.tracing.enterSpan(`auth.api.${prop}`, () => Reflect.apply(value, this, args));
         };
       }
       return value;

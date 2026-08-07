@@ -3,20 +3,15 @@ import { createFileRoute, Navigate, Outlet, redirect } from "@tanstack/react-rou
 import type { Organization } from "better-auth/plugins";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { ensureActiveOrganization } from "#/lib/auth/functions";
 
 export const Route = createFileRoute("/_app/app/_workspace")({
   component: RouteComponent,
   async beforeLoad({ context }) {
-    const { queryClient, session } = context;
+    const { session } = context;
 
-    const organization = await ensureActiveOrganization(queryClient, session.user.id);
-
-    if (!session.session.activeOrganizationId || !organization) {
+    if (!session.session.activeOrganizationId) {
       throw redirect({ to: "/app/onboarding" });
     }
-
-    return { organization: organization as typeof organization | null };
   },
   pendingComponent: () => (
     <div className="flex h-64 items-center justify-center p-6">
