@@ -35,7 +35,7 @@ export function patchPGWithTracing(tracing: Tracing) {
     // Abrimos el span nativo de Cloudflare de forma transparente
     return tracing.enterSpan(opName, async (span: any) => {
       span.setAttribute("db.system.name", "postgresql");
-      span.setAttribute("db.query.text", anonimizeSQL(sqlText));
+      span.setAttribute("db.query.text", sqlText);
 
       try {
         // Ejecutamos el query original manteniendo el contexto 'this' correcto
@@ -47,21 +47,4 @@ export function patchPGWithTracing(tracing: Tracing) {
       }
     });
   };
-}
-
-function anonimizeSQL(queryText: string) {
-  return (
-    queryText
-      // Mask single-quoted string literals (e.g., 'John', '123-45-6789')
-      .replace(/'[^']*'/g, "'***'")
-      // Mask numeric literals (e.g., 100, 42.5)
-      .replace(/\b\d+(\.\d+)?\b/g, "***")
-      // Mask grouped UUIDs/long hex strings
-      .replace(
-        /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/g,
-        "***-***-***",
-      )
-      // Clean up multiple spaces left by replacements
-      .replace(/\s+/g, " ")
-  );
 }
