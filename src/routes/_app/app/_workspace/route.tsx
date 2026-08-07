@@ -1,10 +1,8 @@
 import { type OrganizationAuthClient, useActiveOrganization, useAuth } from "@better-auth-ui/react";
-import { noop } from "@tanstack/react-query";
 import { createFileRoute, Navigate, Outlet, redirect } from "@tanstack/react-router";
 import type { Organization } from "better-auth/plugins";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { ensureActiveOrganization } from "#/lib/auth/functions";
 
 export const Route = createFileRoute("/_app/app/_workspace")({
   component: RouteComponent,
