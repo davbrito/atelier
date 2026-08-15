@@ -17,7 +17,10 @@ import {
   kanbanGarmentsListQueryOptions,
   queryKeys,
 } from "#/lib/query-options";
-import { moveGarmentStage } from "#/lib/server/garments";
+import { optimisticUpdate } from "#/lib/query-utils";
+import { type listKanbanGarments, moveGarmentStage } from "#/lib/server/garments";
+
+type KanbanGarmentsData = Awaited<ReturnType<typeof listKanbanGarments>>;
 
 const PRIORITY_LABELS: Record<string, string> = {
   low: "Baja",
@@ -45,10 +48,27 @@ export function OrderKanbanBoard() {
 
   const moveMutation = useMutation({
     mutationFn: moveGarmentStage,
-    onSuccess: () => {
+    onMutate: async ({ data: { id, stageId } }) => {
+      const { previous } = await optimisticUpdate<KanbanGarmentsData>(
+        queryClient,
+        kanbanGarmentsListQueryOptions.queryKey,
+        (old) =>
+          old
+            ? { ...old, items: old.items.map((g) => (g.id === id ? { ...g, stageId } : g)) }
+            : old,
+      );
+
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(kanbanGarmentsListQueryOptions.queryKey, context.previous);
+      }
+      toast.error("Error al mover la prenda");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.kanbanGarments });
     },
-    onError: () => toast.error("Error al mover la prenda"),
   });
 
   if (stages.length === 0) {
