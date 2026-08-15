@@ -455,3 +455,28 @@
     animation: none;
   }
 }
+
+/* Marks a section or nav link as an unfinished wireframe/shell. */
+.draft-element {
+  position: relative;
+  outline: 2px dashed var(--gold, #d4a017);
+  outline-offset: 2px;
+}
+
+.draft-element::before {
+  content: "WIP";
+  position: absolute;
+  top: -0.65rem;
+  left: 0.5rem;
+  padding: 0 0.35rem;
+  background: var(--gold, #d4a017);
+  color: var(--ink, #1a1a1a);
+  font-family: var(--font-sans, sans-serif);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+  border-radius: 0.15rem;
+  pointer-events: none;
+  z-index: 10;
+}

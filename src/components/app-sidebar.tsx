@@ -7,6 +7,7 @@ import {
   Package,
   Scissors,
   Shield,
+  ShoppingBag,
   Users,
 } from "lucide-react";
 import { OrganizationSwitcher } from "#/components/auth/organization/organization-switcher";
@@ -26,10 +27,21 @@ import {
 } from "#/components/ui/sidebar";
 import { authClient } from "#/lib/auth/client";
 
-const navItems = [
+type NavItem = {
+  label: string;
+  icon: typeof LayoutDashboard;
+  to: string;
+  draft?: boolean;
+};
+
+const navItems: { group: string; items: NavItem[] }[] = [
   {
     group: "Inicio",
     items: [{ label: "Panel", icon: LayoutDashboard, to: "/app" }],
+  },
+  {
+    group: "Pedidos",
+    items: [{ label: "Pedidos", icon: ShoppingBag, to: "/app/orders", draft: true }],
   },
   {
     group: "Catálogo",
@@ -74,13 +86,14 @@ export function AppSidebar() {
             <SidebarGroupLabel>{group}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {items.map(({ label, icon: Icon, to }) => (
+                {items.map(({ label, icon: Icon, to, draft }) => (
                   <SidebarMenuItem key={to}>
                     <SidebarLink
                       to={to}
                       activeOptions={{ exact: true }}
                       activeProps={{ isActive: true }}
                       onClick={closeIfMobile}
+                      className={draft ? "draft-element" : undefined}
                       // biome-ignore lint/a11y/useValidAnchor: its passed from the Link
                       render={<a />}
                     >
