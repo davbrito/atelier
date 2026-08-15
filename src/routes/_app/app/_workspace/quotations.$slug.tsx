@@ -147,61 +147,71 @@ function QuotationDetailPage() {
             </div>
 
             {line.materials.length > 0 && (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Concepto</TableHead>
-                    <TableHead>Cantidad</TableHead>
-                    <TableHead className="text-right">Precio unit.</TableHead>
-                    <TableHead className="text-right">Subtotal</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {line.materials.map((m) => (
-                    <TableRow key={m.id}>
-                      <TableCell className="font-medium">{m.frozenName}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {formatUnit(m.quantity, m.frozenUnit)}
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        {formatMoney(Number(m.frozenPrice))}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatMoney(Number(m.amount))}
-                      </TableCell>
+              <div>
+                <p className="px-4 pt-3 pb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                  Materiales
+                </p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Concepto</TableHead>
+                      <TableHead>Cantidad</TableHead>
+                      <TableHead className="text-right">Precio unit.</TableHead>
+                      <TableHead className="text-right">Subtotal</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {line.materials.map((m) => (
+                      <TableRow key={m.id}>
+                        <TableCell className="font-medium">{m.frozenName}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {formatUnit(m.quantity, m.frozenUnit)}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {formatMoney(Number(m.frozenPrice))}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatMoney(Number(m.amount))}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
 
             {line.operations.length > 0 && (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Concepto</TableHead>
-                    <TableHead>Duración</TableHead>
-                    <TableHead className="text-right">Tarifa</TableHead>
-                    <TableHead className="text-right">Subtotal</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {line.operations.map((o) => (
-                    <TableRow key={o.id}>
-                      <TableCell className="font-medium">{o.frozenName}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {o.durationMinutes} min
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        {formatMoney(Number(o.frozenHourlyRate))}/h
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatMoney(Number(o.amount))}
-                      </TableCell>
+              <div>
+                <p className="px-4 pt-3 pb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                  Mano de obra
+                </p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Concepto</TableHead>
+                      <TableHead>Duración</TableHead>
+                      <TableHead className="text-right">Tarifa</TableHead>
+                      <TableHead className="text-right">Subtotal</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {line.operations.map((o) => (
+                      <TableRow key={o.id}>
+                        <TableCell className="font-medium">{o.frozenName}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {o.durationMinutes} min
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {formatMoney(Number(o.frozenHourlyRate))}/h
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatMoney(Number(o.amount))}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </Card>
         );
