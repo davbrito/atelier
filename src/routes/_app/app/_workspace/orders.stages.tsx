@@ -1,9 +1,11 @@
+import { move } from "@dnd-kit/helpers";
+import { DragDropProvider } from "@dnd-kit/react";
+import { useSortable } from "@dnd-kit/react/sortable";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
+  GripVerticalIcon,
   Loader2Icon,
   PencilIcon,
   PlusIcon,
@@ -64,6 +66,64 @@ export const Route = createFileRoute("/_app/app/_workspace/orders/stages")({
 
 type GarmentStage = Awaited<ReturnType<typeof listGarmentStages>>["items"][number];
 
+function SortableStageRow({
+  stage,
+  index,
+  onEdit,
+  onDelete,
+}: {
+  stage: GarmentStage;
+  index: number;
+  onEdit: (stage: GarmentStage) => void;
+  onDelete: (id: string) => void;
+}) {
+  const { ref, handleRef, isDragging } = useSortable({ id: stage.id, index });
+
+  return (
+    <TableRow ref={ref} className={isDragging ? "relative z-10 bg-muted" : undefined}>
+      <TableCell className="w-10">
+        <button
+          ref={handleRef}
+          type="button"
+          className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+        >
+          <GripVerticalIcon className="size-4" />
+        </button>
+      </TableCell>
+      <TableCell className="font-medium">
+        <div className="flex items-center gap-2">
+          <span
+            className="size-3 shrink-0 rounded-full border"
+            style={{ backgroundColor: stage.color ?? undefined }}
+          />
+          {stage.name}
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex gap-1">
+          {stage.isFinalStage && <Badge variant="secondary">Final</Badge>}
+          {stage.isSystemDefault && <Badge variant="outline">Por defecto</Badge>}
+        </div>
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="flex justify-end gap-1">
+          <Button variant="ghost" size="icon" onClick={() => onEdit(stage)}>
+            <PencilIcon className="size-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive"
+            onClick={() => onDelete(stage.id)}
+          >
+            <Trash2Icon className="size-3" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 function OrderStagesPage() {
   const queryClient = useQueryClient();
 
@@ -114,15 +174,6 @@ function OrderStagesPage() {
     setIsSheetOpen(true);
   }
 
-  function move(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    if (target < 0 || target >= stages.length) return;
-
-    const orderedIds = stages.map((s) => s.id);
-    [orderedIds[index], orderedIds[target]] = [orderedIds[target], orderedIds[index]];
-    reorderMutation.mutate({ data: { orderedIds } });
-  }
-
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
@@ -167,67 +218,39 @@ function OrderStagesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-20"></TableHead>
+                <TableHead className="w-10"></TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {stages.map((stage, index) => (
-                <TableRow key={stage.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={index === 0 || reorderMutation.isPending}
-                        onClick={() => move(index, -1)}
-                      >
-                        <ArrowUpIcon className="size-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={index === stages.length - 1 || reorderMutation.isPending}
-                        onClick={() => move(index, 1)}
-                      >
-                        <ArrowDownIcon className="size-3" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="size-3 shrink-0 rounded-full border"
-                        style={{ backgroundColor: stage.color ?? undefined }}
-                      />
-                      {stage.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      {stage.isFinalStage && <Badge variant="secondary">Final</Badge>}
-                      {stage.isSystemDefault && <Badge variant="outline">Por defecto</Badge>}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(stage)}>
-                        <PencilIcon className="size-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => setDeletingId(stage.id)}
-                      >
-                        <Trash2Icon className="size-3" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              <DragDropProvider
+                onDragOver={(event) => {
+                  const reordered = move(stages, event);
+                  if (reordered !== stages) {
+                    queryClient.setQueryData(garmentStagesListQueryOptions.queryKey, {
+                      ...data,
+                      items: reordered,
+                    });
+                  }
+                }}
+                onDragEnd={(event) => {
+                  if (event.canceled) return;
+                  const reordered = move(stages, event);
+                  reorderMutation.mutate({ data: { orderedIds: reordered.map((s) => s.id) } });
+                }}
+              >
+                {stages.map((stage, index) => (
+                  <SortableStageRow
+                    key={stage.id}
+                    stage={stage}
+                    index={index}
+                    onEdit={handleEdit}
+                    onDelete={setDeletingId}
+                  />
+                ))}
+              </DragDropProvider>
             </TableBody>
           </Table>
         </Card>

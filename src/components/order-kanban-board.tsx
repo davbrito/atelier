@@ -1,3 +1,4 @@
+import { DragDropProvider, DragOverlay, useDraggable, useDroppable } from "@dnd-kit/react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { CalendarIcon } from "lucide-react";
@@ -5,13 +6,6 @@ import { toast } from "sonner";
 import { Badge } from "#/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "#/components/ui/empty";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "#/components/ui/select";
 import {
   garmentStagesListQueryOptions,
   kanbanGarmentsListQueryOptions,
@@ -21,6 +15,7 @@ import { optimisticUpdate } from "#/lib/query-utils";
 import { type listKanbanGarments, moveGarmentStage } from "#/lib/server/garments";
 
 type KanbanGarmentsData = Awaited<ReturnType<typeof listKanbanGarments>>;
+type KanbanGarment = KanbanGarmentsData["items"][number];
 
 const PRIORITY_LABELS: Record<string, string> = {
   low: "Baja",
@@ -37,6 +32,89 @@ const PRIORITY_VARIANTS: Record<string, "outline" | "secondary" | "default" | "d
 };
 
 const UNASSIGNED_COLUMN_ID = "__unassigned__";
+
+function GarmentCard({ garment }: { garment: KanbanGarment }) {
+  return (
+    <Card className="gap-2 p-3">
+      <CardHeader className="p-0">
+        <CardTitle className="text-sm">{garment.name}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2 p-0 text-xs">
+        <div className="flex items-center justify-between text-muted-foreground">
+          <Link
+            to="/app/orders/$code"
+            params={{ code: garment.orderCode }}
+            className="hover:underline"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            {garment.orderCode}
+          </Link>
+          {garment.clientName && <span>{garment.clientName}</span>}
+        </div>
+        <div className="flex items-center justify-between">
+          <Badge variant={PRIORITY_VARIANTS[garment.priority] ?? "outline"}>
+            {PRIORITY_LABELS[garment.priority] ?? garment.priority}
+          </Badge>
+          {garment.dueDate && (
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <CalendarIcon className="size-3" />
+              {new Date(garment.dueDate).toLocaleDateString("es-VE", {
+                day: "2-digit",
+                month: "short",
+              })}
+            </span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DraggableGarmentCard({ garment }: { garment: KanbanGarment }) {
+  const { ref, isDragging } = useDraggable({ id: garment.id });
+
+  return (
+    <div ref={ref} className={isDragging ? "cursor-grabbing opacity-40" : "cursor-grab"}>
+      <GarmentCard garment={garment} />
+    </div>
+  );
+}
+
+function KanbanColumn({
+  column,
+  garments,
+}: {
+  column: { id: string; name: string; color: string | null };
+  garments: KanbanGarment[];
+}) {
+  const { ref, isDropTarget } = useDroppable({ id: column.id });
+
+  return (
+    <div className="flex w-72 shrink-0 flex-col gap-3">
+      <div className="flex items-center gap-2 px-1">
+        {column.color && (
+          <span
+            className="size-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: column.color }}
+          />
+        )}
+        <h3 className="font-medium text-sm">{column.name}</h3>
+        <span className="text-muted-foreground text-xs">{garments.length}</span>
+      </div>
+
+      <div
+        ref={ref}
+        className={`flex min-h-16 flex-col gap-2 rounded-md p-1 transition-colors ${
+          isDropTarget ? "bg-muted" : ""
+        }`}
+      >
+        {garments.map((garment) => (
+          <DraggableGarmentCard key={garment.id} garment={garment} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function OrderKanbanBoard() {
   const queryClient = useQueryClient();
@@ -95,82 +173,36 @@ export function OrderKanbanBoard() {
   ];
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-2">
-      {columns.map((column) => {
-        const columnGarments =
-          column.id === UNASSIGNED_COLUMN_ID
-            ? unassigned
-            : garments.filter((g) => g.stageId === column.id);
+    <DragDropProvider
+      onDragEnd={(event) => {
+        const { source, target } = event.operation;
+        if (!source || !target) return;
 
-        return (
-          <div key={column.id} className="flex w-72 shrink-0 flex-col gap-3">
-            <div className="flex items-center gap-2 px-1">
-              {column.color && (
-                <span
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: column.color }}
-                />
-              )}
-              <h3 className="font-medium text-sm">{column.name}</h3>
-              <span className="text-muted-foreground text-xs">{columnGarments.length}</span>
-            </div>
+        const garment = garments.find((g) => g.id === source.id);
+        if (!garment) return;
 
-            <div className="flex flex-col gap-2">
-              {columnGarments.map((garment) => (
-                <Card key={garment.id} className="gap-2 p-3">
-                  <CardHeader className="p-0">
-                    <CardTitle className="text-sm">{garment.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-2 p-0 text-xs">
-                    <div className="flex items-center justify-between text-muted-foreground">
-                      <Link
-                        to="/app/orders/$code"
-                        params={{ code: garment.orderCode }}
-                        className="hover:underline"
-                      >
-                        {garment.orderCode}
-                      </Link>
-                      {garment.clientName && <span>{garment.clientName}</span>}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Badge variant={PRIORITY_VARIANTS[garment.priority] ?? "outline"}>
-                        {PRIORITY_LABELS[garment.priority] ?? garment.priority}
-                      </Badge>
-                      {garment.dueDate && (
-                        <span className="flex items-center gap-1 text-muted-foreground">
-                          <CalendarIcon className="size-3" />
-                          {new Date(garment.dueDate).toLocaleDateString("es-VE", {
-                            day: "2-digit",
-                            month: "short",
-                          })}
-                        </span>
-                      )}
-                    </div>
-                    <Select
-                      items={stages.map((stage) => ({ label: stage.name, value: stage.id }))}
-                      value={garment.stageId ?? ""}
-                      onValueChange={(value: string | null) =>
-                        moveMutation.mutate({ data: { id: garment.id, stageId: value || null } })
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Sin etapa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stages.map((stage) => (
-                          <SelectItem key={stage.id} value={stage.id}>
-                            {stage.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+        const stageId = target.id === UNASSIGNED_COLUMN_ID ? null : (target.id as string);
+        if (garment.stageId === stageId) return;
+
+        moveMutation.mutate({ data: { id: garment.id, stageId } });
+      }}
+    >
+      <div className="flex gap-4 overflow-x-auto pb-2">
+        {columns.map((column) => {
+          const columnGarments =
+            column.id === UNASSIGNED_COLUMN_ID
+              ? unassigned
+              : garments.filter((g) => g.stageId === column.id);
+
+          return <KanbanColumn key={column.id} column={column} garments={columnGarments} />;
+        })}
+      </div>
+      <DragOverlay>
+        {(source) => {
+          const garment = garments.find((g) => g.id === source.id);
+          return garment ? <GarmentCard garment={garment} /> : null;
+        }}
+      </DragOverlay>
+    </DragDropProvider>
   );
 }

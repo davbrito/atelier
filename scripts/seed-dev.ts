@@ -87,6 +87,7 @@ async function ensureGarmentStages(db: Db, organizationId: string) {
         DEFAULT_GARMENT_STAGES.map((stage, position) => ({
           organizationId,
           name: stage.name,
+          color: stage.color,
           isFinalStage: stage.isFinalStage,
           isSystemDefault: true,
           position,

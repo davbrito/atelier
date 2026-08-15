@@ -149,6 +149,7 @@ export const seedDefaultGarmentStages = createServerFn({ method: "POST" })
         DEFAULT_GARMENT_STAGES.map((stage, position) => ({
           organizationId: activeOrganizationId,
           name: stage.name,
+          color: stage.color,
           isFinalStage: stage.isFinalStage,
           isSystemDefault: true,
           position,
