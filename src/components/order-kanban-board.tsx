@@ -123,7 +123,13 @@ export function OrderKanbanBoard() {
                   </CardHeader>
                   <CardContent className="flex flex-col gap-2 p-0 text-xs">
                     <div className="flex items-center justify-between text-muted-foreground">
-                      <span>{garment.orderCode}</span>
+                      <Link
+                        to="/app/orders/$code"
+                        params={{ code: garment.orderCode }}
+                        className="hover:underline"
+                      >
+                        {garment.orderCode}
+                      </Link>
                       {garment.clientName && <span>{garment.clientName}</span>}
                     </div>
                     <div className="flex items-center justify-between">

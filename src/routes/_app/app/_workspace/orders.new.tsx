@@ -32,8 +32,8 @@ import {
 import { Textarea } from "#/components/ui/textarea";
 import {
   garmentStagesListQueryOptions,
-  quotationByIdQueryOptions,
   queryKeys,
+  quotationByIdQueryOptions,
 } from "#/lib/query-options";
 import { createOrder } from "#/lib/server/orders";
 import { cn } from "#/lib/utils";
@@ -413,11 +413,7 @@ function NewOrderPage() {
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate({ to: "/app/orders" })}
-          >
+          <Button type="button" variant="outline" onClick={() => navigate({ to: "/app/orders" })}>
             Cancelar
           </Button>
           <Button type="submit" disabled={createMutation.isPending}>

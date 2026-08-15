@@ -1,9 +1,56 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import * as z from "zod";
-import { budget, garment, order, quotationLine } from "#/db/schema";
+import { budget, client, garment, garmentStage, order, quotationLine } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import { generateSequentialCode } from "./codes";
+
+export const getOrder = createServerFn({ method: "GET" })
+  .middleware([organizationMiddleware])
+  .validator(z.object({ code: z.string() }))
+  .handler(async ({ data, context: { activeOrganizationId: organizationId, db } }) => {
+    const [orderRow] = await db
+      .select({
+        id: order.id,
+        code: order.code,
+        status: order.status,
+        priority: order.priority,
+        totalAmount: order.totalAmount,
+        depositAmount: order.depositAmount,
+        receivedAt: order.receivedAt,
+        dueDate: order.dueDate,
+        notes: order.notes,
+        clientId: order.clientId,
+        clientName: client.name,
+        clientPhone: client.phone,
+        clientEmail: client.email,
+        quotationId: order.quotationId,
+      })
+      .from(order)
+      .leftJoin(client, eq(order.clientId, client.id))
+      .where(and(eq(order.code, data.code), eq(order.organizationId, organizationId)));
+
+    if (!orderRow) throw new Error("Pedido no encontrado");
+
+    const garments = await db
+      .select({
+        id: garment.id,
+        name: garment.name,
+        quantity: garment.quantity,
+        unitPrice: garment.unitPrice,
+        fittingDate: garment.fittingDate,
+        notes: garment.notes,
+        stageId: garment.stageId,
+        stageName: garmentStage.name,
+        stageColor: garmentStage.color,
+        isFinalStage: garmentStage.isFinalStage,
+      })
+      .from(garment)
+      .leftJoin(garmentStage, eq(garment.stageId, garmentStage.id))
+      .where(eq(garment.orderId, orderRow.id));
+
+    return { ...orderRow, garments };
+  });
 
 const createOrderGarmentSchema = z.object({
   budgetId: z.uuid(),
