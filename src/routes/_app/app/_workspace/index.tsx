@@ -1,14 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRightIcon,
-  CalculatorIcon,
-  ClipboardListIcon,
-  PackageIcon,
-  PlusIcon,
-  ScissorsIcon,
-  UsersIcon,
-} from "lucide-react";
+import { ArrowRightIcon, ClipboardListIcon, PlusIcon } from "lucide-react";
 import { Suspense } from "react";
 import { SystemStats, SystemStatsLoader } from "#/components/dasboard/system-counts.tsx";
 import { PageHeader } from "#/components/page-header";
