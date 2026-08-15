@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ClipboardListIcon, ExternalLinkIcon } from "lucide-react";
+import { ClipboardListIcon, ExternalLinkIcon, PlusIcon } from "lucide-react";
 import { PageHeader } from "#/components/page-header";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -74,10 +74,20 @@ function QuotationDetailPage() {
         )}`}
         back
       >
-        <Badge variant="secondary" className="gap-1.5">
-          <ClipboardListIcon className="size-3" />
-          Cotización
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="gap-1.5">
+            <ClipboardListIcon className="size-3" />
+            Cotización
+          </Badge>
+          <Button
+            size="sm"
+            nativeButton={false}
+            render={<Link to="/app/orders/new" search={{ quotationId: quotation.id }} />}
+          >
+            <PlusIcon className="size-4" />
+            Crear pedido
+          </Button>
+        </div>
       </PageHeader>
 
       {/* Document summary */}

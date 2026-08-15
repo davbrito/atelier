@@ -8,7 +8,7 @@ import { getMaterialInventory } from "./server/inventory";
 import { getMaterialById, listMaterials } from "./server/materials";
 import { getOperationById, listOperations } from "./server/operations";
 import { getUserOrganizationCount } from "./server/organizations";
-import { getQuotationBySlug, listQuotations } from "./server/quotations";
+import { getQuotation, getQuotationBySlug, listQuotations } from "./server/quotations";
 import { listWhitelistedEmails } from "./server/whitelist";
 
 export const queryKeys = {
@@ -109,6 +109,12 @@ export const quotationBySlugQueryOptions = (slug: string) =>
   queryOptions({
     queryKey: queryKeys.quotation(slug),
     queryFn: ({ signal }) => getQuotationBySlug({ data: { slug }, signal }),
+  });
+
+export const quotationByIdQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: queryKeys.quotation(id),
+    queryFn: ({ signal }) => getQuotation({ data: { id }, signal }),
   });
 
 export const garmentStagesListQueryOptions = queryOptions({

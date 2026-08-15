@@ -1,5 +1,5 @@
 import { Field } from "@base-ui/react/field";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { format } from "date-fns";
@@ -7,6 +7,7 @@ import { CalendarIcon, Loader2Icon, MinusIcon, PlusIcon } from "lucide-react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { toast } from "sonner";
+import * as z from "zod";
 import { BudgetCombobox } from "#/components/budget-combobox";
 import { ClientCombobox } from "#/components/client-combobox";
 import { PageHeader } from "#/components/page-header";
@@ -29,20 +30,39 @@ import {
   SelectValue,
 } from "#/components/ui/select";
 import { Textarea } from "#/components/ui/textarea";
-import { garmentStagesListQueryOptions, queryKeys } from "#/lib/query-options";
+import {
+  garmentStagesListQueryOptions,
+  quotationByIdQueryOptions,
+  queryKeys,
+} from "#/lib/query-options";
 import { createOrder } from "#/lib/server/orders";
 import { cn } from "#/lib/utils";
 
+const searchSchema = z.object({
+  quotationId: z.uuid().optional(),
+});
+
 export const Route = createFileRoute("/_app/app/_workspace/orders/new")({
   component: NewOrderPage,
-  loader: ({ context: { queryClient } }) =>
-    queryClient.prefetchQuery(garmentStagesListQueryOptions),
+  validateSearch: searchSchema,
+  loaderDeps: ({ search: { quotationId } }) => ({ quotationId }),
+  loader: ({ context: { queryClient }, deps: { quotationId } }) =>
+    Promise.all([
+      queryClient.prefetchQuery(garmentStagesListQueryOptions),
+      quotationId ? queryClient.prefetchQuery(quotationByIdQueryOptions(quotationId)) : undefined,
+    ]),
   pendingComponent: () => (
     <div className="flex h-64 items-center justify-center">
       <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
     </div>
   ),
 });
+
+function lineTotal(line: { materials: { amount: string }[]; operations: { amount: string }[] }) {
+  const materials = line.materials.reduce((sum, m) => sum + Number(m.amount), 0);
+  const operations = line.operations.reduce((sum, o) => sum + Number(o.amount), 0);
+  return materials + operations;
+}
 
 const PRIORITY_OPTIONS = [
   { label: "Baja", value: "low" },
@@ -53,6 +73,7 @@ const PRIORITY_OPTIONS = [
 
 type GarmentFormValue = {
   budgetId: string;
+  quotationLineId: string | undefined;
   quantity: number | "";
   unitPrice: string;
   stageId: string;
@@ -71,6 +92,7 @@ type OrderFormValues = {
 function blankGarment(defaultStageId: string): GarmentFormValue {
   return {
     budgetId: "",
+    quotationLineId: undefined,
     quantity: 1,
     unitPrice: "",
     stageId: defaultStageId,
@@ -83,18 +105,35 @@ function NewOrderPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const createFn = useServerFn(createOrder);
+  const { quotationId } = Route.useSearch();
 
   const { data: stagesData } = useSuspenseQuery(garmentStagesListQueryOptions);
   const stages = stagesData.items;
   const defaultStageId = stages[0]?.id ?? "";
 
+  const { data: quotation } = useQuery({
+    ...quotationByIdQueryOptions(quotationId ?? ""),
+    enabled: !!quotationId,
+  });
+
   const { control, handleSubmit } = useForm<OrderFormValues>({
-    defaultValues: {
-      clientId: "",
+    values: {
+      clientId: quotation?.clientId ?? "",
       priority: "medium",
       dueDate: undefined,
       notes: "",
-      garments: [blankGarment(defaultStageId)],
+      garments:
+        quotation && quotation.lines.length > 0
+          ? quotation.lines.map((line) => ({
+              budgetId: line.budgetId ?? "",
+              quotationLineId: line.id,
+              quantity: 1,
+              unitPrice: lineTotal(line).toFixed(2),
+              stageId: defaultStageId,
+              fittingDate: undefined,
+              notes: "",
+            }))
+          : [blankGarment(defaultStageId)],
     },
   });
 
@@ -119,7 +158,11 @@ function NewOrderPage() {
       <PageHeader
         back
         title="Nuevo pedido"
-        description="Registra el pedido, el cliente y las prendas que lo componen."
+        description={
+          quotation
+            ? `Prellenado desde la cotización de ${quotation.clientTitle}.`
+            : "Registra el pedido, el cliente y las prendas que lo componen."
+        }
       />
 
       <form
@@ -130,6 +173,7 @@ function NewOrderPage() {
             .filter((g) => g.budgetId !== "")
             .map((g) => ({
               budgetId: g.budgetId,
+              quotationLineId: g.quotationLineId,
               quantity: g.quantity === "" ? 1 : g.quantity,
               unitPrice: g.unitPrice || "0.00",
               stageId: g.stageId || undefined,
@@ -145,6 +189,7 @@ function NewOrderPage() {
           createMutation.mutate({
             data: {
               clientId: values.clientId,
+              quotationId: quotation?.id,
               priority: values.priority as "low" | "medium" | "high" | "urgent",
               dueDate: values.dueDate ? values.dueDate.toISOString() : undefined,
               notes: values.notes.trim() || undefined,

@@ -1,12 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { eq } from "drizzle-orm";
 import * as z from "zod";
-import { budget, garment, order } from "#/db/schema";
+import { budget, garment, order, quotationLine } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import { generateSequentialCode } from "./codes";
 
 const createOrderGarmentSchema = z.object({
   budgetId: z.uuid(),
+  quotationLineId: z.uuid().optional(),
   quantity: z.number().int().min(1).default(1),
   unitPrice: z.string().default("0.00"),
   stageId: z.uuid().optional(),
@@ -16,6 +17,7 @@ const createOrderGarmentSchema = z.object({
 
 export const createOrderSchema = z.object({
   clientId: z.uuid(),
+  quotationId: z.uuid().optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
   dueDate: z.iso.datetime().optional().or(z.literal("")),
   notes: z.string().trim().optional(),
@@ -32,6 +34,20 @@ export const createOrder = createServerFn({ method: "POST" })
       });
 
       if (!client) throw new Error("Cliente no encontrado");
+
+      let validQuotationLineIds: Set<string> | null = null;
+      if (data.quotationId) {
+        const quotation = await tx.query.quotation.findFirst({
+          where: { id: data.quotationId, organizationId },
+        });
+        if (!quotation) throw new Error("Cotización no encontrada");
+
+        const lines = await tx
+          .select({ id: quotationLine.id })
+          .from(quotationLine)
+          .where(eq(quotationLine.quotationId, data.quotationId));
+        validQuotationLineIds = new Set(lines.map((l) => l.id));
+      }
 
       const now = new Date();
       const prefix = `PED${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-`;
@@ -52,6 +68,7 @@ export const createOrder = createServerFn({ method: "POST" })
         .values({
           organizationId,
           clientId: data.clientId,
+          quotationId: data.quotationId || null,
           code,
           priority: data.priority,
           totalAmount,
@@ -65,10 +82,16 @@ export const createOrder = createServerFn({ method: "POST" })
           const selectedBudget = budgetMap.get(g.budgetId);
           if (!selectedBudget) throw new Error("Presupuesto no encontrado");
 
+          const quotationLineId =
+            g.quotationLineId && validQuotationLineIds?.has(g.quotationLineId)
+              ? g.quotationLineId
+              : null;
+
           return {
             orderId: newOrder.id,
             name: selectedBudget.name,
             budgetId: g.budgetId,
+            quotationLineId,
             quantity: g.quantity,
             unitPrice: g.unitPrice,
             stageId: g.stageId || null,
