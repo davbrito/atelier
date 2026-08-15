@@ -40,8 +40,12 @@ const navItems: { group: string; items: NavItem[] }[] = [
     items: [{ label: "Panel", icon: LayoutDashboard, to: "/app" }],
   },
   {
-    group: "Pedidos",
-    items: [{ label: "Pedidos", icon: ShoppingBag, to: "/app/orders", draft: true }],
+    group: "Ventas",
+    items: [
+      { label: "Cotizaciones", icon: ClipboardList, to: "/app/quotations" },
+      { label: "Presupuestos", icon: Calculator, to: "/app/budgets" },
+      { label: "Pedidos", icon: ShoppingBag, to: "/app/orders", draft: true },
+    ],
   },
   {
     group: "Catálogo",
@@ -53,14 +57,6 @@ const navItems: { group: string; items: NavItem[] }[] = [
   {
     group: "Clientes",
     items: [{ label: "Clientes", icon: Users, to: "/app/clients" }],
-  },
-  {
-    group: "Presupuestos",
-    items: [{ label: "Presupuestos", icon: Calculator, to: "/app/budgets" }],
-  },
-  {
-    group: "Cotizaciones",
-    items: [{ label: "Cotizaciones", icon: ClipboardList, to: "/app/quotations" }],
   },
 ];
 
@@ -86,22 +82,24 @@ export function AppSidebar() {
             <SidebarGroupLabel>{group}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {items.map(({ label, icon: Icon, to, draft }) => (
-                  <SidebarMenuItem key={to}>
-                    <SidebarLink
-                      to={to}
-                      activeOptions={{ exact: true }}
-                      activeProps={{ isActive: true }}
-                      onClick={closeIfMobile}
-                      className={draft ? "draft-element" : undefined}
-                      // biome-ignore lint/a11y/useValidAnchor: its passed from the Link
-                      render={<a />}
-                    >
-                      <Icon className="size-4" />
-                      <span>{label}</span>
-                    </SidebarLink>
-                  </SidebarMenuItem>
-                ))}
+                {items
+                  .filter((item) => !item.draft || !import.meta.env.PROD)
+                  .map(({ label, icon: Icon, to, draft }) => (
+                    <SidebarMenuItem key={to}>
+                      <SidebarLink
+                        to={to}
+                        activeOptions={{ exact: true }}
+                        activeProps={{ isActive: true }}
+                        onClick={closeIfMobile}
+                        className={draft ? "draft-element" : undefined}
+                        // biome-ignore lint/a11y/useValidAnchor: its passed from the Link
+                        render={<a />}
+                      >
+                        <Icon className="size-4" />
+                        <span>{label}</span>
+                      </SidebarLink>
+                    </SidebarMenuItem>
+                  ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
