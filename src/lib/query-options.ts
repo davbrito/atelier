@@ -2,6 +2,8 @@ import { queryOptions } from "@tanstack/react-query";
 import { getBudgetById, getBudgetBySlug, listBudgets } from "./server/budgets";
 import { getClientById, listClients } from "./server/clients";
 import { getDashboardStats } from "./server/dashboard";
+import { listGarmentStages } from "./server/garment-stages";
+import { listKanbanGarments } from "./server/garments";
 import { getMaterialInventory } from "./server/inventory";
 import { getMaterialById, listMaterials } from "./server/materials";
 import { getOperationById, listOperations } from "./server/operations";
@@ -26,6 +28,8 @@ export const queryKeys = {
   quotations: ["quotations"],
   quotationsPage: (params: { page: number; pageSize: number }) => ["quotations", params],
   quotation: (slug: string) => ["quotation", slug],
+  garmentStages: ["garment-stages"],
+  kanbanGarments: ["kanban-garments"],
   dashboard: ["dashboard"],
   userOrganizationCount: ["userOrganizationCount"],
   whitelistEmails: ["whitelist-emails"],
@@ -106,6 +110,16 @@ export const quotationBySlugQueryOptions = (slug: string) =>
     queryKey: queryKeys.quotation(slug),
     queryFn: ({ signal }) => getQuotationBySlug({ data: { slug }, signal }),
   });
+
+export const garmentStagesListQueryOptions = queryOptions({
+  queryKey: queryKeys.garmentStages,
+  queryFn: ({ signal }) => listGarmentStages({ signal }),
+});
+
+export const kanbanGarmentsListQueryOptions = queryOptions({
+  queryKey: queryKeys.kanbanGarments,
+  queryFn: ({ signal }) => listKanbanGarments({ signal }),
+});
 
 export const dashboardStatsQueryOptions = queryOptions({
   queryKey: queryKeys.dashboard,

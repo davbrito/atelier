@@ -1,16 +1,28 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PlusIcon } from "lucide-react";
+import { Loader2Icon, PlusIcon } from "lucide-react";
+import { OrderKanbanBoard } from "#/components/order-kanban-board";
 import { PageHeader } from "#/components/page-header";
 import { Button } from "#/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { garmentStagesListQueryOptions, kanbanGarmentsListQueryOptions } from "#/lib/query-options";
 
 export const Route = createFileRoute("/_app/app/_workspace/orders/")({
   component: OrdersPage,
+  loader: ({ context: { queryClient } }) =>
+    Promise.all([
+      queryClient.prefetchQuery(garmentStagesListQueryOptions),
+      queryClient.prefetchQuery(kanbanGarmentsListQueryOptions),
+    ]),
+  pendingComponent: () => (
+    <div className="flex h-64 items-center justify-center">
+      <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
+    </div>
+  ),
 });
 
 function OrdersPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 p-6">
       <PageHeader title="Pedidos" description="Seguimiento de pedidos y prendas del taller">
         <Button className="draft-element" disabled>
           <PlusIcon className="size-4" />
@@ -25,9 +37,7 @@ function OrdersPage() {
         </TabsList>
 
         <TabsContent value="kanban">
-          <div className="draft-element flex min-h-96 items-center justify-center rounded-lg p-8 text-muted-foreground text-sm">
-            Tablero Kanban de pedidos (pendiente)
-          </div>
+          <OrderKanbanBoard />
         </TabsContent>
 
         <TabsContent value="table">
@@ -37,7 +47,7 @@ function OrdersPage() {
         </TabsContent>
       </Tabs>
 
-      <Link to="/app/orders/stages" className="draft-element w-fit rounded-md px-3 py-1.5 text-sm">
+      <Link to="/app/orders/stages" className="w-fit rounded-md px-3 py-1.5 text-sm underline">
         Gestionar etapas del Kanban
       </Link>
     </div>

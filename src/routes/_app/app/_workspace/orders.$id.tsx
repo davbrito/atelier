@@ -9,7 +9,7 @@ function OrderDetailPage() {
   const { id } = Route.useParams();
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 p-6">
       <PageHeader back title={`Pedido #${id}`} description="Detalle del pedido" />
 
       <div className="draft-element flex min-h-40 items-center justify-center rounded-lg p-8 text-muted-foreground text-sm">
