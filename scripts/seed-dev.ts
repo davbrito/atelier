@@ -1,6 +1,6 @@
 import "dotenv/config";
-import slugify from "@sindresorhus/slugify";
 import { faker } from "@faker-js/faker";
+import slugify from "@sindresorhus/slugify";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
@@ -170,7 +170,7 @@ async function ensureBudgets(
   materials: (typeof material.$inferSelect)[],
   operations: (typeof operation.$inferSelect)[],
 ) {
-  let budgets = await db.select().from(budget).where(eq(budget.organizationId, organizationId));
+  const budgets = await db.select().from(budget).where(eq(budget.organizationId, organizationId));
 
   if (budgets.length < GARMENT_NAMES.length) {
     console.log("Creando presupuestos de prueba...");
