@@ -61,7 +61,7 @@ function QuotationDetailPage() {
   const total = +quotation.total;
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
+    <div className="container-narrow flex flex-col gap-6">
       <PageHeader
         title={quotation.clientTitle}
         description={`Cotización generada el ${new Date(quotation.createdAt).toLocaleDateString(

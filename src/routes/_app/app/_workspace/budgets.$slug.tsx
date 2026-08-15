@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_app/app/_workspace/budgets/$slug")({
   loader: ({ context: { queryClient }, params: { slug } }) =>
     void queryClient.prefetchQuery(budgetBySlugQueryOptions(slug)),
   pendingComponent: () => (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
+    <div className="container-narrow flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <Skeleton className="size-9 shrink-0 rounded-md" />
         <div className="space-y-2">
@@ -91,7 +91,7 @@ function QuotePage() {
   const total = materialCost + laborCost;
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
+    <div className="container-narrow flex flex-col gap-6">
       <PageHeader title={budget.name} description={budget.description ?? undefined} back>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="gap-1.5">

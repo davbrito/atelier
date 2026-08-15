@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_app/app/_workspace/materials/$id")({
   loader: ({ context: { queryClient }, params: { id } }) =>
     void queryClient.prefetchQuery(materialByIdQueryOptions(id)),
   pendingComponent: () => (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6">
+    <div className="container-narrow flex flex-col gap-8">
       <div className="h-24 animate-pulse rounded-lg bg-muted" />
       <div className="h-40 animate-pulse rounded-lg bg-muted" />
     </div>
@@ -83,7 +83,7 @@ function MaterialDetailPage() {
     UNIT_OPTIONS.find((option) => option.value === material.unit)?.label ?? material.unit;
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 p-6">
+    <div className="container-narrow flex flex-col gap-8">
       {/* Banner */}
       <div className="relative overflow-hidden rounded-xl">
         {material.image ? (
