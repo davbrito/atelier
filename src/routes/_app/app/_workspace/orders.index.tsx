@@ -1,8 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Loader2Icon, PlusIcon } from "lucide-react";
+import { ListOrderedIcon, Loader2Icon, PlusIcon, SettingsIcon } from "lucide-react";
 import { OrderKanbanBoard } from "#/components/order-kanban-board";
 import { PageHeader } from "#/components/page-header";
 import { Button } from "#/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "#/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { garmentStagesListQueryOptions, kanbanGarmentsListQueryOptions } from "#/lib/query-options";
 
@@ -24,10 +30,23 @@ function OrdersPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader title="Pedidos" description="Seguimiento de pedidos y prendas del taller">
-        <Button nativeButton={false} render={<Link to="/app/orders/new" />}>
-          <PlusIcon className="size-4" />
-          Nuevo pedido
-        </Button>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="outline" size="icon" />}>
+              <SettingsIcon className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem render={<Link to="/app/orders/stages" />}>
+                <ListOrderedIcon className="size-3.5" />
+                Gestionar etapas del Kanban
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button nativeButton={false} render={<Link to="/app/orders/new" />}>
+            <PlusIcon className="size-4" />
+            Nuevo pedido
+          </Button>
+        </div>
       </PageHeader>
 
       <Tabs defaultValue="kanban">
@@ -46,10 +65,6 @@ function OrdersPage() {
           </div>
         </TabsContent>
       </Tabs>
-
-      <Link to="/app/orders/stages" className="w-fit rounded-md px-3 py-1.5 text-sm underline">
-        Gestionar etapas del Kanban
-      </Link>
     </div>
   );
 }
