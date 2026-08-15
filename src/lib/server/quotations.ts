@@ -1,6 +1,4 @@
-import slugify from "@sindresorhus/slugify";
 import { createServerFn } from "@tanstack/react-start";
-import { generateRandomString } from "better-auth/crypto";
 import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 import type { Db } from "#/db/client";
@@ -11,6 +9,7 @@ import {
   quotationsCountQuery,
   quotationsQuery,
 } from "../services/quotations";
+import { generateSequentialCode } from "./codes";
 
 // ── Queries ──────────────────────────────────────────────
 
@@ -132,16 +131,9 @@ export const createQuotation = createServerFn({ method: "POST" })
 
       if (!client) throw new Error("Cliente no encontrado");
 
-      const dateSlug = slugify(new Date().toISOString().slice(0, 10));
-      const titleSlug = `${dateSlug}-${slugify(client.name)}`;
-      let slug = titleSlug;
-      while (
-        await tx.$count(
-          tx.select().from(schema.quotation).where(eq(schema.quotation.slug, slug)).limit(1),
-        )
-      ) {
-        slug = `${titleSlug}_${generateRandomString(4)}`;
-      }
+      const now = new Date();
+      const prefix = `COT${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-`;
+      const slug = await generateSequentialCode(tx, organizationId, prefix);
 
       // Create the quotation header, freezing the client's name at
       // generation time so it stays immutable even if the client is renamed.

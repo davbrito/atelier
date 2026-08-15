@@ -1,7 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, count, desc, eq, ilike, or, type SQL } from "drizzle-orm";
 import * as z from "zod";
-import { budget, client, garment, garmentStage, order, quotationLine } from "#/db/schema";
+import {
+  budget,
+  client,
+  garment,
+  garmentStage,
+  order,
+  quotation,
+  quotationLine,
+} from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import { generateSequentialCode } from "./codes";
 
@@ -90,9 +98,11 @@ export const getOrder = createServerFn({ method: "GET" })
         clientPhone: client.phone,
         clientEmail: client.email,
         quotationId: order.quotationId,
+        quotationSlug: quotation.slug,
       })
       .from(order)
       .leftJoin(client, eq(order.clientId, client.id))
+      .leftJoin(quotation, eq(order.quotationId, quotation.id))
       .where(and(eq(order.code, data.code), eq(order.organizationId, organizationId)));
 
     if (!orderRow) throw new Error("Pedido no encontrado");

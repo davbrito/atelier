@@ -83,44 +83,52 @@ function OrderDetailPage() {
 
       {/* Client + dates */}
       <Card>
-        <CardContent className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
-          <div>
-            <p className="text-muted-foreground text-xs">Cliente</p>
-            <p className="font-medium text-sm">{order.clientName ?? "—"}</p>
-            {order.clientPhone && (
-              <p className="flex items-center gap-1 text-muted-foreground text-xs">
-                <PhoneIcon className="size-3" />
-                {order.clientPhone}
-              </p>
-            )}
-            {order.clientEmail && (
-              <p className="flex items-center gap-1 text-muted-foreground text-xs">
-                <MailIcon className="size-3" />
-                {order.clientEmail}
-              </p>
-            )}
-          </div>
-          <div>
-            <p className="text-muted-foreground text-xs">Fecha de entrega</p>
-            <p className="flex items-center gap-1 font-medium text-sm">
-              {order.dueDate ? (
-                <>
-                  <CalendarIcon className="size-3" />
-                  {formatDate(order.dueDate)}
-                </>
-              ) : (
-                "—"
-              )}
-            </p>
-          </div>
-          {order.quotationId && (
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-4">
             <div>
-              <p className="text-muted-foreground text-xs">Origen</p>
-              <p className="font-medium text-sm">Desde cotización</p>
+              <p className="text-muted-foreground text-xs">Cliente</p>
+              <p className="font-medium text-sm">{order.clientName ?? "—"}</p>
+              {order.clientPhone && (
+                <p className="flex items-center gap-1 text-muted-foreground text-xs">
+                  <PhoneIcon className="size-3" />
+                  {order.clientPhone}
+                </p>
+              )}
+              {order.clientEmail && (
+                <p className="flex items-center gap-1 text-muted-foreground text-xs">
+                  <MailIcon className="size-3" />
+                  {order.clientEmail}
+                </p>
+              )}
             </div>
-          )}
+            <div>
+              <p className="text-muted-foreground text-xs">Fecha de entrega</p>
+              <p className="flex items-center gap-1 font-medium text-sm">
+                {order.dueDate ? (
+                  <>
+                    <CalendarIcon className="size-3" />
+                    {formatDate(order.dueDate)}
+                  </>
+                ) : (
+                  "—"
+                )}
+              </p>
+            </div>
+            {order.quotationId && order.quotationSlug && (
+              <div>
+                <p className="text-muted-foreground text-xs">Origen</p>
+                <Link
+                  to="/app/quotations/$slug"
+                  params={{ slug: order.quotationSlug }}
+                  className="font-medium text-sm underline"
+                >
+                  Cotización {order.quotationSlug}
+                </Link>
+              </div>
+            )}
+          </div>
           {order.notes && (
-            <div className="col-span-2 sm:col-span-4">
+            <div>
               <p className="text-muted-foreground text-xs">Notas</p>
               <p className="text-sm">{order.notes}</p>
             </div>
