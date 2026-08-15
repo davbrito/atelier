@@ -20,7 +20,7 @@ export function createAuth(db: Db, env: Env, ctx: ExecutionContext) {
     ...baseConfig,
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
-    advanced: { disableOriginCheck: true, database: { joins: true } },
+    advanced: { disableOriginCheck: import.meta.env.DEV, database: { joins: true } },
     database: drizzleAdapter(db, { provider: "pg", transaction: true, schema }),
     emailAndPassword: {
       enabled: true,
