@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { faker } from "@faker-js/faker";
 import slugify from "@sindresorhus/slugify";
+import { Command } from "commander";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
@@ -301,8 +302,8 @@ async function seedOrders(
   clients: (typeof client.$inferSelect)[],
   stages: (typeof garmentStage.$inferSelect)[],
   budgets: (typeof budget.$inferSelect)[],
+  orderCount: number,
 ) {
-  const orderCount = faker.number.int({ min: 8, max: 12 });
   console.log(`Creando ${orderCount} pedidos...`);
 
   for (let i = 0; i < orderCount; i++) {
@@ -347,11 +348,20 @@ async function seedOrders(
 }
 
 async function main() {
-  const organizationId = process.argv[2];
-  if (!organizationId) {
-    console.error("Uso: pnpm db:seed:dev <organizationId>");
-    process.exit(1);
-  }
+  const program = new Command();
+  program
+    .name("seed-dev")
+    .description("Siembra datos de desarrollo (etapas, clientes, catálogo, cotizaciones, pedidos)")
+    .argument("<organizationId>", "ID de la organización a sembrar")
+    .option(
+      "-n, --order-count <count>",
+      "cantidad de pedidos a crear",
+      (value) => Number.parseInt(value, 10),
+    )
+    .parse();
+
+  const organizationId = program.args[0];
+  const orderCount = program.opts().orderCount ?? faker.number.int({ min: 8, max: 12 });
 
   const connectionString = process.env.DATABASE_URL_UNPOOLED;
   if (!connectionString) {
@@ -367,7 +377,7 @@ async function main() {
   const operations = await ensureOperations(db, organizationId);
   const budgets = await ensureBudgets(db, organizationId, materials, operations);
   await ensureQuotations(db, organizationId, clients, budgets);
-  await seedOrders(db, organizationId, clients, stages, budgets);
+  await seedOrders(db, organizationId, clients, stages, budgets, orderCount);
 
   console.log("Listo.");
   await pgClient.end();

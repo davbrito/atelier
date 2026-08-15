@@ -1,16 +1,17 @@
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
   createColumnHelper,
-  createSortedRowModel,
+  type PaginationState,
+  rowPaginationFeature,
   rowSortingFeature,
-  sortFn_alphanumeric,
-  sortFn_basic,
-  sortFn_datetime,
+  type SortingState,
   tableFeatures,
   useTable,
 } from "@tanstack/react-table";
-import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, Loader2Icon } from "lucide-react";
+import { useState } from "react";
+import { Pagination } from "#/components/pagination";
 import { Badge } from "#/components/ui/badge";
 import { Input } from "#/components/ui/input";
 import {
@@ -29,6 +30,7 @@ import {
   TableRow,
 } from "#/components/ui/table";
 import { formatMoney, LOCALE } from "#/lib/format";
+import { ordersListQueryOptions } from "#/lib/query-options";
 import type { listOrders } from "#/lib/server/orders";
 
 type OrderRow = Awaited<ReturnType<typeof listOrders>>["items"][number];
@@ -65,14 +67,12 @@ const PRIORITY_VARIANTS: Record<string, "outline" | "secondary" | "default" | "d
 
 // Defined statically outside the component, as recommended by the TanStack
 // Table docs — the features/columns shape is fixed and reused every render.
+// No sortedRowModel/paginatedRowModel: sorting and pagination are manual
+// (server-side), so the table must not re-derive them from `data`, which is
+// already just the current page of already-sorted/filtered rows.
 const features = tableFeatures({
   rowSortingFeature,
-  sortedRowModel: createSortedRowModel(),
-  sortFns: {
-    alphanumeric: sortFn_alphanumeric,
-    datetime: sortFn_datetime,
-    basic: sortFn_basic,
-  },
+  rowPaginationFeature,
 });
 
 const columnHelper = createColumnHelper<typeof features, OrderRow>();
@@ -80,16 +80,13 @@ const columnHelper = createColumnHelper<typeof features, OrderRow>();
 const columns = columnHelper.columns([
   columnHelper.accessor("code", {
     header: "Código",
-    sortFn: "alphanumeric",
   }),
   columnHelper.accessor("clientName", {
     header: "Cliente",
-    sortFn: "alphanumeric",
     cell: (info) => info.getValue() ?? "—",
   }),
   columnHelper.accessor("priority", {
     header: "Prioridad",
-    sortFn: "alphanumeric",
     cell: (info) => {
       const priority = info.getValue();
       return (
@@ -101,7 +98,6 @@ const columns = columnHelper.columns([
   }),
   columnHelper.accessor("status", {
     header: "Estado",
-    sortFn: "alphanumeric",
     cell: (info) => {
       const status = info.getValue();
       return (
@@ -113,7 +109,6 @@ const columns = columnHelper.columns([
   }),
   columnHelper.accessor("dueDate", {
     header: "Fecha de entrega",
-    sortFn: "datetime",
     cell: (info) => {
       const value = info.getValue();
       return value
@@ -121,41 +116,77 @@ const columns = columnHelper.columns([
         : "—";
     },
   }),
-  columnHelper.accessor((row) => Number(row.totalAmount), {
-    id: "totalAmount",
+  columnHelper.accessor("totalAmount", {
     header: "Total",
-    sortFn: "basic",
-    cell: (info) => formatMoney(info.getValue()),
+    cell: (info) => formatMoney(Number(info.getValue())),
   }),
 ]);
 
-export function OrdersTable({ items }: { items: OrderRow[] }) {
+const PAGE_SIZE = 10;
+
+export function OrdersTable() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  });
 
-  const data = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return items.filter((item) => {
-      if (priorityFilter !== "all" && item.priority !== priorityFilter) return false;
-      if (statusFilter !== "all" && item.status !== statusFilter) return false;
-      if (!term) return true;
-      return (
-        item.code.toLowerCase().includes(term) ||
-        (item.clientName ?? "").toLowerCase().includes(term)
-      );
-    });
-  }, [items, search, priorityFilter, statusFilter]);
+  const sort = sorting[0];
+  const { data, isPlaceholderData } = useQuery({
+    ...ordersListQueryOptions({
+      page: pagination.pageIndex + 1,
+      pageSize: pagination.pageSize,
+      search: search || undefined,
+      priority: priorityFilter === "all" ? undefined : (priorityFilter as OrderRow["priority"]),
+      status: statusFilter === "all" ? undefined : (statusFilter as OrderRow["status"]),
+      sortBy: sort?.id as
+        | "code"
+        | "clientName"
+        | "priority"
+        | "status"
+        | "dueDate"
+        | "totalAmount"
+        | undefined,
+      sortDir: sort ? (sort.desc ? "desc" : "asc") : "desc",
+    }),
+    placeholderData: keepPreviousData,
+  });
 
-  const table = useTable({ features, columns, data });
+  const table = useTable({
+    features,
+    columns,
+    data: data?.items ?? [],
+    getRowId: (row) => row.id,
+    manualSorting: true,
+    manualPagination: true,
+    rowCount: data?.total ?? 0,
+    state: { sorting, pagination },
+    onSortingChange: (updater) => {
+      setSorting(updater);
+      setPagination((p) => ({ ...p, pageIndex: 0 }));
+    },
+    onPaginationChange: setPagination,
+  });
+
+  function resetToFirstPage() {
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
+  }
+
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pagination.pageSize));
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <Input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            resetToFirstPage();
+          }}
           placeholder="Buscar por código o cliente..."
           className="max-w-xs"
         />
@@ -168,7 +199,10 @@ export function OrdersTable({ items }: { items: OrderRow[] }) {
             { label: "Urgente", value: "urgent" },
           ]}
           value={priorityFilter}
-          onValueChange={(value) => setPriorityFilter(value ?? "all")}
+          onValueChange={(value) => {
+            setPriorityFilter(value ?? "all");
+            resetToFirstPage();
+          }}
         >
           <SelectTrigger>
             <SelectValue />
@@ -191,7 +225,10 @@ export function OrdersTable({ items }: { items: OrderRow[] }) {
             { label: "Cancelado", value: "cancelled" },
           ]}
           value={statusFilter}
-          onValueChange={(value) => setStatusFilter(value ?? "all")}
+          onValueChange={(value) => {
+            setStatusFilter(value ?? "all");
+            resetToFirstPage();
+          }}
         >
           <SelectTrigger>
             <SelectValue />
@@ -205,6 +242,7 @@ export function OrdersTable({ items }: { items: OrderRow[] }) {
             <SelectItem value="cancelled">Cancelado</SelectItem>
           </SelectContent>
         </Select>
+        {isPlaceholderData && <Loader2Icon className="size-4 animate-spin text-muted-foreground" />}
       </div>
 
       <div className="rounded-lg border">
@@ -264,6 +302,12 @@ export function OrdersTable({ items }: { items: OrderRow[] }) {
           </TableBody>
         </Table>
       </div>
+
+      <Pagination
+        page={pagination.pageIndex + 1}
+        totalPages={totalPages}
+        onPageChange={(page) => setPagination((p) => ({ ...p, pageIndex: page - 1 }))}
+      />
     </div>
   );
 }

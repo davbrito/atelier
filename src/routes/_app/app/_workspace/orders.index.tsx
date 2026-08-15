@@ -1,4 +1,3 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ListOrderedIcon, Loader2Icon, PlusIcon, SettingsIcon } from "lucide-react";
 import { OrderKanbanBoard } from "#/components/order-kanban-board";
@@ -23,7 +22,7 @@ export const Route = createFileRoute("/_app/app/_workspace/orders/")({
   loader: ({ context: { queryClient } }) => {
     queryClient.prefetchQuery(garmentStagesListQueryOptions);
     queryClient.prefetchQuery(kanbanGarmentsListQueryOptions);
-    queryClient.prefetchQuery(ordersListQueryOptions);
+    queryClient.prefetchQuery(ordersListQueryOptions({ page: 1, pageSize: 10, sortDir: "desc" }));
   },
   pendingComponent: () => (
     <div className="flex h-64 items-center justify-center">
@@ -33,8 +32,6 @@ export const Route = createFileRoute("/_app/app/_workspace/orders/")({
 });
 
 function OrdersPage() {
-  const { data: ordersData } = useSuspenseQuery(ordersListQueryOptions);
-
   return (
     <>
       <div className="flex flex-col gap-6 p-6">
@@ -69,7 +66,7 @@ function OrdersPage() {
         </TabsContent>
 
         <TabsContent value="table" className="p-6">
-          <OrdersTable items={ordersData.items} />
+          <OrdersTable />
         </TabsContent>
       </Tabs>
     </>

@@ -1,30 +1,73 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or, type SQL } from "drizzle-orm";
 import * as z from "zod";
 import { budget, client, garment, garmentStage, order, quotationLine } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import { generateSequentialCode } from "./codes";
 
-export const listOrders = createServerFn({ method: "GET" })
-  .middleware([organizationMiddleware])
-  .handler(async ({ context: { activeOrganizationId, db } }) => {
-    const items = await db
-      .select({
-        id: order.id,
-        code: order.code,
-        status: order.status,
-        priority: order.priority,
-        totalAmount: order.totalAmount,
-        receivedAt: order.receivedAt,
-        dueDate: order.dueDate,
-        clientName: client.name,
-      })
-      .from(order)
-      .leftJoin(client, eq(order.clientId, client.id))
-      .where(eq(order.organizationId, activeOrganizationId))
-      .orderBy(desc(order.receivedAt));
+const ORDER_SORT_COLUMNS = {
+  code: order.code,
+  clientName: client.name,
+  priority: order.priority,
+  status: order.status,
+  dueDate: order.dueDate,
+  totalAmount: order.totalAmount,
+} as const;
 
-    return { items };
+export const listOrdersSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(10),
+  search: z.string().trim().optional(),
+  priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
+  status: z.enum(["pending", "in_progress", "ready", "delivered", "cancelled"]).optional(),
+  sortBy: z.enum(Object.keys(ORDER_SORT_COLUMNS) as [keyof typeof ORDER_SORT_COLUMNS]).optional(),
+  sortDir: z.enum(["asc", "desc"]).default("desc"),
+});
+
+export type ListOrderOptions = z.infer<typeof listOrdersSchema>;
+
+export const listOrders = createServerFn({ method: "GET" })
+  .validator(listOrdersSchema)
+  .middleware([organizationMiddleware])
+  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
+    const { page, pageSize, search, priority, status, sortBy, sortDir } = data;
+
+    const whereClause = and(
+      eq(order.organizationId, activeOrganizationId),
+      priority ? eq(order.priority, priority) : undefined,
+      status ? eq(order.status, status) : undefined,
+      search ? or(ilike(order.code, `%${search}%`), ilike(client.name, `%${search}%`)) : undefined,
+    );
+
+    const sortColumn = sortBy ? ORDER_SORT_COLUMNS[sortBy] : order.receivedAt;
+    const orderByClause: SQL = sortDir === "asc" ? asc(sortColumn) : desc(sortColumn);
+
+    const [items, [{ total }]] = await Promise.all([
+      db
+        .select({
+          id: order.id,
+          code: order.code,
+          status: order.status,
+          priority: order.priority,
+          totalAmount: order.totalAmount,
+          receivedAt: order.receivedAt,
+          dueDate: order.dueDate,
+          clientName: client.name,
+        })
+        .from(order)
+        .leftJoin(client, eq(order.clientId, client.id))
+        .where(whereClause)
+        .orderBy(orderByClause)
+        .limit(pageSize)
+        .offset((page - 1) * pageSize),
+      db
+        .select({ total: count() })
+        .from(order)
+        .leftJoin(client, eq(order.clientId, client.id))
+        .where(whereClause),
+    ]);
+
+    return { items, total, page, pageSize };
   });
 
 export const getOrder = createServerFn({ method: "GET" })
