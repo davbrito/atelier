@@ -14,11 +14,10 @@ import { garmentStagesListQueryOptions, kanbanGarmentsListQueryOptions } from "#
 
 export const Route = createFileRoute("/_app/app/_workspace/orders/")({
   component: OrdersPage,
-  loader: ({ context: { queryClient } }) =>
-    Promise.all([
-      queryClient.prefetchQuery(garmentStagesListQueryOptions),
-      queryClient.prefetchQuery(kanbanGarmentsListQueryOptions),
-    ]),
+  loader: ({ context: { queryClient } }) => {
+    queryClient.prefetchQuery(garmentStagesListQueryOptions);
+    queryClient.prefetchQuery(kanbanGarmentsListQueryOptions);
+  },
   pendingComponent: () => (
     <div className="flex h-64 items-center justify-center">
       <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
@@ -28,34 +27,35 @@ export const Route = createFileRoute("/_app/app/_workspace/orders/")({
 
 function OrdersPage() {
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <PageHeader title="Pedidos" description="Seguimiento de pedidos y prendas del taller">
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="outline" size="icon" />}>
-              <SettingsIcon className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem render={<Link to="/app/orders/stages" />}>
-                <ListOrderedIcon className="size-3.5" />
-                Gestionar etapas del Kanban
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button nativeButton={false} render={<Link to="/app/orders/new" />}>
-            <PlusIcon className="size-4" />
-            Nuevo pedido
-          </Button>
-        </div>
-      </PageHeader>
-
-      <Tabs defaultValue="kanban">
-        <TabsList>
+    <>
+      <div className="flex flex-col gap-6 p-6">
+        <PageHeader title="Pedidos" description="Seguimiento de pedidos y prendas del taller">
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button variant="outline" size="icon" />}>
+                <SettingsIcon className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem render={<Link to="/app/orders/stages" />}>
+                  <ListOrderedIcon className="size-3.5" />
+                  Gestionar etapas del Kanban
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button nativeButton={false} render={<Link to="/app/orders/new" />}>
+              <PlusIcon className="size-4" />
+              Nuevo pedido
+            </Button>
+          </div>
+        </PageHeader>
+      </div>
+      <Tabs defaultValue="kanban" className="flex min-h-0 min-w-0 grow flex-col">
+        <TabsList className="mx-6">
           <TabsTrigger value="kanban">Kanban</TabsTrigger>
           <TabsTrigger value="table">Tabla</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="kanban">
+        <TabsContent value="kanban" className="flex min-h-0 min-w-0 grow flex-col">
           <OrderKanbanBoard />
         </TabsContent>
 
@@ -65,6 +65,6 @@ function OrdersPage() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </>
   );
 }

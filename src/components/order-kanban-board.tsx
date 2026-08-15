@@ -187,7 +187,7 @@ export function OrderKanbanBoard() {
         moveMutation.mutate({ data: { id: garment.id, stageId } });
       }}
     >
-      <div className="flex gap-4 overflow-x-auto pb-2">
+      <div className="flex grow gap-4 overflow-x-auto px-6 pb-6">
         {columns.map((column) => {
           const columnGarments =
             column.id === UNASSIGNED_COLUMN_ID
