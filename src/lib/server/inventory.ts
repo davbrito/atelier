@@ -5,8 +5,6 @@ import type { Db } from "#/db/client";
 import { material, materialInventoryMovement, user } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 
-type Transaction = Parameters<Parameters<Db["transaction"]>[0]>[0];
-
 /**
  * Namespace seed for material-inventory advisory locks (pg_advisory_xact_lock
  * takes a (classid, objid) pair). Keeps this lock space from colliding with
@@ -24,7 +22,7 @@ const decimalString = z
   }, "Cantidad inválida");
 
 export async function getCurrentStock(
-  executor: Db | Transaction,
+  executor: Db,
   materialId: string,
   organizationId: string,
 ): Promise<string> {

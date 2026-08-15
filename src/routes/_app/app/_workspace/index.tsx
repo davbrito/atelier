@@ -13,6 +13,7 @@ import { PageHeader } from "#/components/page-header";
 import { buttonVariants } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { dashboardStatsQueryOptions } from "#/lib/query-options";
+import { formatBudgetNames } from "#/lib/utils";
 
 export const Route = createFileRoute("/_app/app/_workspace/")({
   component: DashboardPage,
@@ -163,7 +164,7 @@ function DashboardPage() {
                     <div className="min-w-0">
                       <p className="truncate font-medium text-sm">{q.clientTitle}</p>
                       <p className="truncate text-muted-foreground text-xs">
-                        {q.budgetName ?? "Sin presupuesto"} ·{" "}
+                        {formatBudgetNames(q.budgetNames)} ·{" "}
                         {new Date(q.createdAt).toLocaleDateString("es-VE", {
                           day: "numeric",
                           month: "short",

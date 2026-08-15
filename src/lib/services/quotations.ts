@@ -50,47 +50,72 @@ function quotationsWhereClause(filters: QuotationFilters) {
 }
 
 function quotationsQueryBase(db: Db, where: SQL | undefined) {
+  // Totals are computed per quotation LINE (each line = one budget/garment
+  // type), then rolled up to the quotation via the quotationLine → quotation
+  // join, since a quotation can now have multiple lines.
   const materialTotals = db.$with("materialTotals").as(
     db
       .select({
-        quotationId: schema.quotationMaterial.quotationId,
+        quotationId: schema.quotationLine.quotationId,
         total:
           sql<string>`sum(${schema.quotationMaterial.frozenPrice} * ${schema.quotationMaterial.quantity})`.as(
             "total",
           ),
       })
       .from(schema.quotationMaterial)
-      .groupBy(schema.quotationMaterial.quotationId),
+      .innerJoin(
+        schema.quotationLine,
+        eq(schema.quotationMaterial.quotationLineId, schema.quotationLine.id),
+      )
+      .groupBy(schema.quotationLine.quotationId),
   );
 
   const operationTotals = db.$with("operationTotals").as(
     db
       .select({
-        quotationId: schema.quotationOperation.quotationId,
+        quotationId: schema.quotationLine.quotationId,
         total:
           sql<string>`sum((${schema.quotationOperation.durationMinutes} / 60.0) * ${schema.quotationOperation.frozenHourlyRate})`.as(
             "total",
           ),
       })
       .from(schema.quotationOperation)
-      .groupBy(schema.quotationOperation.quotationId),
+      .innerJoin(
+        schema.quotationLine,
+        eq(schema.quotationOperation.quotationLineId, schema.quotationLine.id),
+      )
+      .groupBy(schema.quotationLine.quotationId),
+  );
+
+  // One row per quotation with the budget names of all its lines, so the UI
+  // can show e.g. "Vestido y 1 más" instead of a single flat budgetName.
+  const lineSummaries = db.$with("lineSummaries").as(
+    db
+      .select({
+        quotationId: schema.quotationLine.quotationId,
+        budgetNames: sql<string[]>`array_agg(${schema.budget.name})`.as("budget_names"),
+        lineCount: sql<number>`count(*)`.as("line_count"),
+      })
+      .from(schema.quotationLine)
+      .leftJoin(schema.budget, eq(schema.quotationLine.budgetId, schema.budget.id))
+      .groupBy(schema.quotationLine.quotationId),
   );
 
   const query = db
-    .with(materialTotals, operationTotals)
+    .with(materialTotals, operationTotals, lineSummaries)
     .select({
       id: schema.quotation.id,
       slug: schema.quotation.slug,
       clientTitle: schema.quotation.clientTitle,
       createdAt: schema.quotation.createdAt,
-      budgetName: schema.budget.name,
-      budgetSlug: schema.budget.slug,
+      budgetNames: sql<string[]>`coalesce(${lineSummaries.budgetNames}, '{}')`,
+      lineCount: sql<number>`coalesce(${lineSummaries.lineCount}, 0)`,
       materialTotal: sql<string>`coalesce(${materialTotals.total}, 0)`,
       operationTotal: sql<string>`coalesce(${operationTotals.total}, 0)`,
       total: sql<string>`coalesce(${materialTotals.total}, 0) + coalesce(${operationTotals.total}, 0)`,
     })
     .from(schema.quotation)
-    .leftJoin(schema.budget, eq(schema.quotation.budgetId, schema.budget.id))
+    .leftJoin(lineSummaries, eq(lineSummaries.quotationId, schema.quotation.id))
     .leftJoin(materialTotals, eq(materialTotals.quotationId, schema.quotation.id))
     .leftJoin(operationTotals, eq(operationTotals.quotationId, schema.quotation.id))
     .where(where);

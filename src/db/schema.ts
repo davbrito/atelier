@@ -151,7 +151,6 @@ export const quotation = snakeCase.table(
     organizationId: text()
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
-    budgetId: uuid().references(() => budget.id, { onDelete: "set null" }),
     clientId: uuid().references(() => client.id, { onDelete: "set null" }),
     clientTitle: varchar({ length: 255 }).notNull(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
@@ -163,6 +162,25 @@ export const quotation = snakeCase.table(
   ],
 );
 
+// A quotation line prices one budget/garment type within a quotation. A
+// quotation can have multiple lines (e.g. dress + jacket) — mirrors how an
+// order can have multiple garments.
+export const quotationLine = snakeCase.table(
+  "quotation_lines",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    quotationId: uuid()
+      .notNull()
+      .references(() => quotation.id, { onDelete: "cascade" }),
+    budgetId: uuid().references(() => budget.id, { onDelete: "set null" }),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  () => [
+    pgPolicy("quotation_lines_select", { for: "select", using: sql`true` }),
+    pgPolicy("quotation_lines_insert", { for: "insert", withCheck: sql`true` }),
+  ],
+);
+
 // Quotation lines are frozen: they must survive catalog changes, so the
 // catalog references are informational only (set null on delete) and the
 // name/price/unit are copied at creation time. No UPDATE or DELETE policy,
@@ -171,9 +189,9 @@ export const quotationMaterial = snakeCase.table(
   "quotation_materials",
   {
     id: uuid().primaryKey().default(sql`uuidv7()`),
-    quotationId: uuid()
+    quotationLineId: uuid()
       .notNull()
-      .references(() => quotation.id, { onDelete: "cascade" }),
+      .references(() => quotationLine.id, { onDelete: "cascade" }),
     materialId: uuid().references(() => material.id, { onDelete: "set null" }),
     quantity: decimal({ precision: 12, scale: 4 }).notNull(),
     frozenName: varchar({ length: 255 }).notNull(),
@@ -190,9 +208,9 @@ export const quotationOperation = snakeCase.table(
   "quotation_operations",
   {
     id: uuid().primaryKey().default(sql`uuidv7()`),
-    quotationId: uuid()
+    quotationLineId: uuid()
       .notNull()
-      .references(() => quotation.id, { onDelete: "cascade" }),
+      .references(() => quotationLine.id, { onDelete: "cascade" }),
     operationId: uuid().references(() => operation.id, { onDelete: "set null" }),
     durationMinutes: integer().notNull(),
     frozenName: varchar({ length: 255 }).notNull(),
@@ -334,6 +352,12 @@ export const garment = snakeCase.table(
       .references(() => order.id, { onDelete: "cascade" }),
     name: varchar({ length: 255 }).notNull(), // Ej. "Vestido de 15 años", "Traje de baño"
     stageId: uuid().references(() => garmentStage.id, { onDelete: "set null" }),
+    // The budget this garment is built from — the source of its product
+    // name/recipe. Independent of quotationLineId: an order can reference a
+    // budget directly without ever going through a formal quotation.
+    budgetId: uuid().references(() => budget.id, { onDelete: "set null" }),
+    // Set only when this garment originated from a quotation line.
+    quotationLineId: uuid().references(() => quotationLine.id, { onDelete: "set null" }),
     quantity: integer().notNull().default(1),
     unitPrice: decimal({ precision: 12, scale: 2 }).notNull().default("0.00"),
     fittingDate: timestamp({ withTimezone: true }), // Fecha agendada de prueba

@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateRandomString } from "better-auth/crypto";
 import { and, eq } from "drizzle-orm";
 import * as z from "zod";
+import type { Db } from "#/db/client";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import {
@@ -38,6 +39,44 @@ export const listQuotations = createServerFn({ method: "GET" })
     return { items, total, page, pageSize };
   });
 
+async function loadQuotationLines(db: Db, quotationId: string) {
+  const lines = await db
+    .select({
+      id: schema.quotationLine.id,
+      quotationId: schema.quotationLine.quotationId,
+      budgetId: schema.quotationLine.budgetId,
+      createdAt: schema.quotationLine.createdAt,
+      budgetName: schema.budget.name,
+      budgetSlug: schema.budget.slug,
+    })
+    .from(schema.quotationLine)
+    .leftJoin(schema.budget, eq(schema.quotationLine.budgetId, schema.budget.id))
+    .where(eq(schema.quotationLine.quotationId, quotationId));
+
+  const linesWithItems = await Promise.all(
+    lines.map(async (line) => {
+      const materials = await db.query.quotationMaterial.findMany({
+        where: { quotationLineId: line.id },
+        extras: {
+          amount: (t, { sql }) => sql<string>`${t.quantity} * ${t.frozenPrice}`,
+        },
+      });
+
+      const operations = await db.query.quotationOperation.findMany({
+        where: { quotationLineId: line.id },
+        extras: {
+          amount: (t, { sql }) =>
+            sql<string>`((${t.durationMinutes} / 60.0) * ${t.frozenHourlyRate})`,
+        },
+      });
+
+      return { ...line, materials, operations };
+    }),
+  );
+
+  return linesWithItems;
+}
+
 export const getQuotation = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .validator(z.object({ id: z.uuid() }))
@@ -54,17 +93,9 @@ export const getQuotation = createServerFn({ method: "GET" })
 
     if (!quotation) throw new Error("Cotización no encontrada");
 
-    const mats = await db
-      .select()
-      .from(schema.quotationMaterial)
-      .where(eq(schema.quotationMaterial.quotationId, data.id));
+    const lines = await loadQuotationLines(db, quotation.id);
 
-    const ops = await db
-      .select()
-      .from(schema.quotationOperation)
-      .where(eq(schema.quotationOperation.quotationId, data.id));
-
-    return { ...quotation, materials: mats, operations: ops };
+    return { ...quotation, lines };
   });
 
 export const getQuotationBySlug = createServerFn({ method: "GET" })
@@ -78,28 +109,15 @@ export const getQuotationBySlug = createServerFn({ method: "GET" })
 
     if (!quotation) throw new Error("Cotización no encontrada");
 
-    const mats = await db.query.quotationMaterial.findMany({
-      where: { quotationId: quotation.id },
-      extras: {
-        amount: (t, { sql }) => sql<string>`${t.quantity} * ${t.frozenPrice}`,
-      },
-    });
+    const lines = await loadQuotationLines(db, quotation.id);
 
-    const ops = await db.query.quotationOperation.findMany({
-      where: { quotationId: quotation.id },
-      extras: {
-        amount: (t, { sql }) =>
-          sql<string>`((${t.durationMinutes} / 60.0) * ${t.frozenHourlyRate})`,
-      },
-    });
-
-    return { ...quotation, materials: mats, operations: ops };
+    return { ...quotation, lines };
   });
 
 // ── Mutations ────────────────────────────────────────────
 
 export const createQuotationSchema = z.object({
-  budgetId: z.uuid(),
+  budgetIds: z.array(z.uuid()).min(1),
   clientId: z.uuid(),
 });
 
@@ -108,29 +126,11 @@ export const createQuotation = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
   .handler(async ({ data, context: { activeOrganizationId: organizationId, db } }) => {
     return await db.transaction(async (tx) => {
-      // Load budget with its materials and operations
-      const budget = await tx.query.budget.findFirst({
-        columns: { id: true, hourlyRate: true },
-        where: { id: data.budgetId, organizationId },
-      });
-
-      if (!budget) throw new Error("Presupuesto no encontrado");
-
       const client = await tx.query.client.findFirst({
         where: { id: data.clientId, organizationId },
       });
 
       if (!client) throw new Error("Cliente no encontrado");
-
-      const budgetMats = await tx
-        .select()
-        .from(schema.budgetMaterial)
-        .where(eq(schema.budgetMaterial.budgetId, data.budgetId));
-
-      const budgetOps = await tx
-        .select()
-        .from(schema.budgetOperation)
-        .where(eq(schema.budgetOperation.budgetId, data.budgetId));
 
       const dateSlug = slugify(new Date().toISOString().slice(0, 10));
       const titleSlug = `${dateSlug}-${slugify(client.name)}`;
@@ -143,76 +143,101 @@ export const createQuotation = createServerFn({ method: "POST" })
         slug = `${titleSlug}_${generateRandomString(4)}`;
       }
 
-      // Create the quotation, freezing the client's name at generation time
-      // so the quotation stays immutable even if the client is later renamed.
+      // Create the quotation header, freezing the client's name at
+      // generation time so it stays immutable even if the client is renamed.
       const [quotation] = await tx
         .insert(schema.quotation)
         .values({
           organizationId,
           slug,
-          budgetId: data.budgetId,
           clientId: client.id,
           clientTitle: client.name,
         })
         .returning();
 
-      // Freeze materials with current name, price and unit. A budget line
-      // pointing at a material that is gone from the catalog would produce a
-      // wrong quote, so fail (and roll back) instead of freezing bad data.
-      if (budgetMats.length > 0) {
-        const catalogMats = await tx
+      // One line per selected budget, each freezing its own materials and
+      // operations (mirrors an order's multiple garments).
+      for (const budgetId of data.budgetIds) {
+        const budget = await tx.query.budget.findFirst({
+          columns: { id: true, hourlyRate: true },
+          where: { id: budgetId, organizationId },
+        });
+
+        if (!budget) throw new Error("Presupuesto no encontrado");
+
+        const budgetMats = await tx
           .select()
-          .from(schema.material)
-          .where(eq(schema.material.organizationId, organizationId));
+          .from(schema.budgetMaterial)
+          .where(eq(schema.budgetMaterial.budgetId, budgetId));
 
-        const materialMap = new Map(catalogMats.map((m) => [m.id, m]));
-
-        await tx.insert(schema.quotationMaterial).values(
-          budgetMats.map((bm) => {
-            const catalog = materialMap.get(bm.materialId);
-            if (!catalog) {
-              throw new Error(
-                "El presupuesto referencia un material que ya no existe en el catálogo. Edita el presupuesto antes de generar la cotización.",
-              );
-            }
-            return {
-              quotationId: quotation.id,
-              materialId: bm.materialId,
-              quantity: bm.quantity,
-              frozenName: catalog.name,
-              frozenPrice: catalog.currentPrice,
-              frozenUnit: catalog.unit,
-            };
-          }),
-        );
-      }
-
-      // Freeze operations with current name and hourly rate
-      if (budgetOps.length > 0) {
-        const catalogOps = await tx
+        const budgetOps = await tx
           .select()
-          .from(schema.operation)
-          .where(eq(schema.operation.organizationId, organizationId));
+          .from(schema.budgetOperation)
+          .where(eq(schema.budgetOperation.budgetId, budgetId));
 
-        const operationMap = new Map(catalogOps.map((o) => [o.id, o]));
+        const [line] = await tx
+          .insert(schema.quotationLine)
+          .values({ quotationId: quotation.id, budgetId })
+          .returning();
 
-        await tx.insert(schema.quotationOperation).values(
-          budgetOps.map((bo) => {
-            const catalog = operationMap.get(bo.operationId);
-            if (!catalog) {
-              throw new Error(
-                "El presupuesto referencia una operación que ya no existe en el catálogo. Edita el presupuesto antes de generar la cotización.",
-              );
-            }
-            return {
-              quotationId: quotation.id,
-              operationId: bo.operationId,
-              durationMinutes: bo.durationMinutes,
-              frozenName: catalog.name,
-              frozenHourlyRate: budget.hourlyRate,
-            };
-          }),
-        );
+        // Freeze materials with current name, price and unit. A budget line
+        // pointing at a material that is gone from the catalog would produce
+        // a wrong quote, so fail (and roll back) instead of freezing bad data.
+        if (budgetMats.length > 0) {
+          const catalogMats = await tx
+            .select()
+            .from(schema.material)
+            .where(eq(schema.material.organizationId, organizationId));
+
+          const materialMap = new Map(catalogMats.map((m) => [m.id, m]));
+
+          await tx.insert(schema.quotationMaterial).values(
+            budgetMats.map((bm) => {
+              const catalog = materialMap.get(bm.materialId);
+              if (!catalog) {
+                throw new Error(
+                  "El presupuesto referencia un material que ya no existe en el catálogo. Edita el presupuesto antes de generar la cotización.",
+                );
+              }
+              return {
+                quotationLineId: line.id,
+                materialId: bm.materialId,
+                quantity: bm.quantity,
+                frozenName: catalog.name,
+                frozenPrice: catalog.currentPrice,
+                frozenUnit: catalog.unit,
+              };
+            }),
+          );
+        }
+
+        // Freeze operations with current name and hourly rate
+        if (budgetOps.length > 0) {
+          const catalogOps = await tx
+            .select()
+            .from(schema.operation)
+            .where(eq(schema.operation.organizationId, organizationId));
+
+          const operationMap = new Map(catalogOps.map((o) => [o.id, o]));
+
+          await tx.insert(schema.quotationOperation).values(
+            budgetOps.map((bo) => {
+              const catalog = operationMap.get(bo.operationId);
+              if (!catalog) {
+                throw new Error(
+                  "El presupuesto referencia una operación que ya no existe en el catálogo. Edita el presupuesto antes de generar la cotización.",
+                );
+              }
+              return {
+                quotationLineId: line.id,
+                operationId: bo.operationId,
+                durationMinutes: bo.durationMinutes,
+                frozenName: catalog.name,
+                frozenHourlyRate: budget.hourlyRate,
+              };
+            }),
+          );
+        }
       }
 
       return quotation;

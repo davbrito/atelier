@@ -66,7 +66,7 @@ function QuotePage() {
     e.preventDefault();
     if (!clientId || !budget?.id) return;
     createMutation.mutate({
-      data: { budgetId: budget.id, clientId },
+      data: { budgetIds: [budget.id], clientId },
     });
   }
 

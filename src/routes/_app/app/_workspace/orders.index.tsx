@@ -24,7 +24,7 @@ function OrdersPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageHeader title="Pedidos" description="Seguimiento de pedidos y prendas del taller">
-        <Button className="draft-element" disabled>
+        <Button nativeButton={false} render={<Link to="/app/orders/new" />}>
           <PlusIcon className="size-4" />
           Nuevo pedido
         </Button>

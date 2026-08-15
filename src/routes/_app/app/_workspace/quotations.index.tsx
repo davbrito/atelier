@@ -1,13 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  ClipboardListIcon,
-  ExternalLinkIcon,
-  Loader2Icon,
-  PlusIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { ClipboardListIcon, Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -36,6 +30,7 @@ import {
 } from "#/components/ui/table";
 import { quotationsListQueryOptions } from "#/lib/query-options";
 import { deleteQuotation } from "#/lib/server/quotations";
+import { formatBudgetNames } from "#/lib/utils";
 
 const PAGE_SIZE = 20;
 
@@ -127,16 +122,8 @@ function QuotationsPage() {
                   >
                     <TableCell className="font-medium">{q.clientTitle}</TableCell>
                     <TableCell>
-                      {q.budgetSlug ? (
-                        <Link
-                          to="/app/budgets/$slug"
-                          params={{ slug: q.budgetSlug }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 rounded bg-muted/50 px-1 text-xs hover:bg-muted/70 hover:underline"
-                        >
-                          <ExternalLinkIcon className="size-3" />
-                          {q.budgetName}
-                        </Link>
+                      {q.lineCount > 0 ? (
+                        <span className="text-sm">{formatBudgetNames(q.budgetNames)}</span>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}

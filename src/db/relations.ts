@@ -100,6 +100,48 @@ const atelierRelations = defineRelations(schema, (r) => ({
       from: r.quotation.clientId,
       to: r.client.id,
     }),
+    lines: r.many.quotationLine({
+      from: r.quotation.id,
+      to: r.quotationLine.quotationId,
+    }),
+  },
+  quotationLines: {
+    quotation: r.one.quotation({
+      from: r.quotationLine.quotationId,
+      to: r.quotation.id,
+    }),
+    budget: r.one.budget({
+      from: r.quotationLine.budgetId,
+      to: r.budget.id,
+    }),
+    materials: r.many.quotationMaterial({
+      from: r.quotationLine.id,
+      to: r.quotationMaterial.quotationLineId,
+    }),
+    operations: r.many.quotationOperation({
+      from: r.quotationLine.id,
+      to: r.quotationOperation.quotationLineId,
+    }),
+  },
+  quotationMaterials: {
+    line: r.one.quotationLine({
+      from: r.quotationMaterial.quotationLineId,
+      to: r.quotationLine.id,
+    }),
+    material: r.one.material({
+      from: r.quotationMaterial.materialId,
+      to: r.material.id,
+    }),
+  },
+  quotationOperations: {
+    line: r.one.quotationLine({
+      from: r.quotationOperation.quotationLineId,
+      to: r.quotationLine.id,
+    }),
+    operation: r.one.operation({
+      from: r.quotationOperation.operationId,
+      to: r.operation.id,
+    }),
   },
   clients: {
     organization: r.one.organization({
@@ -151,6 +193,14 @@ const atelierRelations = defineRelations(schema, (r) => ({
     order: r.one.order({
       from: r.garment.orderId,
       to: r.order.id,
+    }),
+    budget: r.one.budget({
+      from: r.garment.budgetId,
+      to: r.budget.id,
+    }),
+    quotationLine: r.one.quotationLine({
+      from: r.garment.quotationLineId,
+      to: r.quotationLine.id,
     }),
   },
 }));

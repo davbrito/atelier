@@ -10,3 +10,13 @@ export { cn } from "cnfast";
 export function storageUrl(key: string): string {
   return `/${key}`;
 }
+
+/**
+ * Formats a quotation's budget names for compact display, e.g.
+ * "Vestido y 1 más" for multiple lines, or "Sin presupuesto" when empty.
+ */
+export function formatBudgetNames(names: string[]): string {
+  if (names.length === 0) return "Sin presupuesto";
+  if (names.length === 1) return names[0];
+  return `${names[0]} y ${names.length - 1} más`;
+}

@@ -1,8 +1,7 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2Icon } from "lucide-react";
-import { Controller, useForm } from "react-hook-form";
+import { Loader2Icon, MinusIcon, PlusIcon } from "lucide-react";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { BudgetCombobox } from "#/components/budget-combobox";
 import { ClientCombobox } from "#/components/client-combobox";
@@ -17,12 +16,17 @@ import {
   SheetTitle,
 } from "#/components/ui/sheet";
 import { useIsMobile } from "#/hooks/use-mobile";
-import { createQuotation, createQuotationSchema } from "#/lib/server/quotations";
+import { createQuotation } from "#/lib/server/quotations";
 import { cn } from "#/lib/utils";
 
 type QuotationCreateSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+};
+
+type QuotationFormValues = {
+  clientId: string;
+  budgets: { budgetId: string }[];
 };
 
 export function QuotationCreateSheet({ open, onOpenChange }: QuotationCreateSheetProps) {
@@ -35,10 +39,15 @@ export function QuotationCreateSheet({ open, onOpenChange }: QuotationCreateShee
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm({
-    resolver: zodResolver(createQuotationSchema),
-    defaultValues: { budgetId: "", clientId: "" },
+  } = useForm<QuotationFormValues>({
+    defaultValues: { clientId: "", budgets: [{ budgetId: "" }] },
   });
+
+  const {
+    fields: budgetFields,
+    append: appendBudget,
+    remove: removeBudget,
+  } = useFieldArray({ control, name: "budgets" });
 
   const createMutation = useMutation({
     mutationFn: createFn,
@@ -65,11 +74,22 @@ export function QuotationCreateSheet({ open, onOpenChange }: QuotationCreateShee
         <SheetHeader>
           <SheetTitle>Nueva cotización</SheetTitle>
           <SheetDescription>
-            Genera una cotización congelada a partir de un presupuesto.
+            Genera una cotización congelada a partir de uno o más presupuestos.
           </SheetDescription>
         </SheetHeader>
         <form
-          onSubmit={handleSubmit((data) => createMutation.mutateAsync({ data }))}
+          onSubmit={handleSubmit((values) => {
+            const budgetIds = values.budgets
+              .map((b) => b.budgetId)
+              .filter((id): id is string => id !== "");
+
+            if (budgetIds.length === 0) {
+              toast.error("Agrega al menos un presupuesto");
+              return;
+            }
+
+            createMutation.mutate({ data: { clientId: values.clientId, budgetIds } });
+          })}
           className="flex flex-1 flex-col gap-6 p-6"
         >
           <div className="grid gap-2">
@@ -77,6 +97,7 @@ export function QuotationCreateSheet({ open, onOpenChange }: QuotationCreateShee
             <Controller
               control={control}
               name="clientId"
+              rules={{ required: true }}
               render={({ field }) => (
                 <ClientCombobox value={field.value} onChange={field.onChange} />
               )}
@@ -87,17 +108,36 @@ export function QuotationCreateSheet({ open, onOpenChange }: QuotationCreateShee
           </div>
 
           <div className="grid gap-2">
-            <span className="font-medium text-sm">Presupuesto base</span>
-            <Controller
-              control={control}
-              name="budgetId"
-              render={({ field }) => (
-                <BudgetCombobox value={field.value} onChange={field.onChange} />
-              )}
-            />
-            {errors.budgetId && (
-              <span className="text-destructive text-xs">Selecciona un presupuesto</span>
-            )}
+            <span className="font-medium text-sm">Presupuestos</span>
+            {budgetFields.map((field, i) => (
+              <div key={field.id} className="flex items-center gap-2">
+                <Controller
+                  control={control}
+                  name={`budgets.${i}.budgetId`}
+                  render={({ field }) => (
+                    <BudgetCombobox value={field.value} onChange={field.onChange} />
+                  )}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeBudget(i)}
+                  disabled={budgetFields.length === 1}
+                >
+                  <MinusIcon className="size-3" />
+                </Button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => appendBudget({ budgetId: "" })}
+            >
+              <PlusIcon className="size-3" />
+              Agregar presupuesto
+            </Button>
           </div>
 
           <SheetFooter className="mt-auto">

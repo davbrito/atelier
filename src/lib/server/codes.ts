@@ -2,13 +2,7 @@ import { sql } from "drizzle-orm";
 import type { Db } from "#/db/client";
 import { codeCounter } from "#/db/schema";
 
-type Transaction = Parameters<Parameters<Db["transaction"]>[0]>[0];
-
-async function nextSequence(
-  tx: Db | Transaction,
-  organizationId: string,
-  prefix: string,
-): Promise<number> {
+async function nextSequence(tx: Db, organizationId: string, prefix: string): Promise<number> {
   const [row] = await tx
     .insert(codeCounter)
     .values({ organizationId, prefix, lastValue: 1 })
@@ -28,7 +22,7 @@ async function nextSequence(
  * same counter mechanism works for any entity that needs correlativos.
  */
 export async function generateSequentialCode(
-  tx: Db | Transaction,
+  tx: Db,
   organizationId: string,
   prefix: string,
   padLength = 4,

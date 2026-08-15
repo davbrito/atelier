@@ -58,8 +58,6 @@ function QuotationDetailPage() {
     );
   }
 
-  const materialsTotal = +quotation.materialTotal;
-  const operationsTotal = +quotation.operationTotal;
   const total = +quotation.total;
 
   return (
@@ -100,19 +98,8 @@ function QuotationDetailPage() {
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground text-xs">Presupuesto base</p>
-            {quotation.budgetSlug ? (
-              <Link
-                to="/app/budgets/$slug"
-                params={{ slug: quotation.budgetSlug }}
-                className="inline-flex items-center gap-1 font-medium text-primary text-sm hover:underline"
-              >
-                {quotation.budgetName}
-                <ExternalLinkIcon className="size-3" />
-              </Link>
-            ) : (
-              <p className="font-medium text-sm">—</p>
-            )}
+            <p className="text-muted-foreground text-xs">Prendas</p>
+            <p className="font-medium text-sm">{quotation.lines.length}</p>
           </div>
           <div>
             <p className="text-muted-foreground text-xs">Total</p>
@@ -123,81 +110,92 @@ function QuotationDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Materials */}
-      {quotation.materials.length > 0 && (
-        <Card className="gap-0 p-0">
-          <div className="border-b px-4 py-3">
-            <h3 className="font-medium text-sm">Materiales</h3>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Concepto</TableHead>
-                <TableHead>Cantidad</TableHead>
-                <TableHead className="text-right">Precio unit.</TableHead>
-                <TableHead className="text-right">Subtotal</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {quotation.materials.map((m) => (
-                <TableRow key={m.id}>
-                  <TableCell className="font-medium">{m.frozenName}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatUnit(m.quantity, m.frozenUnit)}
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {formatMoney(Number(m.frozenPrice))}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatMoney(Number(m.amount))}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="flex justify-end border-t px-4 py-3 text-sm">
-            <span className="text-muted-foreground">Subtotal materiales:&nbsp;</span>
-            <span className="font-medium">{formatMoney(materialsTotal)}</span>
-          </div>
-        </Card>
-      )}
+      {/* One section per quotation line (budget/garment type) */}
+      {quotation.lines.map((line) => {
+        const lineMaterialsTotal = line.materials.reduce((sum, m) => sum + Number(m.amount), 0);
+        const lineOperationsTotal = line.operations.reduce((sum, o) => sum + Number(o.amount), 0);
+        const lineTotal = lineMaterialsTotal + lineOperationsTotal;
 
-      {/* Labor */}
-      {quotation.operations.length > 0 && (
-        <Card className="gap-0 p-0">
-          <div className="border-b px-4 py-3">
-            <h3 className="font-medium text-sm">Mano de obra</h3>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Concepto</TableHead>
-                <TableHead>Duración</TableHead>
-                <TableHead className="text-right">Tarifa</TableHead>
-                <TableHead className="text-right">Subtotal</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {quotation.operations.map((o) => (
-                <TableRow key={o.id}>
-                  <TableCell className="font-medium">{o.frozenName}</TableCell>
-                  <TableCell className="text-muted-foreground">{o.durationMinutes} min</TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {formatMoney(Number(o.frozenHourlyRate))}/h
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatMoney(Number(o.amount))}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="flex justify-end border-t px-4 py-3 text-sm">
-            <span className="text-muted-foreground">Subtotal mano de obra:&nbsp;</span>
-            <span className="font-medium">{formatMoney(operationsTotal)}</span>
-          </div>
-        </Card>
-      )}
+        return (
+          <Card key={line.id} className="gap-0 p-0">
+            <div className="flex items-center justify-between border-b px-4 py-3">
+              {line.budgetSlug ? (
+                <Link
+                  to="/app/budgets/$slug"
+                  params={{ slug: line.budgetSlug }}
+                  className="inline-flex items-center gap-1 font-medium text-primary text-sm hover:underline"
+                >
+                  {line.budgetName}
+                  <ExternalLinkIcon className="size-3" />
+                </Link>
+              ) : (
+                <span className="font-medium text-sm">Prenda sin presupuesto</span>
+              )}
+              <span className="font-medium text-sm" suppressHydrationWarning>
+                {formatMoney(lineTotal)}
+              </span>
+            </div>
+
+            {line.materials.length > 0 && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Concepto</TableHead>
+                    <TableHead>Cantidad</TableHead>
+                    <TableHead className="text-right">Precio unit.</TableHead>
+                    <TableHead className="text-right">Subtotal</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {line.materials.map((m) => (
+                    <TableRow key={m.id}>
+                      <TableCell className="font-medium">{m.frozenName}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatUnit(m.quantity, m.frozenUnit)}
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {formatMoney(Number(m.frozenPrice))}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatMoney(Number(m.amount))}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+
+            {line.operations.length > 0 && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Concepto</TableHead>
+                    <TableHead>Duración</TableHead>
+                    <TableHead className="text-right">Tarifa</TableHead>
+                    <TableHead className="text-right">Subtotal</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {line.operations.map((o) => (
+                    <TableRow key={o.id}>
+                      <TableCell className="font-medium">{o.frozenName}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {o.durationMinutes} min
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {formatMoney(Number(o.frozenHourlyRate))}/h
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatMoney(Number(o.amount))}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Card>
+        );
+      })}
 
       {/* Total */}
       <Card className="border-primary/20 bg-primary/5">
