@@ -1,6 +1,7 @@
 import { MutationCache, QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import { DefaultErrorComponent } from "./components/default-error-component";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -23,6 +24,7 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
+    defaultErrorComponent: DefaultErrorComponent,
   });
 
   setupRouterSsrQueryIntegration({ router, queryClient });

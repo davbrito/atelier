@@ -1,4 +1,4 @@
-@import "@fontsource-variable/bodoni-moda/standard.css";
+@import "@fontsource-variable/playfair-display";
 @import "@fontsource-variable/hanken-grotesk/index.css";
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -8,9 +8,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-bodoni: "Bodoni Moda Variable", Georgia, "Times New Roman", serif;
+  --font-playfair: "Playfair Display Variable", Georgia, "Times New Roman", serif;
   --font-hanken: "Hanken Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-bodoni);
+  --font-serif: var(--font-playfair);
   --font-sans: "Figtree Variable", sans-serif;
 
   --color-cream: var(--cream);
@@ -127,12 +127,12 @@
   --spacing-section-padding: 120px;
   --spacing-margin-mobile: 20px;
 
-  --font-heading: var(--font-bodoni);
-  --font-headline-lg: var(--font-bodoni);
-  --font-display-lg: var(--font-bodoni);
-  --font-headline-md: var(--font-bodoni);
+  --font-heading: var(--font-playfair);
+  --font-headline-lg: var(--font-playfair);
+  --font-display-lg: var(--font-playfair);
+  --font-headline-md: var(--font-playfair);
   --font-body-md: var(--font-hanken);
-  --font-headline-lg-mobile: var(--font-bodoni);
+  --font-headline-lg-mobile: var(--font-playfair);
   --font-body-lg: var(--font-hanken);
   --font-label-sm: var(--font-hanken);
   --text-headline-lg: 32px;

@@ -1,4 +1,3 @@
-import { useLayoutEffect } from "react";
 import { create } from "zustand";
 
 type Theme = "light" | "dark";
@@ -31,16 +30,15 @@ const useThemeStore = create<{
 });
 
 function resolveTheme(): Theme {
-  if (typeof document === "undefined") return "light";
   return document.documentElement.classList.contains("dark") ? "dark" : "light";
+}
+
+export function loadTheme() {
+  useThemeStore.setState({ theme: resolveTheme() });
 }
 
 export function useTheme() {
   const state = useThemeStore();
-
-  useLayoutEffect(() => {
-    useThemeStore.setState({ theme: resolveTheme() });
-  }, []);
 
   return state;
 }

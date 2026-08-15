@@ -1,14 +1,9 @@
-import bodoniFont from "@fontsource-variable/bodoni-moda/files/bodoni-moda-latin-standard-normal.woff2?url";
 import hankenFont from "@fontsource-variable/hanken-grotesk/files/hanken-grotesk-latin-wght-normal.woff2?url";
+import playfairFont from "@fontsource-variable/playfair-display/files/playfair-display-latin-wght-normal.woff2?url";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
-import {
-  createRootRouteWithContext,
-  HeadContent,
-  ScriptOnce,
-  Scripts,
-} from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { PageInfo } from "#/data/info";
 import APP_INSTALL_SCRIPT from "../assets/js/install.js?raw";
@@ -53,13 +48,14 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       {
         rel: "preload",
         as: "font",
-        href: bodoniFont,
+        href: playfairFont,
         type: "font/woff2",
         crossOrigin: "anonymous",
       },
     ],
   }),
   shellComponent: RootDocument,
+  scripts: () => [{ children: THEME_INIT_SCRIPT }, { children: APP_INSTALL_SCRIPT }],
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -69,8 +65,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <ScriptOnce>{THEME_INIT_SCRIPT}</ScriptOnce>
-        <ScriptOnce>{APP_INSTALL_SCRIPT}</ScriptOnce>
         {children}
         <TanStackDevtools
           config={{

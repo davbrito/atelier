@@ -14,6 +14,5 @@ export async function optimisticUpdate<T>(
 
   const previous = queryClient.getQueryData<T>(queryKey);
   queryClient.setQueryData<T>(queryKey, updater);
-
   return { previous };
 }
