@@ -4,11 +4,16 @@ import { Link } from "@tanstack/react-router";
 import { CalendarIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "#/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "#/components/ui/empty";
 import { Input } from "#/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select";
 import {
   garmentStagesListQueryOptions,
   kanbanGarmentsListQueryOptions,
@@ -16,6 +21,7 @@ import {
 } from "#/lib/query-options";
 import { optimisticUpdate } from "#/lib/query-utils";
 import { type listKanbanGarments, moveGarmentStage } from "#/lib/server/garments";
+import { updateOrderPriority } from "#/lib/server/orders";
 
 type KanbanGarmentsData = Awaited<ReturnType<typeof listKanbanGarments>>;
 type KanbanGarment = KanbanGarmentsData["items"][number];
@@ -27,16 +33,36 @@ const PRIORITY_LABELS: Record<string, string> = {
   urgent: "Urgente",
 };
 
-const PRIORITY_VARIANTS: Record<string, "outline" | "secondary" | "default" | "destructive"> = {
-  low: "outline",
-  medium: "secondary",
-  high: "default",
-  urgent: "destructive",
+const PRIORITY_OPTIONS = [
+  { label: "Baja", value: "low" },
+  { label: "Media", value: "medium" },
+  { label: "Alta", value: "high" },
+  { label: "Urgente", value: "urgent" },
+];
+
+const PRIORITY_TRIGGER_CLASSES: Record<string, string> = {
+  low: "bg-muted text-muted-foreground",
+  medium: "bg-secondary text-secondary-foreground",
+  high: "bg-primary/10 text-primary",
+  urgent: "bg-destructive/10 text-destructive",
 };
 
 const UNASSIGNED_COLUMN_ID = "__unassigned__";
 
-function GarmentCard({ garment }: { garment: KanbanGarment }) {
+const PRIORITY_ORDER: Record<string, number> = {
+  urgent: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
+
+function GarmentCard({
+  garment,
+  onPriorityChange,
+}: {
+  garment: KanbanGarment;
+  onPriorityChange?: (orderId: string, priority: string) => void;
+}) {
   return (
     <Card className="gap-2 p-3">
       <CardHeader className="p-0">
@@ -54,10 +80,31 @@ function GarmentCard({ garment }: { garment: KanbanGarment }) {
           </Link>
           {garment.clientName && <span>{garment.clientName}</span>}
         </div>
-        <div className="flex items-center justify-between">
-          <Badge variant={PRIORITY_VARIANTS[garment.priority] ?? "outline"}>
-            {PRIORITY_LABELS[garment.priority] ?? garment.priority}
-          </Badge>
+        <div
+          className="flex items-center justify-between"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <Select
+            items={PRIORITY_OPTIONS}
+            value={garment.priority}
+            onValueChange={(value) => {
+              if (value) onPriorityChange?.(garment.orderId, value);
+            }}
+          >
+            <SelectTrigger
+              size="sm"
+              className={`h-6 gap-1 border-none px-2 py-0 text-xs ${PRIORITY_TRIGGER_CLASSES[garment.priority] ?? ""}`}
+            >
+              <SelectValue>{PRIORITY_LABELS[garment.priority] ?? garment.priority}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {PRIORITY_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {garment.dueDate && (
             <span className="flex items-center gap-1 text-muted-foreground">
               <CalendarIcon className="size-3" />
@@ -73,12 +120,18 @@ function GarmentCard({ garment }: { garment: KanbanGarment }) {
   );
 }
 
-function DraggableGarmentCard({ garment }: { garment: KanbanGarment }) {
+function DraggableGarmentCard({
+  garment,
+  onPriorityChange,
+}: {
+  garment: KanbanGarment;
+  onPriorityChange?: (orderId: string, priority: string) => void;
+}) {
   const { ref, isDragging } = useDraggable({ id: garment.id });
 
   return (
     <div ref={ref} className={isDragging ? "cursor-grabbing opacity-40" : "cursor-grab"}>
-      <GarmentCard garment={garment} />
+      <GarmentCard garment={garment} onPriorityChange={onPriorityChange} />
     </div>
   );
 }
@@ -86,9 +139,11 @@ function DraggableGarmentCard({ garment }: { garment: KanbanGarment }) {
 function KanbanColumn({
   column,
   garments,
+  onPriorityChange,
 }: {
   column: { id: string; name: string; color: string | null };
   garments: KanbanGarment[];
+  onPriorityChange?: (orderId: string, priority: string) => void;
 }) {
   const { ref, isDropTarget } = useDroppable({ id: column.id });
 
@@ -112,7 +167,11 @@ function KanbanColumn({
         }`}
       >
         {garments.map((garment) => (
-          <DraggableGarmentCard key={garment.id} garment={garment} />
+          <DraggableGarmentCard
+            key={garment.id}
+            garment={garment}
+            onPriorityChange={onPriorityChange}
+          />
         ))}
       </div>
     </div>
@@ -144,6 +203,10 @@ export function OrderKanbanBoard() {
       .filter((g) => clientFilter === "all" || g.clientName === clientFilter)
       .filter((g) => !dueBefore || (g.dueDate && new Date(g.dueDate) <= new Date(dueBefore)))
       .sort((a, b) => {
+        const priorityDiff =
+          (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99);
+        if (priorityDiff !== 0) return priorityDiff;
+
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
@@ -174,6 +237,40 @@ export function OrderKanbanBoard() {
       queryClient.invalidateQueries({ queryKey: queryKeys.kanbanGarments });
     },
   });
+
+  const priorityMutation = useMutation({
+    mutationFn: updateOrderPriority,
+    onMutate: async ({ data: { id: orderId, priority } }) => {
+      const { previous } = await optimisticUpdate<KanbanGarmentsData>(
+        queryClient,
+        kanbanGarmentsListQueryOptions.queryKey,
+        (old) =>
+          old
+            ? {
+                ...old,
+                items: old.items.map((g) => (g.orderId === orderId ? { ...g, priority } : g)),
+              }
+            : old,
+      );
+
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(kanbanGarmentsListQueryOptions.queryKey, context.previous);
+      }
+      toast.error("Error al cambiar la prioridad");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.kanbanGarments });
+    },
+  });
+
+  const handlePriorityChange = (orderId: string, priority: string) => {
+    priorityMutation.mutate({
+      data: { id: orderId, priority: priority as "low" | "medium" | "high" | "urgent" },
+    });
+  };
 
   if (stages.length === 0) {
     return (
@@ -286,7 +383,14 @@ export function OrderKanbanBoard() {
                 ? unassigned
                 : filteredGarments.filter((g) => g.stageId === column.id);
 
-            return <KanbanColumn key={column.id} column={column} garments={columnGarments} />;
+            return (
+              <KanbanColumn
+                key={column.id}
+                column={column}
+                garments={columnGarments}
+                onPriorityChange={handlePriorityChange}
+              />
+            );
           })}
         </div>
         <DragOverlay>

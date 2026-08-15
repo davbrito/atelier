@@ -216,3 +216,23 @@ export const createOrder = createServerFn({ method: "POST" })
       return newOrder;
     });
   });
+
+export const updateOrderPriority = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      id: z.uuid(),
+      priority: z.enum(["low", "medium", "high", "urgent"]),
+    }),
+  )
+  .middleware([organizationMiddleware])
+  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
+    const [updated] = await db
+      .update(order)
+      .set({ priority: data.priority })
+      .where(and(eq(order.id, data.id), eq(order.organizationId, activeOrganizationId)))
+      .returning({ id: order.id });
+
+    if (!updated) throw new Error("Pedido no encontrado");
+
+    return { success: true };
+  });

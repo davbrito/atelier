@@ -353,10 +353,8 @@ async function main() {
     .name("seed-dev")
     .description("Siembra datos de desarrollo (etapas, clientes, catálogo, cotizaciones, pedidos)")
     .argument("<organizationId>", "ID de la organización a sembrar")
-    .option(
-      "-n, --order-count <count>",
-      "cantidad de pedidos a crear",
-      (value) => Number.parseInt(value, 10),
+    .option("-n, --order-count <count>", "cantidad de pedidos a crear", (value) =>
+      Number.parseInt(value, 10),
     )
     .parse();
 

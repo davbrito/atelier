@@ -14,6 +14,7 @@ export const listKanbanGarments = createServerFn({ method: "GET" })
         id: garment.id,
         name: garment.name,
         stageId: garment.stageId,
+        orderId: order.id,
         orderCode: order.code,
         priority: order.priority,
         dueDate: order.dueDate,
