@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getBudgetById, getBudgetBySlug, listBudgets } from "./server/budgets";
 import { getClientById, listClients } from "./server/clients";
-import { getDashboardStats } from "./server/dashboard";
+import { getDashboardCounts, getRecentQuotations } from "./server/dashboard";
 import { listGarmentStages } from "./server/garment-stages";
 import { listKanbanGarments } from "./server/garments";
 import { getMaterialInventory } from "./server/inventory";
@@ -32,7 +32,8 @@ export const queryKeys = {
   garmentStages: ["garment-stages"],
   kanbanGarments: ["kanban-garments"],
   order: (code: string) => ["order", code],
-  dashboard: ["dashboard"],
+  recentQuotations: ["recent-quotations"],
+  dashboardCounts: ["dashboard-counts"],
   userOrganizationCount: ["userOrganizationCount"],
   whitelistEmails: ["whitelist-emails"],
 };
@@ -135,9 +136,14 @@ export const kanbanGarmentsListQueryOptions = queryOptions({
   queryFn: ({ signal }) => listKanbanGarments({ signal }),
 });
 
-export const dashboardStatsQueryOptions = queryOptions({
-  queryKey: queryKeys.dashboard,
-  queryFn: ({ signal }) => getDashboardStats({ signal }),
+export const recentQuotationsQueryOptions = queryOptions({
+  queryKey: queryKeys.recentQuotations,
+  queryFn: ({ signal }) => getRecentQuotations({ signal }),
+});
+
+export const dashboardCountsQueryOptions = queryOptions({
+  queryKey: queryKeys.dashboardCounts,
+  queryFn: ({ signal }) => getDashboardCounts({ signal }),
 });
 
 export const userOrganizationCountQueryOptions = queryOptions({

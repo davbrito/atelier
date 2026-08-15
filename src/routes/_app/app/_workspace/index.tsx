@@ -9,16 +9,19 @@ import {
   ScissorsIcon,
   UsersIcon,
 } from "lucide-react";
+import { Suspense } from "react";
+import { SystemStats, SystemStatsLoader } from "#/components/dasboard/system-counts.tsx";
 import { PageHeader } from "#/components/page-header";
 import { buttonVariants } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
-import { dashboardStatsQueryOptions } from "#/lib/query-options";
+import { dashboardCountsQueryOptions, recentQuotationsQueryOptions } from "#/lib/query-options";
 import { formatBudgetNames } from "#/lib/utils";
 
 export const Route = createFileRoute("/_app/app/_workspace/")({
   component: DashboardPage,
   loader: ({ context: { queryClient } }) => {
-    queryClient.prefetchQuery(dashboardStatsQueryOptions);
+    queryClient.prefetchQuery(recentQuotationsQueryOptions);
+    queryClient.prefetchQuery(dashboardCountsQueryOptions);
   },
   pendingComponent: () => (
     <div className="flex flex-col gap-8 p-6">
@@ -31,49 +34,6 @@ export const Route = createFileRoute("/_app/app/_workspace/")({
   ),
 });
 
-const statsCards = [
-  {
-    key: "budgets" as const,
-    label: "Presupuestos",
-    icon: CalculatorIcon,
-    to: "/app/budgets",
-    color: "text-muted-foreground",
-    bg: "bg-muted",
-  },
-  {
-    key: "clients" as const,
-    label: "Clientes",
-    icon: UsersIcon,
-    to: "/app/clients",
-    color: "text-muted-foreground",
-    bg: "bg-muted",
-  },
-  {
-    key: "materials" as const,
-    label: "Materiales",
-    icon: PackageIcon,
-    to: "/app/materials",
-    color: "text-muted-foreground",
-    bg: "bg-muted",
-  },
-  {
-    key: "operations" as const,
-    label: "Operaciones",
-    icon: ScissorsIcon,
-    to: "/app/operations",
-    color: "text-muted-foreground",
-    bg: "bg-muted",
-  },
-  {
-    key: "quotations" as const,
-    label: "Cotizaciones",
-    icon: ClipboardListIcon,
-    to: "/app/quotations",
-    color: "text-muted-foreground",
-    bg: "bg-muted",
-  },
-];
-
 const quickActions = [
   { label: "Nuevo presupuesto", icon: PlusIcon, to: "/app/budgets" },
   { label: "Nuevo material", icon: PlusIcon, to: "/app/materials" },
@@ -81,8 +41,7 @@ const quickActions = [
 ];
 
 function DashboardPage() {
-  const { data } = useSuspenseQuery(dashboardStatsQueryOptions);
-  const { counts, recentQuotations } = data;
+  const { data } = useSuspenseQuery(recentQuotationsQueryOptions);
 
   return (
     <div className="flex flex-col gap-8 p-6">
@@ -92,26 +51,9 @@ function DashboardPage() {
       />
 
       {/* Stats */}
-      <div className="flex flex-wrap gap-3 *:flex-1 sm:grid sm:grid-cols-[repeat(auto-fit,minmax(8rem,1fr))]">
-        {statsCards.map(({ key, label, icon: Icon, to, color, bg }) => (
-          <Link key={key} to={to}>
-            <Card
-              size="sm"
-              className="flex-row items-center gap-2 rounded-xl px-2 py-1 transition-shadow hover:shadow-md"
-            >
-              <div className={`shrink-0 rounded-lg p-1.5 ${bg}`}>
-                <Icon className={`size-4 ${color}`} />
-              </div>
-              <div>
-                <div className="font-bold text-lg leading-none tracking-tight">{counts[key]}</div>
-                <p className="whitespace-nowrap text-muted-foreground text-xs leading-tight">
-                  {label}
-                </p>
-              </div>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      <Suspense fallback={<SystemStatsLoader />}>
+        <SystemStats />
+      </Suspense>
 
       {/* Quick Actions + Recent Quotations */}
       <div className="grid gap-6 lg:grid-cols-3">
@@ -144,7 +86,7 @@ function DashboardPage() {
             </Link>
           </CardHeader>
           <CardContent>
-            {recentQuotations.length === 0 ? (
+            {data.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <ClipboardListIcon className="mb-3 size-8 text-muted-foreground/25" />
                 <p className="text-muted-foreground text-sm">No hay cotizaciones aún.</p>
@@ -154,7 +96,7 @@ function DashboardPage() {
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {recentQuotations.map((q) => (
+                {data.map((q) => (
                   <Link
                     key={q.id}
                     to="/app/quotations/$slug"
