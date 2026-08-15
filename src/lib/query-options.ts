@@ -7,7 +7,7 @@ import { listKanbanGarments } from "./server/garments";
 import { getMaterialInventory } from "./server/inventory";
 import { getMaterialById, listMaterials } from "./server/materials";
 import { getOperationById, listOperations } from "./server/operations";
-import { getOrder } from "./server/orders";
+import { getOrder, listOrders } from "./server/orders";
 import { getUserOrganizationCount } from "./server/organizations";
 import { getQuotation, getQuotationBySlug, listQuotations } from "./server/quotations";
 import { listWhitelistedEmails } from "./server/whitelist";
@@ -31,6 +31,7 @@ export const queryKeys = {
   quotation: (slug: string) => ["quotation", slug],
   garmentStages: ["garment-stages"],
   kanbanGarments: ["kanban-garments"],
+  orders: ["orders"],
   order: (code: string) => ["order", code],
   recentQuotations: ["recent-quotations"],
   dashboardCounts: ["dashboard-counts"],
@@ -134,6 +135,11 @@ export const garmentStagesListQueryOptions = queryOptions({
 export const kanbanGarmentsListQueryOptions = queryOptions({
   queryKey: queryKeys.kanbanGarments,
   queryFn: ({ signal }) => listKanbanGarments({ signal }),
+});
+
+export const ordersListQueryOptions = queryOptions({
+  queryKey: queryKeys.orders,
+  queryFn: ({ signal }) => listOrders({ signal }),
 });
 
 export const recentQuotationsQueryOptions = queryOptions({

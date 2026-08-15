@@ -1,6 +1,8 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ListOrderedIcon, Loader2Icon, PlusIcon, SettingsIcon } from "lucide-react";
 import { OrderKanbanBoard } from "#/components/order-kanban-board";
+import { OrdersTable } from "#/components/orders-table";
 import { PageHeader } from "#/components/page-header";
 import { Button } from "#/components/ui/button";
 import {
@@ -10,13 +12,18 @@ import {
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
-import { garmentStagesListQueryOptions, kanbanGarmentsListQueryOptions } from "#/lib/query-options";
+import {
+  garmentStagesListQueryOptions,
+  kanbanGarmentsListQueryOptions,
+  ordersListQueryOptions,
+} from "#/lib/query-options";
 
 export const Route = createFileRoute("/_app/app/_workspace/orders/")({
   component: OrdersPage,
   loader: ({ context: { queryClient } }) => {
     queryClient.prefetchQuery(garmentStagesListQueryOptions);
     queryClient.prefetchQuery(kanbanGarmentsListQueryOptions);
+    queryClient.prefetchQuery(ordersListQueryOptions);
   },
   pendingComponent: () => (
     <div className="flex h-64 items-center justify-center">
@@ -26,6 +33,8 @@ export const Route = createFileRoute("/_app/app/_workspace/orders/")({
 });
 
 function OrdersPage() {
+  const { data: ordersData } = useSuspenseQuery(ordersListQueryOptions);
+
   return (
     <>
       <div className="flex flex-col gap-6 p-6">
@@ -59,10 +68,8 @@ function OrdersPage() {
           <OrderKanbanBoard />
         </TabsContent>
 
-        <TabsContent value="table">
-          <div className="draft-element flex min-h-96 items-center justify-center rounded-lg p-8 text-muted-foreground text-sm">
-            Tabla dinámica de pedidos (pendiente)
-          </div>
+        <TabsContent value="table" className="p-6">
+          <OrdersTable items={ordersData.items} />
         </TabsContent>
       </Tabs>
     </>

@@ -1,9 +1,31 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import * as z from "zod";
 import { budget, client, garment, garmentStage, order, quotationLine } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import { generateSequentialCode } from "./codes";
+
+export const listOrders = createServerFn({ method: "GET" })
+  .middleware([organizationMiddleware])
+  .handler(async ({ context: { activeOrganizationId, db } }) => {
+    const items = await db
+      .select({
+        id: order.id,
+        code: order.code,
+        status: order.status,
+        priority: order.priority,
+        totalAmount: order.totalAmount,
+        receivedAt: order.receivedAt,
+        dueDate: order.dueDate,
+        clientName: client.name,
+      })
+      .from(order)
+      .leftJoin(client, eq(order.clientId, client.id))
+      .where(eq(order.organizationId, activeOrganizationId))
+      .orderBy(desc(order.receivedAt));
+
+    return { items };
+  });
 
 export const getOrder = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
