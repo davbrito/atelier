@@ -1,14 +1,17 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   decimal,
   index,
   integer,
   pgEnum,
   pgPolicy,
+  primaryKey,
   real,
   snakeCase,
   text,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -238,3 +241,111 @@ export const whitelistEmail = snakeCase.table("whitelist_emails", {
     .references(() => user.id, { onDelete: "cascade" }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
+
+// ── Orders & Garments Enums ──────────────────────────────
+
+export const orderPriority = pgEnum("order_priority", ["low", "medium", "high", "urgent"]);
+
+export const orderStatus = pgEnum("order_status", [
+  "pending",
+  "in_progress",
+  "ready",
+  "delivered",
+  "cancelled",
+]);
+
+// ── Orders (Pedidos) ─────────────────────────────────────
+
+export const order = snakeCase.table(
+  "orders",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    clientId: uuid().references(() => client.id, { onDelete: "set null" }),
+    quotationId: uuid().references(() => quotation.id, { onDelete: "set null" }),
+    code: varchar({ length: 50 }).notNull(), // Ej. #PED2026-05-0101
+    status: orderStatus().notNull().default("pending"),
+    priority: orderPriority().notNull().default("medium"),
+    totalAmount: decimal({ precision: 12, scale: 2 }).notNull().default("0.00"),
+    depositAmount: decimal({ precision: 12, scale: 2 }).notNull().default("0.00"),
+    receivedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    dueDate: timestamp({ withTimezone: true }),
+    notes: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdateFn(() => sql`now()`),
+  },
+  (table) => [
+    index("orders_organization_id_idx").on(table.organizationId),
+    index("orders_client_id_idx").on(table.clientId),
+    index("orders_due_date_idx").on(table.dueDate),
+    index("orders_received_at_idx").on(table.receivedAt.desc()),
+    unique("orders_organization_id_code_unique").on(table.organizationId, table.code),
+  ],
+);
+
+// ── Correlativos (contador genérico de códigos secuenciales) ──
+
+export const codeCounter = snakeCase.table(
+  "code_counters",
+  {
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    prefix: varchar({ length: 40 }).notNull(), // Ej. "PED2026-05-", "COT2026-05-"
+    lastValue: integer().notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.organizationId, table.prefix] })],
+);
+
+// ── Garment Stages (Etapas dinámicas del Kanban) ─────────
+
+export const garmentStage = snakeCase.table(
+  "order_garment_stages",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    name: varchar({ length: 100 }).notNull(), // Ej. "Patronaje", "Bordado"
+    color: varchar({ length: 20 }), // Opcional: código de color hexadecimal para la UI (#FF5733)
+    position: integer().notNull().default(0), // Para ordenar las columnas del Kanban (0, 1, 2, 3...)
+    isSystemDefault: boolean().notNull().default(false), // Identifica las creadas por defecto
+    isFinalStage: boolean().notNull().default(false), // True si indica que la prenda está terminada
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("order_garment_stages_org_position_idx").on(table.organizationId, table.position),
+  ],
+);
+
+// ── Garments / Order Items (Prendas del Pedido) ──────────
+
+export const garment = snakeCase.table(
+  "order_garments",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    orderId: uuid()
+      .notNull()
+      .references(() => order.id, { onDelete: "cascade" }),
+    name: varchar({ length: 255 }).notNull(), // Ej. "Vestido de 15 años", "Traje de baño"
+    stageId: uuid().references(() => garmentStage.id, { onDelete: "set null" }),
+    quantity: integer().notNull().default(1),
+    unitPrice: decimal({ precision: 12, scale: 2 }).notNull().default("0.00"),
+    fittingDate: timestamp({ withTimezone: true }), // Fecha agendada de prueba
+    notes: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdateFn(() => sql`now()`),
+  },
+  (table) => [
+    index("order_garments_order_id_idx").on(table.orderId),
+    index("order_garments_stage_id_idx").on(table.stageId),
+  ],
+);

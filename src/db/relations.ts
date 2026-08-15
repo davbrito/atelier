@@ -30,6 +30,10 @@ const atelierRelations = defineRelations(schema, (r) => ({
       from: r.organization.id,
       to: r.client.organizationId,
     }),
+    garmentStages: r.many.garmentStage({
+      from: r.organization.id,
+      to: r.garmentStage.organizationId,
+    }),
   },
   materials: {
     organization: r.one.organization({
@@ -105,6 +109,18 @@ const atelierRelations = defineRelations(schema, (r) => ({
     quotations: r.many.quotation({
       from: r.client.id,
       to: r.quotation.clientId,
+    }),
+  },
+  garmentStages: {
+    organization: r.one.organization({
+      from: r.garmentStage.organizationId,
+      to: r.organization.id,
+    }),
+  },
+  garments: {
+    stage: r.one.garmentStage({
+      from: r.garment.stageId,
+      to: r.garmentStage.id,
     }),
   },
 }));
