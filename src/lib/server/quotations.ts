@@ -108,9 +108,15 @@ export const getQuotationBySlug = createServerFn({ method: "GET" })
 
     if (!quotation) throw new Error("Cotización no encontrada");
 
-    const lines = await loadQuotationLines(db, quotation.id);
+    const [lines, [relatedOrder]] = await Promise.all([
+      loadQuotationLines(db, quotation.id),
+      db
+        .select({ code: schema.order.code, status: schema.order.status })
+        .from(schema.order)
+        .where(eq(schema.order.quotationId, quotation.id)),
+    ]);
 
-    return { ...quotation, lines };
+    return { ...quotation, lines, relatedOrder: relatedOrder ?? null };
   });
 
 // ── Mutations ────────────────────────────────────────────

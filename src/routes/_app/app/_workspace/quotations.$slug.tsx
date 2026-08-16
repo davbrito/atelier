@@ -17,6 +17,14 @@ import {
 import { formatMoney, formatUnit, LOCALE } from "#/lib/format";
 import { quotationBySlugQueryOptions } from "#/lib/query-options";
 
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  pending: "Pendiente",
+  in_progress: "En progreso",
+  ready: "Listo",
+  delivered: "Entregado",
+  cancelled: "Cancelado",
+};
+
 export const Route = createFileRoute("/_app/app/_workspace/quotations/$slug")({
   loader: ({ context: { queryClient }, params: { slug } }) => {
     void queryClient.prefetchQuery(quotationBySlugQueryOptions(slug));
@@ -79,14 +87,27 @@ function QuotationDetailPage() {
             <ClipboardListIcon className="size-3" />
             Cotización
           </Badge>
-          <Button
-            size="sm"
-            nativeButton={false}
-            render={<Link to="/app/orders/new" search={{ quotationId: quotation.id }} />}
-          >
-            <PlusIcon className="size-4" />
-            Crear pedido
-          </Button>
+          {quotation.relatedOrder ? (
+            <Button
+              size="sm"
+              variant="outline"
+              nativeButton={false}
+              render={
+                <Link to="/app/orders/$code" params={{ code: quotation.relatedOrder.code }} />
+              }
+            >
+              Ver pedido
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              nativeButton={false}
+              render={<Link to="/app/orders/new" search={{ quotationId: quotation.id }} />}
+            >
+              <PlusIcon className="size-4" />
+              Crear pedido
+            </Button>
+          )}
         </div>
       </PageHeader>
 
@@ -117,6 +138,20 @@ function QuotationDetailPage() {
               {formatMoney(total)}
             </p>
           </div>
+          {quotation.relatedOrder && (
+            <div>
+              <p className="text-muted-foreground text-xs">Pedido</p>
+              <Link
+                to="/app/orders/$code"
+                params={{ code: quotation.relatedOrder.code }}
+                className="font-medium text-sm underline"
+              >
+                {quotation.relatedOrder.code} ·{" "}
+                {ORDER_STATUS_LABELS[quotation.relatedOrder.status] ??
+                  quotation.relatedOrder.status}
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
 
