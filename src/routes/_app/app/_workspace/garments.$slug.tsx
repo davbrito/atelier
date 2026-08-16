@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2Icon, PencilIcon, ShirtIcon } from "lucide-react";
+import { ArrowLeftIcon, Loader2Icon, PencilIcon, ShirtIcon } from "lucide-react";
 import { useState } from "react";
 import { BudgetEditSheet } from "#/components/budget-edit-sheet";
 import { ClientCombobox } from "#/components/client-combobox";
-import { PageHeader } from "#/components/page-header";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
+import { Dialog, DialogContent } from "#/components/ui/dialog";
 import * as StyledField from "#/components/ui/field";
 import { Skeleton } from "#/components/ui/skeleton";
 import {
@@ -49,6 +49,7 @@ function QuotePage() {
   const createQuotationFn = useServerFn(createQuotation);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [clientId, setClientId] = useState("");
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
   const { data: budget } = useSuspenseQuery(budgetBySlugQueryOptions(slug));
 
@@ -92,7 +93,72 @@ function QuotePage() {
 
   return (
     <div className="container-narrow flex flex-col gap-6">
-      <PageHeader title={budget.name} description={budget.description ?? undefined} back>
+      {/* Banner */}
+      <div className="relative overflow-hidden rounded-xl">
+        {budget.image ? (
+          <button
+            type="button"
+            onClick={() => setIsGalleryOpen(true)}
+            className="block aspect-21/9 w-full cursor-zoom-in"
+          >
+            <img
+              src={budget.image}
+              alt={budget.name}
+              className="size-full object-cover transition hover:brightness-90"
+              style={{
+                viewTransitionName: `budget-image-${budget.id}`,
+                viewTransitionClass: "budget-image budget-image-banner",
+              }}
+            />
+          </button>
+        ) : (
+          <div
+            className="flex aspect-21/9 w-full items-center justify-center bg-linear-to-br from-muted to-muted/40"
+            style={{
+              viewTransitionName: `budget-image-${budget.id}`,
+              viewTransitionClass: "budget-image budget-image-banner",
+            }}
+          >
+            <ShirtIcon className="size-10 text-muted-foreground/30" />
+          </div>
+        )}
+        <Button
+          variant="secondary"
+          size="icon"
+          className="absolute top-3 left-3 shadow"
+          nativeButton={false}
+          render={<Link to="/app/garments" viewTransition />}
+        >
+          <ArrowLeftIcon className="size-4" />
+        </Button>
+      </div>
+
+      {budget.image && (
+        <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+          <DialogContent className="max-w-3xl bg-transparent p-0 shadow-none ring-0">
+            <img
+              src={budget.image}
+              alt={budget.name}
+              className="max-h-[85vh] w-full rounded-xl object-contain"
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1
+            className="w-fit font-heading text-2xl"
+            style={{
+              viewTransitionName: `budget-title-${budget.id}`,
+              viewTransitionClass: "budget-title",
+            }}
+          >
+            {budget.name}
+          </h1>
+          {budget.description && <p className="mt-1 text-muted-foreground">{budget.description}</p>}
+        </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="gap-1.5">
             <ShirtIcon className="size-3" />
@@ -103,7 +169,7 @@ function QuotePage() {
             Editar
           </Button>
         </div>
-      </PageHeader>
+      </div>
 
       {/* Materials */}
       {budget.materials.length > 0 && (

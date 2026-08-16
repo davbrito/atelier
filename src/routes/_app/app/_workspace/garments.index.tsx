@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { EyeIcon, Loader2Icon, PlusIcon, ShirtIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { toast } from "#/components/ui/toast.tsx";
 import { budgetsListQueryOptions } from "#/lib/query-options";
 import { deleteBudget } from "#/lib/server/budgets";
@@ -93,22 +93,47 @@ function BudgetsPage() {
         <>
           <div className="grid gap-4 sm:grid-cols-[repeat(auto-fill,minmax(14rem,1fr))]">
             {budgets.map((budget) => (
-              <Card key={budget.id} className="relative overflow-hidden pt-0">
-                <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
-                {budget.image ? (
-                  <img
-                    src={budget.image}
-                    alt={budget.name}
-                    className="relative z-20 aspect-video w-full object-cover brightness-60 dark:brightness-40"
-                  />
-                ) : (
-                  <div className="relative z-20 flex aspect-video w-full items-center justify-center bg-gradient-to-br from-muted to-muted/40">
-                    <ShirtIcon className="size-10 text-muted-foreground/30" />
-                  </div>
-                )}
+              <Card key={budget.id} className="group relative overflow-hidden pt-0">
+                <Link
+                  to="/app/garments/$slug"
+                  params={{ slug: budget.slug }}
+                  viewTransition
+                  aria-label={budget.name}
+                  className="block aspect-video h-min w-full bg-black/35 transition-colors duration-200 group-hover:bg-black/0"
+                >
+                  {budget.image ? (
+                    <img
+                      src={budget.image}
+                      alt={budget.name}
+                      className="size-full object-cover brightness-60 transition-all duration-200 group-hover:brightness-100 dark:brightness-70 dark:group-hover:brightness-90"
+                      style={{
+                        viewTransitionName: `budget-image-${budget.id}`,
+                        viewTransitionClass: "budget-image budget-image-thumb",
+                      }}
+                    />
+                  ) : (
+                    <div
+                      className="flex size-full items-center justify-center bg-linear-to-br from-muted to-muted/40"
+                      style={{
+                        viewTransitionName: `budget-image-${budget.id}`,
+                        viewTransitionClass: "budget-image budget-image-thumb",
+                      }}
+                    >
+                      <ShirtIcon className="size-10 text-muted-foreground/30" />
+                    </div>
+                  )}
+                </Link>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="font-medium text-sm">{budget.name}</CardTitle>
-                  <div className="flex gap-1">
+                  <CardTitle
+                    className="w-fit truncate font-medium text-sm"
+                    style={{
+                      viewTransitionName: `budget-title-${budget.id}`,
+                      viewTransitionClass: "budget-title",
+                    }}
+                  >
+                    {budget.name}
+                  </CardTitle>
+                  <CardAction>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -116,6 +141,7 @@ function BudgetsPage() {
                         navigate({
                           to: "/app/garments/$slug",
                           params: { slug: budget.slug },
+                          viewTransition: true,
                         })
                       }
                     >
@@ -129,7 +155,7 @@ function BudgetsPage() {
                     >
                       <Trash2Icon className="size-3" />
                     </Button>
-                  </div>
+                  </CardAction>
                 </CardHeader>
                 <CardContent>
                   <div className="text-muted-foreground text-xs">

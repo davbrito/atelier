@@ -395,6 +395,13 @@
   --sidebar-ring: oklch(0.553 0.013 58.071);
 }
 
+/* Desactiva la transición por defecto de toda la página */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
 /* Shared-element view transitions for material images and titles (see
    materials.index.tsx / materials.$id.tsx viewTransitionName/Class).
    The group is the only thing that actually animates (position/size
@@ -405,13 +412,17 @@
    as a "ghost"/see-through glitch instead of one solid image scaling
    into place. */
 ::view-transition-group(.material-image),
-::view-transition-group(.material-title) {
+::view-transition-group(.material-title),
+::view-transition-group(.budget-image),
+::view-transition-group(.budget-title) {
   animation-duration: 350ms;
   animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 ::view-transition-old(.material-image),
-::view-transition-new(.material-image) {
+::view-transition-new(.material-image),
+::view-transition-old(.budget-image),
+::view-transition-new(.budget-image) {
   animation: none;
   mix-blend-mode: normal;
   height: 100%;
@@ -419,11 +430,15 @@
   overflow: clip;
 }
 
-::view-transition-old(.material-image) {
+::view-transition-old(.material-image),
+::view-transition-old(.budget-image) {
   object-fit: contain;
+  animation: none;
+  opacity: 0;
 }
 
-::view-transition-new(.material-image) {
+::view-transition-new(.material-image),
+::view-transition-new(.budget-image) {
   object-fit: cover;
 }
 
@@ -438,20 +453,28 @@
    one is playing the "new" role always shows the correct radius for
    its actual element, in both navigation directions. */
 ::view-transition-old(.material-image-thumb),
-::view-transition-new(.material-image-thumb) {
+::view-transition-new(.material-image-thumb),
+::view-transition-old(.budget-image-thumb),
+::view-transition-new(.budget-image-thumb) {
   border-radius: 0.25rem;
 }
 
 ::view-transition-old(.material-image-banner),
-::view-transition-new(.material-image-banner) {
+::view-transition-new(.material-image-banner),
+::view-transition-old(.budget-image-banner),
+::view-transition-new(.budget-image-banner) {
   border-radius: 0.75rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(.material-image),
   ::view-transition-group(.material-title),
+  ::view-transition-group(.budget-image),
+  ::view-transition-group(.budget-title),
   ::view-transition-old(.material-image),
-  ::view-transition-new(.material-image) {
+  ::view-transition-new(.material-image),
+  ::view-transition-old(.budget-image),
+  ::view-transition-new(.budget-image) {
     animation: none;
   }
 }
