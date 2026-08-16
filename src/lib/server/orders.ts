@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, count, desc, eq, ilike, or, type SQL, sum } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or, type SQL, sql, sum } from "drizzle-orm";
 import * as z from "zod";
 import type { Db } from "#/db/client";
 import { budget, client, garment, order, orderPayment, quotationLine } from "#/db/schema";
@@ -16,9 +16,6 @@ async function getOrderPaidAmount(db: Db, orderId: string): Promise<number> {
 
   return Number(row?.paid ?? 0);
 }
-
-export const PAYMENT_INCOMPLETE_ERROR =
-  "No se puede marcar como entregado: aún falta saldo por pagar.";
 
 const ORDER_SORT_COLUMNS = {
   code: order.code,
@@ -299,6 +296,12 @@ export const listKanbanOrders = createServerFn({ method: "GET" })
         totalAmount: order.totalAmount,
         dueDate: order.dueDate,
         clientName: client.name,
+        // Scalar subquery instead of a join+group-by: keeps this a flat,
+        // one-row-per-order select without touching the rest of the query.
+        paidAmount: sql<string>`coalesce((
+          select sum(${orderPayment.amount}) from ${orderPayment}
+          where ${orderPayment.orderId} = ${order.id}
+        ), 0)`,
       })
       .from(order)
       .leftJoin(client, eq(order.clientId, client.id))
@@ -316,21 +319,13 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
   )
   .middleware([organizationMiddleware])
   .handler(async ({ data, context: { activeOrganizationId, db } }) => {
-    const [existing] = await db
-      .select({ id: order.id, totalAmount: order.totalAmount })
-      .from(order)
-      .where(and(eq(order.id, data.id), eq(order.organizationId, activeOrganizationId)));
+    const [updated] = await db
+      .update(order)
+      .set({ status: data.status })
+      .where(and(eq(order.id, data.id), eq(order.organizationId, activeOrganizationId)))
+      .returning({ id: order.id });
 
-    if (!existing) throw new Error("Pedido no encontrado");
-
-    if (data.status === "delivered") {
-      const paid = await getOrderPaidAmount(db, existing.id);
-      if (paid < Number(existing.totalAmount)) {
-        throw new Error(PAYMENT_INCOMPLETE_ERROR);
-      }
-    }
-
-    await db.update(order).set({ status: data.status }).where(eq(order.id, existing.id));
+    if (!updated) throw new Error("Pedido no encontrado");
 
     return { success: true };
   });

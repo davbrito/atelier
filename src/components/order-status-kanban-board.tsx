@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -25,11 +26,7 @@ import { ORDER_STATUSES } from "#/lib/constants/order-status";
 import { formatMoney } from "#/lib/format";
 import { kanbanOrdersListQueryOptions, queryKeys } from "#/lib/query-options";
 import { optimisticUpdate } from "#/lib/query-utils";
-import {
-  type listKanbanOrders,
-  PAYMENT_INCOMPLETE_ERROR,
-  updateOrderStatus,
-} from "#/lib/server/orders";
+import { type listKanbanOrders, updateOrderStatus } from "#/lib/server/orders";
 
 type KanbanOrdersData = Awaited<ReturnType<typeof listKanbanOrders>>;
 type KanbanOrder = KanbanOrdersData["items"][number];
@@ -156,7 +153,7 @@ export function OrderStatusKanbanBoard() {
 
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
-  const [paymentWarningOrder, setPaymentWarningOrder] = useState<string | null>(null);
+  const [pendingDeliveryOrderId, setPendingDeliveryOrderId] = useState<string | null>(null);
 
   const clientOptions = useMemo(() => {
     const names = new Set(orders.map((o) => o.clientName).filter((name): name is string => !!name));
@@ -190,13 +187,9 @@ export function OrderStatusKanbanBoard() {
 
       return { previous };
     },
-    onError: (err, vars, context) => {
+    onError: (_err, _vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(kanbanOrdersListQueryOptions.queryKey, context.previous);
-      }
-      if (err instanceof Error && err.message === PAYMENT_INCOMPLETE_ERROR) {
-        setPaymentWarningOrder(vars.data.id);
-        return;
       }
       toast.add({ type: "error", description: "Error al mover el pedido" });
     },
@@ -204,6 +197,10 @@ export function OrderStatusKanbanBoard() {
       queryClient.invalidateQueries({ queryKey: queryKeys.kanbanOrders });
     },
   });
+
+  function moveTo(orderId: string, status: KanbanOrder["status"]) {
+    statusMutation.mutate({ data: { id: orderId, status } });
+  }
 
   const columns = ORDER_STATUSES.map((s) => ({ id: s.code, name: s.label }));
 
@@ -277,7 +274,13 @@ export function OrderStatusKanbanBoard() {
           const status = target.id as KanbanOrder["status"];
           if (order.status === status) return;
 
-          statusMutation.mutate({ data: { id: order.id, status } });
+          const balance = Number(order.totalAmount) - Number(order.paidAmount);
+          if (status === "delivered" && balance > 0) {
+            setPendingDeliveryOrderId(order.id);
+            return;
+          }
+
+          moveTo(order.id, status);
         }}
       >
         <div className="flex grow gap-4 overflow-x-auto px-6 pb-6">
@@ -295,24 +298,32 @@ export function OrderStatusKanbanBoard() {
       </DragDropProvider>
 
       <AlertDialog
-        open={!!paymentWarningOrder}
-        onOpenChange={(open) => !open && setPaymentWarningOrder(null)}
+        open={!!pendingDeliveryOrderId}
+        onOpenChange={(open) => !open && setPendingDeliveryOrderId(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Falta saldo por pagar</AlertDialogTitle>
             <AlertDialogDescription>
               {(() => {
-                const order = orders.find((o) => o.id === paymentWarningOrder);
-                return order
-                  ? `El pedido ${order.code} aún tiene saldo pendiente. Registra el pago completo antes de marcarlo como entregado.`
-                  : "Este pedido aún tiene saldo pendiente. Registra el pago completo antes de marcarlo como entregado.";
+                const order = orders.find((o) => o.id === pendingDeliveryOrderId);
+                if (!order) return "Este pedido aún tiene saldo pendiente.";
+                const balance = Number(order.totalAmount) - Number(order.paidAmount);
+                return `El pedido ${order.code} aún tiene ${formatMoney(balance)} de saldo pendiente. ¿Marcarlo como entregado de todas formas?`;
               })()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setPaymentWarningOrder(null)}>
-              Entendido
+            <AlertDialogCancel onClick={() => setPendingDeliveryOrderId(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingDeliveryOrderId) moveTo(pendingDeliveryOrderId, "delivered");
+                setPendingDeliveryOrderId(null);
+              }}
+            >
+              Marcar como entregado
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
