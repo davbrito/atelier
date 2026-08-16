@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 import { ColorPicker } from "#/components/color-picker";
 import { ImageUpload } from "#/components/image-upload";
 import { Badge } from "#/components/ui/badge";
@@ -33,6 +32,7 @@ import {
   SheetTitle,
 } from "#/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { materialInventoryQueryOptions, queryKeys } from "#/lib/query-options";
 import { setEntityImage } from "#/lib/server/images";
@@ -136,10 +136,10 @@ function InventoryTab({ materialId, unit, enabled }: InventoryTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.materialInventory(materialId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.materials });
-      toast.success("Movimiento registrado");
+      toast.add({ type: "success", description: "Movimiento registrado" });
       resetMovementForm();
     },
-    onError: () => toast.error("Error al registrar el movimiento"),
+    onError: () => toast.add({ type: "error", description: "Error al registrar el movimiento" }),
   });
 
   const currentStock = data?.currentStock ?? "0";
@@ -414,13 +414,16 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.materials });
       if ("imageFailed" in result && result.imageFailed) {
-        toast.warning("Material creado, pero no se pudo subir la imagen. Intenta editarlo.");
+        toast.add({
+          type: "warning",
+          description: "Material creado, pero no se pudo subir la imagen. Intenta editarlo.",
+        });
       } else {
-        toast.success("Material creado correctamente");
+        toast.add({ type: "success", description: "Material creado correctamente" });
       }
       onOpenChange(false);
     },
-    onError: () => toast.error("Error al crear el material"),
+    onError: () => toast.add({ type: "error", description: "Error al crear el material" }),
   });
 
   const updateMutation = useMutation({
@@ -447,13 +450,16 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.materials });
       if ("imageFailed" in result && result.imageFailed) {
-        toast.warning("Material actualizado, pero no se pudo subir la imagen. Intenta de nuevo.");
+        toast.add({
+          type: "warning",
+          description: "Material actualizado, pero no se pudo subir la imagen. Intenta de nuevo.",
+        });
       } else {
-        toast.success("Material actualizado");
+        toast.add({ type: "success", description: "Material actualizado" });
       }
       onOpenChange(false);
     },
-    onError: () => toast.error("Error al actualizar el material"),
+    onError: () => toast.add({ type: "error", description: "Error al actualizar el material" }),
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;

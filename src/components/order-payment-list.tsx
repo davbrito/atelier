@@ -5,7 +5,6 @@ import { ImageIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
-import { toast } from "sonner";
 import * as z from "zod";
 import { ImageUpload } from "#/components/image-upload";
 import {
@@ -44,6 +43,7 @@ import {
   SelectValue,
 } from "#/components/ui/select";
 import { Textarea } from "#/components/ui/textarea";
+import { toast } from "#/components/ui/toast.tsx";
 import { PAYMENT_TYPES, paymentTypeLabel } from "#/lib/constants/payment-types";
 import { formatMoney, LOCALE } from "#/lib/format";
 import { queryKeys } from "#/lib/query-options";
@@ -95,6 +95,7 @@ export function OrderPaymentList({
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [galleryImage, setGalleryImage] = useState<string | null>(null);
 
   const { control, handleSubmit, reset } = useForm<PaymentFormValues>({
     resolver: zodResolver(buildPaymentFormSchema(balance)),
@@ -128,25 +129,31 @@ export function OrderPaymentList({
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.order(orderCode) });
       if ("imageFailed" in result && result.imageFailed) {
-        toast.warning("Pago registrado, pero no se pudo subir el comprobante.");
+        toast.add({
+          type: "warning",
+          description: "Pago registrado, pero no se pudo subir el comprobante.",
+        });
       } else {
-        toast.success("Pago registrado");
+        toast.add({ type: "success", description: "Pago registrado" });
       }
       setIsCreateOpen(false);
       reset();
     },
     onError: (error) =>
-      toast.error(error instanceof Error ? error.message : "Error al registrar el pago"),
+      toast.add({
+        type: "error",
+        description: error instanceof Error ? error.message : "Error al registrar el pago",
+      }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteOrderPayment,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.order(orderCode) });
-      toast.success("Pago eliminado");
+      toast.add({ type: "success", description: "Pago eliminado" });
       setDeletingId(null);
     },
-    onError: () => toast.error("Error al eliminar el pago"),
+    onError: () => toast.add({ type: "error", description: "Error al eliminar el pago" }),
   });
 
   return (
@@ -169,13 +176,17 @@ export function OrderPaymentList({
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
                 {p.image ? (
-                  <a href={p.image} target="_blank" rel="noreferrer" className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setGalleryImage(p.image)}
+                    className="shrink-0 cursor-zoom-in"
+                  >
                     <img
                       src={p.image}
                       alt="Comprobante de pago"
-                      className="size-12 rounded-md border object-cover"
+                      className="size-12 rounded-md border object-cover transition hover:brightness-90"
                     />
-                  </a>
+                  </button>
                 ) : (
                   <div className="flex size-12 shrink-0 items-center justify-center rounded-md border bg-muted text-muted-foreground">
                     <ImageIcon className="size-4" />
@@ -210,6 +221,18 @@ export function OrderPaymentList({
             </div>
           </Card>
         ))
+      )}
+
+      {galleryImage && (
+        <Dialog open={!!galleryImage} onOpenChange={(open) => !open && setGalleryImage(null)}>
+          <DialogContent className="max-w-3xl bg-transparent p-0 shadow-none ring-0">
+            <img
+              src={galleryImage}
+              alt="Comprobante de pago"
+              className="max-h-[85vh] w-full rounded-xl object-contain"
+            />
+          </DialogContent>
+        </Dialog>
       )}
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -261,7 +284,18 @@ export function OrderPaymentList({
                 control={control}
                 render={({ field, fieldState: { invalid, error } }) => (
                   <Field.Root name="amount" invalid={invalid} render={<StyledField.Field />}>
-                    <Field.Label render={<StyledField.FieldLabel />}>Monto</Field.Label>
+                    <div className="flex items-center justify-between">
+                      <Field.Label render={<StyledField.FieldLabel />}>Monto</Field.Label>
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-xs"
+                        onClick={() => field.onChange(balance.toFixed(2))}
+                      >
+                        Rellenar total
+                      </Button>
+                    </div>
                     <InputGroup>
                       <InputGroupAddon>
                         <InputGroupText>$</InputGroupText>
@@ -269,13 +303,14 @@ export function OrderPaymentList({
                       <InputGroupInput
                         render={
                           <NumericFormat
+                            name={field.name}
                             value={field.value}
                             onValueChange={(v) => field.onChange(v.value)}
                             onBlur={field.onBlur}
                             getInputRef={field.ref}
                             decimalScale={2}
                             allowNegative={false}
-                            placeholder="0.00"
+                            placeholder="0,00"
                             autoComplete="off"
                           />
                         }

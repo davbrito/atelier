@@ -9,7 +9,7 @@ import {
 import type { Member, Organization, User } from "better-auth/client";
 import { LogOut, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import { Button, buttonVariants } from "#/components/ui/button.tsx";
 import {
@@ -62,7 +62,8 @@ export function OrganizationMemberRow({
   const { mutate: updateMemberRole, isPending: isUpdatingRole } = useUpdateMemberRole(
     authClient as OrganizationAuthClient,
     {
-      onSuccess: () => toast.success(organizationLocalization.memberRoleUpdated),
+      onSuccess: () =>
+        toast.add({ type: "success", description: organizationLocalization.memberRoleUpdated }),
     },
   );
 

@@ -12,7 +12,6 @@ import {
   UserIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { ClientSheet } from "#/components/client-sheet";
 import {
   AlertDialog,
@@ -27,6 +26,7 @@ import {
 import { Avatar, AvatarFallback } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { toast } from "#/components/ui/toast.tsx";
 import { clientByIdQueryOptions } from "#/lib/query-options";
 import { deleteClient } from "#/lib/server/clients";
 
@@ -63,10 +63,10 @@ function ClientDetailPage() {
     mutationFn: deleteFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
-      toast.success("Cliente eliminado");
+      toast.add({ type: "success", description: "Cliente eliminado" });
       navigate({ to: "/app/clients" });
     },
-    onError: () => toast.error("Error al eliminar el cliente"),
+    onError: () => toast.add({ type: "error", description: "Error al eliminar el cliente" }),
   });
 
   if (!client) {

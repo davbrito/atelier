@@ -6,7 +6,7 @@ import { useAuth } from "@better-auth-ui/react";
 import { format } from "date-fns";
 import { CalendarIcon, Check, ChevronDownIcon, Copy } from "lucide-react";
 import { type ComponentType, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import { buttonVariants } from "#/components/ui/button.tsx";
 import { Calendar } from "#/components/ui/calendar.tsx";
@@ -89,7 +89,10 @@ function CopyButton({
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : String(error));
+      toast.add({
+        type: "error",
+        description: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

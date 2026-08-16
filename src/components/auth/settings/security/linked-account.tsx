@@ -8,7 +8,7 @@ import {
 } from "@better-auth-ui/react";
 import type { Account, SocialProvider } from "better-auth";
 import { Link2, Link2Off, Plug } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import { Button } from "#/components/ui/button.tsx";
 import {
@@ -48,7 +48,8 @@ export function LinkedAccount({ account, provider }: LinkedAccountProps) {
   const { mutate: linkSocial, isPending: isLinking } = useLinkSocial(authClient);
 
   const { mutate: unlinkAccount, isPending: isUnlinking } = useUnlinkAccount(authClient, {
-    onSuccess: () => toast.success(localization.settings.accountUnlinked),
+    onSuccess: () =>
+      toast.add({ type: "success", description: localization.settings.accountUnlinked }),
   });
 
   const ProviderIcon = providerIcons[provider];

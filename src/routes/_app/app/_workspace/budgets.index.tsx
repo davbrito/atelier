@@ -3,7 +3,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { CalculatorIcon, EyeIcon, Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import * as z from "zod";
 import { BudgetCreateSheet } from "#/components/budget-create-sheet";
 import { PageHeader } from "#/components/page-header";
@@ -20,6 +19,7 @@ import {
 } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { toast } from "#/components/ui/toast.tsx";
 import { budgetsListQueryOptions } from "#/lib/query-options";
 import { deleteBudget } from "#/lib/server/budgets";
 
@@ -59,10 +59,10 @@ function BudgetsPage() {
     mutationFn: deleteFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
-      toast.success("Presupuesto eliminado");
+      toast.add({ type: "success", description: "Presupuesto eliminado" });
       setDeletingId(null);
     },
-    onError: () => toast.error("Error al eliminar el presupuesto"),
+    onError: () => toast.add({ type: "error", description: "Error al eliminar el presupuesto" }),
   });
 
   return (

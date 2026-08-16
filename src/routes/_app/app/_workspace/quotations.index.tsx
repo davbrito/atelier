@@ -3,7 +3,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { ClipboardListIcon, Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import * as z from "zod";
 import { PageHeader } from "#/components/page-header";
 import { Pagination } from "#/components/pagination";
@@ -28,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table";
+import { toast } from "#/components/ui/toast.tsx";
 import { quotationsListQueryOptions } from "#/lib/query-options";
 import { deleteQuotation } from "#/lib/server/quotations";
 import { formatBudgetNames } from "#/lib/utils";
@@ -64,10 +64,10 @@ function QuotationsPage() {
     mutationFn: deleteFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
-      toast.success("Cotización eliminada");
+      toast.add({ type: "success", description: "Cotización eliminada" });
       setDeletingId(null);
     },
-    onError: () => toast.error("Error al eliminar la cotización"),
+    onError: () => toast.add({ type: "error", description: "Error al eliminar la cotización" }),
   });
 
   function goToPage(nextPage: number) {

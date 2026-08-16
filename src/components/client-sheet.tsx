@@ -5,7 +5,6 @@ import { Loader2Icon, MinusIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
-import { toast } from "sonner";
 import { MeasurementNameCombobox } from "#/components/measurement-name-combobox";
 import { Button } from "#/components/ui/button";
 import * as StyledField from "#/components/ui/field";
@@ -26,6 +25,7 @@ import {
   SheetTitle,
 } from "#/components/ui/sheet";
 import { Textarea } from "#/components/ui/textarea";
+import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { STANDARD_MEASUREMENT_NAMES } from "#/lib/constants/measurements";
 import { queryKeys } from "#/lib/query-options";
@@ -111,10 +111,10 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.clients });
       queryClient.invalidateQueries({ queryKey: ["measurement-names"] });
-      toast.success("Cliente creado correctamente");
+      toast.add({ type: "success", description: "Cliente creado correctamente" });
       onOpenChange(false);
     },
-    onError: () => toast.error("Error al crear el cliente"),
+    onError: () => toast.add({ type: "error", description: "Error al crear el cliente" }),
   });
 
   const updateMutation = useMutation({
@@ -122,10 +122,10 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.clients });
       queryClient.invalidateQueries({ queryKey: ["measurement-names"] });
-      toast.success("Cliente actualizado");
+      toast.add({ type: "success", description: "Cliente actualizado" });
       onOpenChange(false);
     },
-    onError: () => toast.error("Error al actualizar el cliente"),
+    onError: () => toast.add({ type: "error", description: "Error al actualizar el cliente" }),
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;

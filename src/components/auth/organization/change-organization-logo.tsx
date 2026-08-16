@@ -8,7 +8,7 @@ import {
 } from "@better-auth-ui/react";
 import { Trash2, Upload } from "lucide-react";
 import { type ChangeEvent, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import { Button, buttonVariants } from "#/components/ui/button.tsx";
 import {
@@ -61,14 +61,18 @@ export function ChangeOrganizationLogo({ className }: ChangeOrganizationLogoProp
       updateOrganization(
         { data: { logo: image } },
         {
-          onSuccess: () => toast.success(organizationLocalization.logoChangedSuccess),
+          onSuccess: () =>
+            toast.add({
+              type: "success",
+              description: organizationLocalization.logoChangedSuccess,
+            }),
           onSettled: () => setIsUploading(false),
         },
       );
     } catch (error) {
       setIsUploading(false);
       if (error instanceof Error) {
-        toast.error(error.message);
+        toast.add({ type: "error", description: error.message });
       }
     }
   }
@@ -81,17 +85,23 @@ export function ChangeOrganizationLogo({ className }: ChangeOrganizationLogoProp
       {
         onSuccess: async () => {
           if (!currentLogo) {
-            toast.success(organizationLocalization.logoDeletedSuccess);
+            toast.add({
+              type: "success",
+              description: organizationLocalization.logoDeletedSuccess,
+            });
             return;
           }
 
           setIsDeleting(true);
           try {
             await logo.delete?.(currentLogo);
-            toast.success(organizationLocalization.logoDeletedSuccess);
+            toast.add({
+              type: "success",
+              description: organizationLocalization.logoDeletedSuccess,
+            });
           } catch (error) {
             if (error instanceof Error) {
-              toast.error(error.message);
+              toast.add({ type: "error", description: error.message });
             }
           } finally {
             setIsDeleting(false);

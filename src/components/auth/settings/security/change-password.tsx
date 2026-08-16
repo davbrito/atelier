@@ -9,7 +9,7 @@ import {
 } from "@better-auth-ui/react";
 import { Eye, EyeOff } from "lucide-react";
 import { type SyntheticEvent, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent, CardFooter } from "#/components/ui/card.tsx";
@@ -156,7 +156,7 @@ function ChangePasswordForm({
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      toast.success(localization.settings.changePasswordSuccess);
+      toast.add({ type: "success", description: localization.settings.changePasswordSuccess });
     },
   });
 
@@ -177,7 +177,7 @@ function ChangePasswordForm({
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      toast.error(localization.auth.passwordsDoNotMatch);
+      toast.add({ type: "error", description: localization.auth.passwordsDoNotMatch });
       return;
     }
 

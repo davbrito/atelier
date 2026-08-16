@@ -1,7 +1,7 @@
 import { type AdditionalFieldValue, parseAdditionalFieldValue } from "@better-auth-ui/core";
 import { type UsernameAuthClient, useAuth, useSession, useUpdateUser } from "@better-auth-ui/react";
 import { type SyntheticEvent, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent, CardFooter } from "#/components/ui/card.tsx";
@@ -28,7 +28,8 @@ export function UserProfile({ className }: UserProfileProps) {
   const { data: session } = useSession(authClient as UsernameAuthClient);
 
   const { mutate: updateUser, isPending } = useUpdateUser(authClient, {
-    onSuccess: () => toast.success(localization.settings.profileUpdatedSuccess),
+    onSuccess: () =>
+      toast.add({ type: "success", description: localization.settings.profileUpdatedSuccess }),
   });
 
   const [fieldErrors, setFieldErrors] = useState<{
@@ -51,7 +52,10 @@ export function UserProfile({ className }: UserProfileProps) {
         try {
           await field.validate(value);
         } catch (error) {
-          toast.error(error instanceof Error ? error.message : String(error));
+          toast.add({
+            type: "error",
+            description: error instanceof Error ? error.message : String(error),
+          });
           return;
         }
       }

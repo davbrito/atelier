@@ -3,7 +3,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { EyeIcon, Loader2Icon, MailIcon, PhoneIcon, Trash2Icon, UsersIcon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import * as z from "zod";
 import { ClientSheet } from "#/components/client-sheet";
 import { PageHeader } from "#/components/page-header";
@@ -29,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table";
+import { toast } from "#/components/ui/toast.tsx";
 import { clientsListQueryOptions } from "#/lib/query-options";
 import { deleteClient } from "#/lib/server/clients";
 
@@ -70,10 +70,10 @@ function ClientsPage() {
     mutationFn: deleteFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
-      toast.success("Cliente eliminado");
+      toast.add({ type: "success", description: "Cliente eliminado" });
       setDeletingId(null);
     },
-    onError: () => toast.error("Error al eliminar el cliente"),
+    onError: () => toast.add({ type: "error", description: "Error al eliminar el cliente" }),
   });
 
   function openCreate() {

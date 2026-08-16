@@ -6,7 +6,7 @@ import {
 } from "@better-auth-ui/react";
 import { UserPlus } from "lucide-react";
 import { type SyntheticEvent, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 import { Button, buttonVariants } from "#/components/ui/button.tsx";
 import {
   Dialog,
@@ -69,7 +69,7 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
     {
       onSuccess: () => {
         onOpenChange(false);
-        toast.success(organizationLocalization.inviteMemberSuccess);
+        toast.add({ type: "success", description: organizationLocalization.inviteMemberSuccess });
       },
     },
   );

@@ -2,7 +2,6 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Loader2Icon, PackageIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import * as z from "zod";
 import { MaterialSheet } from "#/components/material-sheet";
 import { PageHeader } from "#/components/page-header";
@@ -27,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table";
+import { toast } from "#/components/ui/toast.tsx";
 import { materialsListQueryOptions } from "#/lib/query-options";
 import { deleteMaterial, type listMaterials } from "#/lib/server/materials";
 import { UNIT_OPTIONS } from "#/lib/units";
@@ -76,10 +76,10 @@ function MaterialsPage() {
     mutationFn: deleteMaterial,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["materials"] });
-      toast.success("Material eliminado");
+      toast.add({ type: "success", description: "Material eliminado" });
       setDeletingId(null);
     },
-    onError: () => toast.error("Error al eliminar el material"),
+    onError: () => toast.add({ type: "error", description: "Error al eliminar el material" }),
   });
 
   function openCreate() {

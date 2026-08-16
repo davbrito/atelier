@@ -3,7 +3,6 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { Link } from "@tanstack/react-router";
 import { CalendarIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "#/components/ui/empty";
 import { Input } from "#/components/ui/input";
@@ -14,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select";
+import { toast } from "#/components/ui/toast.tsx";
 import {
   garmentStagesListQueryOptions,
   kanbanGarmentsListQueryOptions,
@@ -231,7 +231,7 @@ export function OrderKanbanBoard() {
       if (context?.previous) {
         queryClient.setQueryData(kanbanGarmentsListQueryOptions.queryKey, context.previous);
       }
-      toast.error("Error al mover la prenda");
+      toast.add({ type: "error", description: "Error al mover la prenda" });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.kanbanGarments });
@@ -259,7 +259,7 @@ export function OrderKanbanBoard() {
       if (context?.previous) {
         queryClient.setQueryData(kanbanGarmentsListQueryOptions.queryKey, context.previous);
       }
-      toast.error("Error al cambiar la prioridad");
+      toast.add({ type: "error", description: "Error al cambiar la prioridad" });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.kanbanGarments });

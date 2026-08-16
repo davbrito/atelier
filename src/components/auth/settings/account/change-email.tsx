@@ -1,7 +1,7 @@
 import { getViewURL } from "@better-auth-ui/core";
 import { useAuth, useChangeEmail, useSession } from "@better-auth-ui/react";
 import { type SyntheticEvent, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent, CardFooter } from "#/components/ui/card.tsx";
@@ -29,7 +29,8 @@ export function ChangeEmail({ className }: ChangeEmailProps) {
   const { data: session } = useSession(authClient);
 
   const { mutate: changeEmail, isPending } = useChangeEmail(authClient, {
-    onSuccess: () => toast.success(localization.settings.changeEmailSuccess),
+    onSuccess: () =>
+      toast.add({ type: "success", description: localization.settings.changeEmailSuccess }),
   });
 
   const [fieldErrors, setFieldErrors] = useState<{

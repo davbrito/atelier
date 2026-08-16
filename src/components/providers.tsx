@@ -8,7 +8,7 @@ import { organizationPlugin } from "#/lib/auth/organization-plugin";
 import { passkeyPlugin } from "#/lib/auth/passkey-plugin";
 import { avatarConfig } from "#/lib/avatar-upload";
 import { AuthProvider } from "./auth/auth-provider";
-import { Toaster } from "./ui/sonner";
+import { Toaster } from "./ui/toast";
 
 export function Providers({ children }: { children: ReactNode }) {
   const navigate = useNavigate();

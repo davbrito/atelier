@@ -3,7 +3,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { CalculatorIcon, Loader2Icon, PencilIcon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { BudgetEditSheet } from "#/components/budget-edit-sheet";
 import { ClientCombobox } from "#/components/client-combobox";
 import { PageHeader } from "#/components/page-header";
@@ -20,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table";
+import { toast } from "#/components/ui/toast.tsx";
 import { formatMoney } from "#/lib/format";
 import { budgetBySlugQueryOptions } from "#/lib/query-options";
 import { createQuotation } from "#/lib/server/quotations";
@@ -56,10 +56,10 @@ function QuotePage() {
     mutationFn: createQuotationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
-      toast.success("Cotización creada correctamente");
+      toast.add({ type: "success", description: "Cotización creada correctamente" });
       setClientId("");
     },
-    onError: () => toast.error("Error al crear la cotización"),
+    onError: () => toast.add({ type: "error", description: "Error al crear la cotización" }),
   });
 
   function handleSubmit(e: React.FormEvent) {

@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Loader2Icon } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import * as z from "zod";
 import { Button } from "#/components/ui/button";
 import {
@@ -15,6 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "#/components/ui/sheet";
+import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { budgetFormSchema, createBudget } from "#/lib/server/budgets";
 import { uploadEntityImage } from "#/lib/server/images";
@@ -72,9 +72,12 @@ export function BudgetCreateSheet({ open, onOpenChange }: BudgetCreateSheetProps
     onSuccess: (newBudget) => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
       if ("imageFailed" in newBudget && newBudget.imageFailed) {
-        toast.warning("Presupuesto creado, pero no se pudo subir la imagen. Intenta editarlo.");
+        toast.add({
+          type: "warning",
+          description: "Presupuesto creado, pero no se pudo subir la imagen. Intenta editarlo.",
+        });
       } else {
-        toast.success("Presupuesto creado");
+        toast.add({ type: "success", description: "Presupuesto creado" });
       }
       onOpenChange(false);
       form.reset();
@@ -83,7 +86,7 @@ export function BudgetCreateSheet({ open, onOpenChange }: BudgetCreateSheetProps
         params: { slug: newBudget.slug },
       });
     },
-    onError: () => toast.error("Error al crear el presupuesto"),
+    onError: () => toast.add({ type: "error", description: "Error al crear el presupuesto" }),
   });
 
   return (

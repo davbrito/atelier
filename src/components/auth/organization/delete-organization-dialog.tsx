@@ -7,7 +7,7 @@ import {
 import type { Organization } from "better-auth/client";
 import { TriangleAlert } from "lucide-react";
 import type { SyntheticEvent } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import {
   AlertDialog,
@@ -45,7 +45,7 @@ export function DeleteOrganizationDialog({
     {
       onSuccess: () => {
         onOpenChange(false);
-        toast.success(organizationLocalization.organizationDeleted);
+        toast.add({ type: "success", description: organizationLocalization.organizationDeleted });
 
         navigate({
           to: `${basePaths.settings}/${organizationPluginViewPaths.settings.organizations}`,

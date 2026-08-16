@@ -2,7 +2,7 @@ import { fileToAvatarDataUrl } from "@better-auth-ui/core";
 import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react";
 import { Trash2, Upload } from "lucide-react";
 import { type ChangeEvent, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 import { UserAvatar } from "#/components/auth/user/user-avatar.tsx";
 import { Button, buttonVariants } from "#/components/ui/button.tsx";
 import {
@@ -47,12 +47,13 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
       updateUser(
         { image },
         {
-          onSuccess: () => toast.success(localization.settings.avatarChangedSuccess),
+          onSuccess: () =>
+            toast.add({ type: "success", description: localization.settings.avatarChangedSuccess }),
         },
       );
     } catch (error) {
       if (error instanceof Error) {
-        toast.error(error.message);
+        toast.add({ type: "error", description: error.message });
       }
     }
 
@@ -75,7 +76,7 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
             }
           }
 
-          toast.success(localization.settings.avatarDeletedSuccess);
+          toast.add({ type: "success", description: localization.settings.avatarDeletedSuccess });
         },
       },
     );

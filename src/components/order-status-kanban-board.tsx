@@ -180,7 +180,7 @@ export function OrderStatusKanbanBoard() {
       if (context?.previous) {
         queryClient.setQueryData(kanbanOrdersListQueryOptions.queryKey, context.previous);
       }
-      toast.error("Error al mover el pedido");
+      toast.add({ type: "error", description: "Error al mover el pedido" });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.kanbanOrders });

@@ -6,7 +6,7 @@ import {
 } from "@better-auth-ui/react";
 import type { Member, User } from "better-auth/client";
 import { Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import {
   AlertDialog,
@@ -40,7 +40,7 @@ export function RemoveMemberDialog({ open, onOpenChange, member }: RemoveMemberD
     {
       onSuccess: () => {
         onOpenChange(false);
-        toast.success(organizationLocalization.memberRemoved);
+        toast.add({ type: "success", description: organizationLocalization.memberRemoved });
       },
     },
   );

@@ -2,7 +2,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2Icon } from "lucide-react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
 import * as z from "zod";
 import { BudgetFormFields } from "#/components/budget-form-fields";
 import { Button } from "#/components/ui/button";
@@ -14,6 +13,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "#/components/ui/sheet";
+import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { budgetByIdQueryOptions, queryKeys } from "#/lib/query-options";
 import { budgetFormSchema, updateBudget } from "#/lib/server/budgets";
@@ -92,15 +92,17 @@ export function BudgetEditSheet({ budgetId, open, onOpenChange }: BudgetEditShee
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
       if ("imageFailed" in result && result.imageFailed) {
-        toast.warning(
-          "Presupuesto actualizado, pero no se pudo subir la imagen. Intenta de nuevo.",
-        );
+        toast.add({
+          type: "warning",
+          description:
+            "Presupuesto actualizado, pero no se pudo subir la imagen. Intenta de nuevo.",
+        });
       } else {
-        toast.success("Presupuesto actualizado");
+        toast.add({ type: "success", description: "Presupuesto actualizado" });
       }
       onOpenChange(false);
     },
-    onError: () => toast.error("Error al actualizar el presupuesto"),
+    onError: () => toast.add({ type: "error", description: "Error al actualizar el presupuesto" }),
   });
 
   const isPending = updateMutation.isPending;

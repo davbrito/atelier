@@ -2,7 +2,7 @@ import { getAuthLinkURL } from "@better-auth-ui/core";
 import { useAuth, useResetPassword } from "@better-auth-ui/react";
 import { Eye, EyeOff } from "lucide-react";
 import { type SyntheticEvent, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card.tsx";
@@ -48,7 +48,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
 
   const { mutate: resetPassword, isPending } = useResetPassword(authClient, {
     onSuccess: () => {
-      toast.success(localization.auth.passwordResetSuccess);
+      toast.add({ type: "success", description: localization.auth.passwordResetSuccess });
       navigate({ to: signInURL });
     },
   });
@@ -66,7 +66,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
     const token = searchParams.get("token") as string;
 
     if (!token) {
-      toast.error(localization.auth.invalidResetPasswordToken);
+      toast.add({ type: "error", description: localization.auth.invalidResetPasswordToken });
       navigate({ to: signInURL });
     }
   }, [localization.auth.invalidResetPasswordToken, navigate, signInURL]);
@@ -78,7 +78,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
     const token = searchParams.get("token") as string;
 
     if (!token) {
-      toast.error(localization.auth.invalidResetPasswordToken);
+      toast.add({ type: "error", description: localization.auth.invalidResetPasswordToken });
       navigate({ to: signInURL });
       return;
     }
@@ -88,7 +88,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
     const confirmPassword = formData.get("confirmPassword") as string;
 
     if (emailAndPassword?.confirmPassword && password !== confirmPassword) {
-      toast.error(localization.auth.passwordsDoNotMatch);
+      toast.add({ type: "error", description: localization.auth.passwordsDoNotMatch });
       return;
     }
 

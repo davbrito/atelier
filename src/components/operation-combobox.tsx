@@ -4,7 +4,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2Icon, PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -25,6 +24,7 @@ import {
 } from "#/components/ui/combobox";
 import * as StyledField from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
+import { toast } from "#/components/ui/toast.tsx";
 import { operationByIdQueryOptions } from "#/lib/query-options";
 import { createOperation, listOperations } from "#/lib/server/operations";
 
@@ -87,13 +87,13 @@ export function OperationCombobox({ value, onChange }: OperationComboboxProps) {
   const createMutation = useMutation({
     mutationFn: createFn,
     onSuccess: (newOperation) => {
-      toast.success("Operación creada y seleccionada");
+      toast.add({ type: "success", description: "Operación creada y seleccionada" });
       onChange(newOperation.id, newOperation.defaultDurationMinutes);
       setDialogOpen(false);
       setNewName("");
       setNewDuration("60");
     },
-    onError: () => toast.error("Error al crear la operación"),
+    onError: () => toast.add({ type: "error", description: "Error al crear la operación" }),
   });
 
   function handleCreate(e: React.FormEvent) {

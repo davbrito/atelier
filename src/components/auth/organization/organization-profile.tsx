@@ -6,7 +6,7 @@ import {
   useUpdateOrganization,
 } from "@better-auth-ui/react";
 import { type SyntheticEvent, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent } from "#/components/ui/card.tsx";
@@ -41,7 +41,11 @@ export function OrganizationProfile({ className }: OrganizationProfileProps) {
   const { mutate: commitOrganizationUpdate, isPending } = useUpdateOrganization(
     authClient as OrganizationAuthClient,
     {
-      onSuccess: () => toast.success(organizationLocalization.organizationUpdatedSuccess),
+      onSuccess: () =>
+        toast.add({
+          type: "success",
+          description: organizationLocalization.organizationUpdatedSuccess,
+        }),
     },
   );
 

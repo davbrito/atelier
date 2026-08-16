@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2Icon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { ColorPicker } from "#/components/color-picker";
 import { Button } from "#/components/ui/button";
 import * as StyledField from "#/components/ui/field";
@@ -18,6 +17,7 @@ import {
   SheetTitle,
 } from "#/components/ui/sheet";
 import { Switch } from "#/components/ui/switch";
+import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { queryKeys } from "#/lib/query-options";
 import { createGarmentStage, updateGarmentStage } from "#/lib/server/garment-stages";
@@ -62,20 +62,20 @@ export function GarmentStageSheet({ open, onOpenChange, editingStage }: GarmentS
     mutationFn: createFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.garmentStages });
-      toast.success("Etapa creada correctamente");
+      toast.add({ type: "success", description: "Etapa creada correctamente" });
       onOpenChange(false);
     },
-    onError: () => toast.error("Error al crear la etapa"),
+    onError: () => toast.add({ type: "error", description: "Error al crear la etapa" }),
   });
 
   const updateMutation = useMutation({
     mutationFn: updateFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.garmentStages });
-      toast.success("Etapa actualizada");
+      toast.add({ type: "success", description: "Etapa actualizada" });
       onOpenChange(false);
     },
-    onError: () => toast.error("Error al actualizar la etapa"),
+    onError: () => toast.add({ type: "error", description: "Error al actualizar la etapa" }),
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;

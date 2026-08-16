@@ -2,7 +2,7 @@ import { useAuth, useRevokeSession, useSession } from "@better-auth-ui/react";
 import type { Session } from "better-auth";
 import Bowser from "bowser";
 import { LogOut, Monitor, Smartphone, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
@@ -57,7 +57,8 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
   const { data: session } = useSession(authClient, { refetchOnMount: false });
 
   const { mutate: revokeSession, isPending: isRevoking } = useRevokeSession(authClient, {
-    onSuccess: () => toast.success(localization.settings.revokeSessionSuccess),
+    onSuccess: () =>
+      toast.add({ type: "success", description: localization.settings.revokeSessionSuccess }),
   });
 
   const isCurrentSession = activeSession.token === session?.session.token;

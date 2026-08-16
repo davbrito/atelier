@@ -13,7 +13,6 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { GarmentStageSheet } from "#/components/garment-stage-sheet";
 import { PageHeader } from "#/components/page-header";
 import {
@@ -45,6 +44,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table";
+import { toast } from "#/components/ui/toast.tsx";
 import { garmentStagesListQueryOptions, queryKeys } from "#/lib/query-options";
 import {
   deleteGarmentStage,
@@ -141,9 +141,10 @@ function OrderStagesPage() {
     mutationFn: seedFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.garmentStages });
-      toast.success("Etapas por defecto creadas");
+      toast.add({ type: "success", description: "Etapas por defecto creadas" });
     },
-    onError: () => toast.error("Error al crear las etapas por defecto"),
+    onError: () =>
+      toast.add({ type: "error", description: "Error al crear las etapas por defecto" }),
   });
 
   const reorderMutation = useMutation({
@@ -151,17 +152,17 @@ function OrderStagesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.garmentStages });
     },
-    onError: () => toast.error("Error al reordenar las etapas"),
+    onError: () => toast.add({ type: "error", description: "Error al reordenar las etapas" }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteGarmentStage,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.garmentStages });
-      toast.success("Etapa eliminada");
+      toast.add({ type: "success", description: "Etapa eliminada" });
       setDeletingId(null);
     },
-    onError: () => toast.error("Error al eliminar la etapa"),
+    onError: () => toast.add({ type: "error", description: "Error al eliminar la etapa" }),
   });
 
   function openCreate() {

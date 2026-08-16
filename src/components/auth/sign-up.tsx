@@ -3,7 +3,7 @@ import { AuthPrompts, useAuth, useFetchOptions, useSignUpEmail } from "@better-a
 import { useIsMutating } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
 import { type SyntheticEvent, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card.tsx";
 import {
@@ -127,7 +127,7 @@ export function SignUp({
     const email = formData.get("email") as string;
 
     if (emailAndPassword?.confirmPassword && password !== confirmPassword) {
-      toast.error(localization.auth.passwordsDoNotMatch);
+      toast.add({ type: "error", description: localization.auth.passwordsDoNotMatch });
       setPassword("");
       setConfirmPassword("");
       return;
@@ -143,7 +143,10 @@ export function SignUp({
         try {
           await field.validate(value);
         } catch (error) {
-          toast.error(error instanceof Error ? error.message : String(error));
+          toast.add({
+            type: "error",
+            description: error instanceof Error ? error.message : String(error),
+          });
           return;
         }
       }

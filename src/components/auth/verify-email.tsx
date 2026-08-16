@@ -1,6 +1,6 @@
 import { useAuth, useSendVerificationEmail } from "@better-auth-ui/react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card.tsx";
@@ -54,7 +54,7 @@ export function VerifyEmail({ className }: VerifyEmailProps) {
 
   const { mutate: sendVerificationEmail, isPending } = useSendVerificationEmail(authClient, {
     onSuccess: () => {
-      toast.success(localization.auth.verificationEmailSent);
+      toast.add({ type: "success", description: localization.auth.verificationEmailSent });
       setCooldown(RESEND_COOLDOWN_SECONDS);
     },
   });

@@ -6,7 +6,6 @@ import { format } from "date-fns";
 import { CalendarIcon, Loader2Icon, MinusIcon, PlusIcon } from "lucide-react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
-import { toast } from "sonner";
 import * as z from "zod";
 import { BudgetCombobox } from "#/components/budget-combobox";
 import { ClientCombobox } from "#/components/client-combobox";
@@ -30,6 +29,7 @@ import {
   SelectValue,
 } from "#/components/ui/select";
 import { Textarea } from "#/components/ui/textarea";
+import { toast } from "#/components/ui/toast.tsx";
 import {
   garmentStagesListQueryOptions,
   queryKeys,
@@ -147,10 +147,10 @@ function NewOrderPage() {
     mutationFn: createFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.kanbanGarments });
-      toast.success("Pedido creado correctamente");
+      toast.add({ type: "success", description: "Pedido creado correctamente" });
       navigate({ to: "/app/orders" });
     },
-    onError: () => toast.error("Error al crear el pedido"),
+    onError: () => toast.add({ type: "error", description: "Error al crear el pedido" }),
   });
 
   return (
@@ -182,7 +182,7 @@ function NewOrderPage() {
             }));
 
           if (garments.length === 0) {
-            toast.error("Agrega al menos una prenda");
+            toast.add({ type: "error", description: "Agrega al menos una prenda" });
             return;
           }
 

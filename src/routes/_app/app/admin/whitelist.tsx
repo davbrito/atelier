@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2Icon, MailIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import * as StyledField from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { Item, ItemActions, ItemContent, ItemMedia, ItemTitle } from "#/components/ui/item";
+import { toast } from "#/components/ui/toast.tsx";
 import { queryKeys, whitelistEmailsQueryOptions } from "#/lib/query-options";
 import { addWhitelistedEmail, removeWhitelistedEmail } from "#/lib/server/whitelist";
 
@@ -41,12 +41,15 @@ function WhitelistPage() {
     mutationFn: addWhitelistedEmail,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.whitelistEmails });
-      toast.success("Correo agregado a la lista de usuarios permitidos.");
+      toast.add({
+        type: "success",
+        description: "Correo agregado a la lista de usuarios permitidos.",
+      });
       setFormKey((k) => k + 1);
     },
     onError: (err) => {
       const message = err instanceof Error ? err.message : "Error al agregar el correo.";
-      toast.error(message);
+      toast.add({ type: "error", description: message });
     },
   });
 
@@ -54,10 +57,13 @@ function WhitelistPage() {
     mutationFn: removeWhitelistedEmail,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.whitelistEmails });
-      toast.success("Correo eliminado de la lista de usuarios permitidos.");
+      toast.add({
+        type: "success",
+        description: "Correo eliminado de la lista de usuarios permitidos.",
+      });
       setDeletingId(null);
     },
-    onError: () => toast.error("Error al eliminar el correo."),
+    onError: () => toast.add({ type: "error", description: "Error al eliminar el correo." }),
   });
 
   return (

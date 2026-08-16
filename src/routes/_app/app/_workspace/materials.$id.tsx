@@ -10,7 +10,6 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { MaterialSheet } from "#/components/material-sheet";
 import {
   AlertDialog,
@@ -25,6 +24,7 @@ import {
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Dialog, DialogContent } from "#/components/ui/dialog";
+import { toast } from "#/components/ui/toast.tsx";
 import { materialByIdQueryOptions } from "#/lib/query-options";
 import { deleteMaterial } from "#/lib/server/materials";
 import { UNIT_OPTIONS } from "#/lib/units";
@@ -57,10 +57,10 @@ function MaterialDetailPage() {
     mutationFn: deleteFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["materials"] });
-      toast.success("Material eliminado");
+      toast.add({ type: "success", description: "Material eliminado" });
       navigate({ to: "/app/materials" });
     },
-    onError: () => toast.error("Error al eliminar el material"),
+    onError: () => toast.add({ type: "error", description: "Error al eliminar el material" }),
   });
 
   if (!material) {

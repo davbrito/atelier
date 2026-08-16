@@ -6,7 +6,7 @@ import {
 } from "@better-auth-ui/react";
 import type { Organization } from "better-auth/client";
 import { LogOut } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "#/components/ui/toast.tsx";
 
 import {
   AlertDialog,
@@ -44,7 +44,7 @@ export function LeaveOrganizationDialog({
     {
       onSuccess: () => {
         onOpenChange(false);
-        toast.success(organizationLocalization.leftOrganization);
+        toast.add({ type: "success", description: organizationLocalization.leftOrganization });
 
         navigate({
           to: `${basePaths.settings}/${organizationPluginViewPaths.settings.organizations}`,

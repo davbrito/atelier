@@ -5,7 +5,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2Icon, PencilIcon, PlusIcon, ScissorsIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import * as z from "zod";
 import { PageHeader } from "#/components/page-header";
 import { Pagination } from "#/components/pagination";
@@ -40,6 +39,7 @@ import {
   TableHeader,
   TableRow,
 } from "#/components/ui/table";
+import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { operationsListQueryOptions } from "#/lib/query-options";
 import {
@@ -89,31 +89,31 @@ function OperationsPage() {
     mutationFn: createFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["operations"] });
-      toast.success("Operación creada correctamente");
+      toast.add({ type: "success", description: "Operación creada correctamente" });
       setIsSheetOpen(false);
     },
-    onError: () => toast.error("Error al crear la operación"),
+    onError: () => toast.add({ type: "error", description: "Error al crear la operación" }),
   });
 
   const updateMutation = useMutation({
     mutationFn: updateFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["operations"] });
-      toast.success("Operación actualizada");
+      toast.add({ type: "success", description: "Operación actualizada" });
       setIsSheetOpen(false);
       setEditingOperation(null);
     },
-    onError: () => toast.error("Error al actualizar la operación"),
+    onError: () => toast.add({ type: "error", description: "Error al actualizar la operación" }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["operations"] });
-      toast.success("Operación eliminada");
+      toast.add({ type: "success", description: "Operación eliminada" });
       setDeletingId(null);
     },
-    onError: () => toast.error("Error al eliminar la operación"),
+    onError: () => toast.add({ type: "error", description: "Error al eliminar la operación" }),
   });
 
   function openCreate() {

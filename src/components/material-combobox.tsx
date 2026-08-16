@@ -4,7 +4,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2Icon, PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { ImageUpload } from "#/components/image-upload";
 import {
   AlertDialog,
@@ -33,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select";
+import { toast } from "#/components/ui/toast.tsx";
 import { materialByIdQueryOptions } from "#/lib/query-options";
 import { createMaterial, listMaterials } from "#/lib/server/materials";
 import { UNIT_OPTIONS, type Unit } from "#/lib/units";
@@ -94,7 +94,7 @@ export function MaterialCombobox({ value, onChange }: MaterialComboboxProps) {
   const createMutation = useMutation({
     mutationFn: createFn,
     onSuccess: (newMaterial) => {
-      toast.success("Material creado y seleccionado");
+      toast.add({ type: "success", description: "Material creado y seleccionado" });
       onChange(newMaterial.id);
       setDialogOpen(false);
       setNewName("");
@@ -102,7 +102,7 @@ export function MaterialCombobox({ value, onChange }: MaterialComboboxProps) {
       setNewPrice("");
       setNewImage(null);
     },
-    onError: () => toast.error("Error al crear el material"),
+    onError: () => toast.add({ type: "error", description: "Error al crear el material" }),
   });
 
   function handleCreate(e: React.SubmitEvent) {

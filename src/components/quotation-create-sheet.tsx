@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2Icon, MinusIcon, PlusIcon } from "lucide-react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { BudgetCombobox } from "#/components/budget-combobox";
 import { ClientCombobox } from "#/components/client-combobox";
 import { Button } from "#/components/ui/button";
@@ -15,6 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "#/components/ui/sheet";
+import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { createQuotation } from "#/lib/server/quotations";
 import { cn } from "#/lib/utils";
@@ -53,11 +53,11 @@ export function QuotationCreateSheet({ open, onOpenChange }: QuotationCreateShee
     mutationFn: createFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quotations"] });
-      toast.success("Cotización creada correctamente");
+      toast.add({ type: "success", description: "Cotización creada correctamente" });
       reset();
       onOpenChange(false);
     },
-    onError: () => toast.error("Error al crear la cotización"),
+    onError: () => toast.add({ type: "error", description: "Error al crear la cotización" }),
   });
 
   function handleOpenChange(next: boolean) {
@@ -84,7 +84,7 @@ export function QuotationCreateSheet({ open, onOpenChange }: QuotationCreateShee
               .filter((id): id is string => id !== "");
 
             if (budgetIds.length === 0) {
-              toast.error("Agrega al menos un presupuesto");
+              toast.add({ type: "error", description: "Agrega al menos un presupuesto" });
               return;
             }
 
