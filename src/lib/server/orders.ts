@@ -273,3 +273,45 @@ export const updateOrderPriority = createServerFn({ method: "POST" })
 
     return { success: true };
   });
+
+// ── Order status Kanban (pedidos, no prendas) ─────────────
+
+export const listKanbanOrders = createServerFn({ method: "GET" })
+  .middleware([organizationMiddleware])
+  .handler(async ({ context: { activeOrganizationId, db } }) => {
+    const items = await db
+      .select({
+        id: order.id,
+        code: order.code,
+        status: order.status,
+        priority: order.priority,
+        totalAmount: order.totalAmount,
+        dueDate: order.dueDate,
+        clientName: client.name,
+      })
+      .from(order)
+      .leftJoin(client, eq(order.clientId, client.id))
+      .where(eq(order.organizationId, activeOrganizationId));
+
+    return { items };
+  });
+
+export const updateOrderStatus = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      id: z.uuid(),
+      status: z.enum(["pending", "in_progress", "ready", "delivered", "cancelled"]),
+    }),
+  )
+  .middleware([organizationMiddleware])
+  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
+    const [updated] = await db
+      .update(order)
+      .set({ status: data.status })
+      .where(and(eq(order.id, data.id), eq(order.organizationId, activeOrganizationId)))
+      .returning({ id: order.id });
+
+    if (!updated) throw new Error("Pedido no encontrado");
+
+    return { success: true };
+  });

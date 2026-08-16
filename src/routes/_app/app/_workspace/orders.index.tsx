@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ListOrderedIcon, Loader2Icon, PlusIcon, SettingsIcon } from "lucide-react";
 import { OrderKanbanBoard } from "#/components/order-kanban-board";
+import { OrderStatusKanbanBoard } from "#/components/order-status-kanban-board";
 import { OrdersTable } from "#/components/orders-table";
 import { PageHeader } from "#/components/page-header";
 import { Button } from "#/components/ui/button";
@@ -15,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import {
   garmentStagesListQueryOptions,
   kanbanGarmentsListQueryOptions,
+  kanbanOrdersListQueryOptions,
   ordersListQueryOptions,
 } from "#/lib/query-options";
 
@@ -23,6 +25,7 @@ export const Route = createFileRoute("/_app/app/_workspace/orders/")({
   loader: ({ context: { queryClient } }) => {
     queryClient.prefetchQuery(garmentStagesListQueryOptions);
     queryClient.prefetchQuery(kanbanGarmentsListQueryOptions);
+    queryClient.prefetchQuery(kanbanOrdersListQueryOptions);
     queryClient.prefetchQuery(ordersListQueryOptions({ page: 1, pageSize: 10, sortDir: "desc" }));
   },
   pendingComponent: () => (
@@ -58,11 +61,16 @@ function OrdersPage() {
           </div>
         </PageHeader>
       </div>
-      <Tabs defaultValue="kanban" className="flex min-h-0 min-w-0 grow flex-col">
+      <Tabs defaultValue="status-kanban" className="flex min-h-0 min-w-0 grow flex-col">
         <TabsList className="mx-6">
-          <TabsTrigger value="kanban">Kanban</TabsTrigger>
+          <TabsTrigger value="status-kanban">Kanban de pedidos</TabsTrigger>
+          <TabsTrigger value="kanban">Kanban de prendas</TabsTrigger>
           <TabsTrigger value="table">Tabla</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="status-kanban" className="flex min-h-0 min-w-0 grow flex-col">
+          <OrderStatusKanbanBoard />
+        </TabsContent>
 
         <TabsContent value="kanban" className="flex min-h-0 min-w-0 grow flex-col">
           <OrderKanbanBoard />

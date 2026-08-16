@@ -7,7 +7,7 @@ import { listKanbanGarments } from "./server/garments";
 import { getMaterialInventory } from "./server/inventory";
 import { getMaterialById, listMaterials } from "./server/materials";
 import { getOperationById, listOperations } from "./server/operations";
-import { getOrder, type ListOrderOptions, listOrders } from "./server/orders";
+import { getOrder, type ListOrderOptions, listKanbanOrders, listOrders } from "./server/orders";
 import { getUserOrganizationCount } from "./server/organizations";
 import { getQuotation, getQuotationBySlug, listQuotations } from "./server/quotations";
 import { listWhitelistedEmails } from "./server/whitelist";
@@ -31,6 +31,7 @@ export const queryKeys = {
   quotation: (slug: string) => ["quotation", slug],
   garmentStages: ["garment-stages"],
   kanbanGarments: ["kanban-garments"],
+  kanbanOrders: ["kanban-orders"],
   ordersPage: (params: Record<string, unknown>) => ["orders", params],
   order: (code: string) => ["order", code],
   recentQuotations: ["recent-quotations"],
@@ -135,6 +136,11 @@ export const garmentStagesListQueryOptions = queryOptions({
 export const kanbanGarmentsListQueryOptions = queryOptions({
   queryKey: queryKeys.kanbanGarments,
   queryFn: ({ signal }) => listKanbanGarments({ signal }),
+});
+
+export const kanbanOrdersListQueryOptions = queryOptions({
+  queryKey: queryKeys.kanbanOrders,
+  queryFn: ({ signal }) => listKanbanOrders({ signal }),
 });
 
 export const ordersListQueryOptions = (params: ListOrderOptions) =>
