@@ -99,7 +99,7 @@ function BudgetsPage() {
                   params={{ slug: budget.slug }}
                   viewTransition
                   aria-label={budget.name}
-                  className="block aspect-video h-min w-full bg-black/35 transition-colors duration-200 group-hover:bg-black/0"
+                  className="block aspect-video h-min w-full bg-linear-to-br from-muted to-muted/40 transition-colors duration-200"
                 >
                   {budget.image ? (
                     <img
@@ -113,7 +113,7 @@ function BudgetsPage() {
                     />
                   ) : (
                     <div
-                      className="flex size-full items-center justify-center bg-linear-to-br from-muted to-muted/40"
+                      className="flex size-full items-center justify-center"
                       style={{
                         viewTransitionName: `budget-image-${budget.id}`,
                         viewTransitionClass: "budget-image budget-image-thumb",

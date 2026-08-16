@@ -88,7 +88,7 @@ export function AppSidebar() {
                     <SidebarMenuItem key={to}>
                       <SidebarLink
                         to={to}
-                        activeOptions={{ exact: true }}
+                        activeOptions={{ exact: true, includeSearch: false }}
                         activeProps={{ isActive: true }}
                         onClick={closeIfMobile}
                         className={draft ? "draft-element" : undefined}
