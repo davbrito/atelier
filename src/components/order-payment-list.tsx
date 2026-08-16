@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { NumericFormat } from "react-number-format";
 import { toast } from "sonner";
 import * as z from "zod";
 import { ImageUpload } from "#/components/image-upload";
@@ -29,6 +30,12 @@ import {
 } from "#/components/ui/dialog";
 import * as StyledField from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "#/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -57,7 +64,7 @@ type Payment = {
   image: string | null;
 };
 
-const paymentFormSchema = createOrderPaymentSchema
+const basePaymentFormSchema = createOrderPaymentSchema
   .omit({
     orderId: true,
     imageContentType: true,
@@ -65,23 +72,32 @@ const paymentFormSchema = createOrderPaymentSchema
   })
   .extend({ file: z.instanceof(File).nullable() });
 
-type PaymentFormValues = z.infer<typeof paymentFormSchema>;
+type PaymentFormValues = z.infer<typeof basePaymentFormSchema>;
+
+function buildPaymentFormSchema(balance: number) {
+  return basePaymentFormSchema.refine((values) => Number(values.amount) <= balance, {
+    message: `El monto excede el saldo pendiente (${formatMoney(balance)}). No se puede pagar de más.`,
+    path: ["amount"],
+  });
+}
 
 export function OrderPaymentList({
   orderId,
   orderCode,
   payments,
+  balance,
 }: {
   orderId: string;
   orderCode: string;
   payments: Payment[];
+  balance: number;
 }) {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { control, handleSubmit, reset } = useForm<PaymentFormValues>({
-    resolver: zodResolver(paymentFormSchema),
+    resolver: zodResolver(buildPaymentFormSchema(balance)),
     defaultValues: {
       method: PAYMENT_TYPES[0].code,
       amount: "",
@@ -119,7 +135,8 @@ export function OrderPaymentList({
       setIsCreateOpen(false);
       reset();
     },
-    onError: () => toast.error("Error al registrar el pago"),
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Error al registrar el pago"),
   });
 
   const deleteMutation = useMutation({
@@ -245,17 +262,32 @@ export function OrderPaymentList({
                 render={({ field, fieldState: { invalid, error } }) => (
                   <Field.Root name="amount" invalid={invalid} render={<StyledField.Field />}>
                     <Field.Label render={<StyledField.FieldLabel />}>Monto</Field.Label>
-                    <Field.Control
-                      value={field.value}
-                      onBlur={field.onBlur}
-                      onValueChange={field.onChange}
-                      ref={field.ref}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      render={<Input />}
-                    />
-                    <Field.Error render={<StyledField.FieldError />}>{error?.message}</Field.Error>
+                    <InputGroup>
+                      <InputGroupAddon>
+                        <InputGroupText>$</InputGroupText>
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        render={
+                          <NumericFormat
+                            value={field.value}
+                            onValueChange={(v) => field.onChange(v.value)}
+                            onBlur={field.onBlur}
+                            getInputRef={field.ref}
+                            decimalScale={2}
+                            allowNegative={false}
+                            placeholder="0.00"
+                            autoComplete="off"
+                          />
+                        }
+                      />
+                    </InputGroup>
+                    {error?.message ? (
+                      <StyledField.FieldError>{error.message}</StyledField.FieldError>
+                    ) : (
+                      <StyledField.FieldDescription>
+                        Saldo pendiente: {formatMoney(balance)}
+                      </StyledField.FieldDescription>
+                    )}
                   </Field.Root>
                 )}
               />
@@ -273,6 +305,7 @@ export function OrderPaymentList({
                       onBlur={field.onBlur}
                       onValueChange={field.onChange}
                       ref={field.ref}
+                      autoComplete="off"
                       render={<Input />}
                     />
                   </Field.Root>

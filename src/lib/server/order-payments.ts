@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import * as z from "zod";
 import { order, orderPayment } from "#/db/schema";
 import { PAYMENT_TYPE_CODES } from "#/lib/constants/payment-types";
@@ -32,7 +32,9 @@ export const listOrderPayments = createServerFn({ method: "GET" })
 export const createOrderPaymentSchema = z.object({
   orderId: z.uuid(),
   method: z.enum(PAYMENT_TYPE_CODES),
-  amount: z.string(),
+  amount: z
+    .string()
+    .refine((v) => Number.isFinite(Number(v)) && Number(v) > 0, "El monto debe ser mayor a 0"),
   reference: z.string().trim().optional(),
   notes: z.string().trim().optional(),
   paidAt: z.iso.datetime().optional().or(z.literal("")),
@@ -45,25 +47,44 @@ export const createOrderPayment = createServerFn({ method: "POST" })
   .validator(createOrderPaymentSchema)
   .middleware([organizationMiddleware, storageMiddleware])
   .handler(async ({ data, context: { activeOrganizationId, db, createEntityPresignedUrl } }) => {
-    const [owningOrder] = await db
-      .select({ id: order.id })
-      .from(order)
-      .where(and(eq(order.id, data.orderId), eq(order.organizationId, activeOrganizationId)));
+    const payment = await db.transaction(async (tx) => {
+      // Lock the order row so two concurrent payments can't both pass the
+      // balance check and jointly overpay the order.
+      const [owningOrder] = await tx
+        .select({ totalAmount: order.totalAmount })
+        .from(order)
+        .where(and(eq(order.id, data.orderId), eq(order.organizationId, activeOrganizationId)))
+        .for("update");
 
-    if (!owningOrder) throw new Error("Pedido no encontrado");
+      if (!owningOrder) throw new Error("Pedido no encontrado");
 
-    const [payment] = await db
-      .insert(orderPayment)
-      .values({
-        organizationId: activeOrganizationId,
-        orderId: data.orderId,
-        method: data.method,
-        amount: data.amount,
-        reference: data.reference || null,
-        notes: data.notes || null,
-        paidAt: data.paidAt ? new Date(data.paidAt) : new Date(),
-      })
-      .returning();
+      const [{ paid }] = await tx
+        .select({ paid: sql<string>`coalesce(sum(${orderPayment.amount}), 0)` })
+        .from(orderPayment)
+        .where(eq(orderPayment.orderId, data.orderId));
+
+      const balance = Number(owningOrder.totalAmount) - Number(paid);
+      if (Number(data.amount) > balance) {
+        throw new Error(
+          `El monto excede el saldo pendiente (${balance.toFixed(2)}). No se puede pagar de más.`,
+        );
+      }
+
+      const [newPayment] = await tx
+        .insert(orderPayment)
+        .values({
+          organizationId: activeOrganizationId,
+          orderId: data.orderId,
+          method: data.method,
+          amount: data.amount,
+          reference: data.reference || null,
+          notes: data.notes || null,
+          paidAt: data.paidAt ? new Date(data.paidAt) : new Date(),
+        })
+        .returning();
+
+      return newPayment;
+    });
 
     if (data.imageContentType && data.imageSize) {
       const presigned = await createEntityPresignedUrl(

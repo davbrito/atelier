@@ -203,7 +203,12 @@ function OrderDetailPage() {
         </CardContent>
       </Card>
 
-      <OrderPaymentList orderId={order.id} orderCode={order.code} payments={order.payments} />
+      <OrderPaymentList
+        orderId={order.id}
+        orderCode={order.code}
+        payments={order.payments}
+        balance={balance}
+      />
 
       <Link to="/app/orders" className="w-fit text-sm underline">
         Volver a pedidos
