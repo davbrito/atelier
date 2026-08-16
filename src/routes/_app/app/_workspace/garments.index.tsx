@@ -1,6 +1,8 @@
+import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { EyeIcon, Loader2Icon, PlusIcon, ShirtIcon, Trash2Icon } from "lucide-react";
+import { EyeIcon, Loader2Icon, PlusIcon, SearchIcon, ShirtIcon, Trash2Icon } from "lucide-react";
+import { motion } from "motion/react";
 import { useState } from "react";
 import { useOnInView } from "react-intersection-observer";
 import { BudgetCreateSheet } from "#/components/budget-create-sheet";
@@ -17,9 +19,12 @@ import {
 } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { Input } from "#/components/ui/input";
 import { toast } from "#/components/ui/toast.tsx";
 import { budgetsInfiniteListQueryOptions } from "#/lib/query-options";
 import { deleteBudget } from "#/lib/server/budgets";
+
+const MotionCardTitle = motion.create(CardTitle);
 
 const PAGE_SIZE = 20;
 
@@ -38,8 +43,14 @@ function BudgetsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  const [search, setSearch] = useState("");
+  const [debouncedSearch] = useDebouncedValue(search, { wait: 300 });
+
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
-    budgetsInfiniteListQueryOptions({ pageSize: PAGE_SIZE }),
+    budgetsInfiniteListQueryOptions({
+      pageSize: PAGE_SIZE,
+      search: debouncedSearch.trim() || undefined,
+    }),
   );
   const budgets = data?.pages.flatMap((p) => p.items) ?? [];
 
@@ -69,6 +80,16 @@ function BudgetsPage() {
         </Button>
       </PageHeader>
 
+      <div className="relative max-w-sm">
+        <SearchIcon className="-translate-y-1/2 absolute top-1/2 left-2.5 size-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar prendas..."
+          className="pl-8"
+        />
+      </div>
+
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">
           <Loader2Icon className="size-8 animate-spin text-muted-foreground/50" />
@@ -76,58 +97,61 @@ function BudgetsPage() {
       ) : budgets.length === 0 ? (
         <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
           <ShirtIcon className="mb-4 size-12 text-muted-foreground/20" />
-          <h3 className="font-medium text-lg">No hay prendas</h3>
-          <p className="max-w-xs text-muted-foreground">
-            Crea plantillas reusables para tus prendas con materiales y mano de obra.
-          </p>
-          <Button variant="outline" className="mt-4" onClick={() => setIsCreateOpen(true)}>
-            Crear mi primera prenda
-          </Button>
+          {debouncedSearch.trim() ? (
+            <>
+              <h3 className="font-medium text-lg">Sin resultados</h3>
+              <p className="max-w-xs text-muted-foreground">
+                No se encontraron prendas para "{debouncedSearch.trim()}".
+              </p>
+            </>
+          ) : (
+            <>
+              <h3 className="font-medium text-lg">No hay prendas</h3>
+              <p className="max-w-xs text-muted-foreground">
+                Crea plantillas reusables para tus prendas con materiales y mano de obra.
+              </p>
+              <Button variant="outline" className="mt-4" onClick={() => setIsCreateOpen(true)}>
+                Crear mi primera prenda
+              </Button>
+            </>
+          )}
         </Card>
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-[repeat(auto-fill,minmax(14rem,1fr))]">
             {budgets.map((budget) => (
-              <Card key={budget.id} className="group relative overflow-hidden pt-0">
+              <Card key={budget.id} className="group overflow-visible pt-0">
                 <Link
                   to="/app/garments/$slug"
                   params={{ slug: budget.slug }}
-                  viewTransition
                   aria-label={budget.name}
                   className="block aspect-video h-min w-full bg-linear-to-br from-muted to-muted/40 transition-colors duration-200"
                 >
                   {budget.image ? (
-                    <img
+                    <motion.img
+                      layoutId={`budget-image-${budget.id}`}
+                      transition={{ ease: "easeInOut", duration: 0.2 }}
                       src={budget.image}
                       alt={budget.name}
                       className="size-full object-cover brightness-60 transition-all duration-200 group-hover:brightness-100 dark:brightness-70 dark:group-hover:brightness-90"
-                      style={{
-                        viewTransitionName: `budget-image-${budget.id}`,
-                        viewTransitionClass: "budget-image budget-image-thumb",
-                      }}
                     />
                   ) : (
-                    <div
+                    <motion.div
                       className="flex size-full items-center justify-center"
-                      style={{
-                        viewTransitionName: `budget-image-${budget.id}`,
-                        viewTransitionClass: "budget-image budget-image-thumb",
-                      }}
+                      layoutId={`budget-image-${budget.id}`}
+                      transition={{ ease: "easeInOut", duration: 0.2 }}
                     >
                       <ShirtIcon className="size-10 text-muted-foreground/30" />
-                    </div>
+                    </motion.div>
                   )}
                 </Link>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle
+                  <MotionCardTitle
+                    layoutId={`budget-title-${budget.id}`}
                     className="w-fit truncate font-medium text-sm"
-                    style={{
-                      viewTransitionName: `budget-title-${budget.id}`,
-                      viewTransitionClass: "budget-title",
-                    }}
                   >
                     {budget.name}
-                  </CardTitle>
+                  </MotionCardTitle>
                   <CardAction>
                     <Button
                       variant="ghost"
@@ -136,7 +160,6 @@ function BudgetsPage() {
                         navigate({
                           to: "/app/garments/$slug",
                           params: { slug: budget.slug },
-                          viewTransition: true,
                         })
                       }
                     >
