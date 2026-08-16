@@ -44,7 +44,7 @@ const navItems: { group: string; items: NavItem[] }[] = [
     items: [
       { label: "Cotizaciones", icon: ClipboardList, to: "/app/quotations" },
       { label: "Presupuestos", icon: Calculator, to: "/app/budgets" },
-      { label: "Pedidos", icon: ShoppingBag, to: "/app/orders", draft: true },
+      { label: "Pedidos", icon: ShoppingBag, to: "/app/orders" },
     ],
   },
   {

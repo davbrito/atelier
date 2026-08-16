@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import * as z from "zod";
 import { client, garment, garmentStage, order } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
@@ -66,18 +66,26 @@ export const moveGarmentStage = createServerFn({ method: "POST" })
       if (owned.orderStatus === "pending") {
         await tx.update(order).set({ status: "in_progress" }).where(eq(order.id, owned.orderId));
       } else if (owned.orderStatus === "in_progress") {
-        const orderGarments = await tx
-          .select({ isFinalStage: garmentStage.isFinalStage })
-          .from(garment)
-          .leftJoin(garmentStage, eq(garment.stageId, garmentStage.id))
-          .where(eq(garment.orderId, owned.orderId));
-
-        const allFinal =
-          orderGarments.length > 0 && orderGarments.every((g) => g.isFinalStage === true);
-
-        if (allFinal) {
-          await tx.update(order).set({ status: "ready" }).where(eq(order.id, owned.orderId));
-        }
+        await tx
+          .update(order)
+          .set({ status: "ready" })
+          .where(
+            and(
+              eq(order.id, owned.orderId),
+              inArray(
+                order.id,
+                tx
+                  .select({ orderId: garment.orderId })
+                  .from(garment)
+                  .leftJoin(garmentStage, eq(garment.stageId, garmentStage.id))
+                  .where(eq(garment.orderId, owned.orderId))
+                  .groupBy(garment.orderId)
+                  .having(
+                    sql`COUNT(*) > 0 AND COUNT(*) FILTER (WHERE ${garmentStage.isFinalStage} IS NOT TRUE) = 0`,
+                  ),
+              ),
+            ),
+          );
       }
     });
 
