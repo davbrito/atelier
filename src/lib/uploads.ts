@@ -22,14 +22,14 @@ export async function handleAccessUpload(
   if (!object) return Response.json({ error: "Image not found" }, { status: 404 });
 
   // R2 signals a match by returning an object without a body.
-  // Deterministic keys mean a replaced image reuses the same URL, so
-  // the browser must revalidate on every load — no-cache still lets it
-  // cache the bytes, so a fresh image only costs a 304, not a
-  // re-download. `private` keeps shared/CDN caches (this response is
-  // authorization-gated per user) from serving it to other users.
+  // Deterministic keys mean a replaced image reuses the same URL, so the
+  // browser must eventually revalidate — but it can serve the cached bytes
+  // for a while first instead of round-tripping on every single load.
+  // `private` keeps shared/CDN caches (this response is authorization-gated
+  // per user) from ever storing it.
   const headers = new Headers();
   object.writeHttpMetadata(headers);
-  headers.set("Cache-Control", "private, no-cache");
+  headers.set("Cache-Control", "private, max-age=3600, must-revalidate");
   headers.set("ETag", object.httpEtag);
 
   if (!("body" in object) || object.body === null) {
