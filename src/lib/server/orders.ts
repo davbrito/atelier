@@ -1,16 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, count, desc, eq, ilike, or, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or, type SQL, sum } from "drizzle-orm";
 import * as z from "zod";
-import {
-  budget,
-  client,
-  garment,
-  garmentStage,
-  order,
-  orderPayment,
-  quotation,
-  quotationLine,
-} from "#/db/schema";
+import { budget, client, garment, order, orderPayment, quotationLine } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import { storageUrl } from "../utils";
 import { generateSequentialCode } from "./codes";
@@ -84,55 +75,81 @@ export const getOrder = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .validator(z.object({ code: z.string() }))
   .handler(async ({ data, context: { activeOrganizationId: organizationId, db } }) => {
-    const [orderRow] = await db
-      .select({
-        id: order.id,
-        code: order.code,
-        status: order.status,
-        priority: order.priority,
-        totalAmount: order.totalAmount,
-        receivedAt: order.receivedAt,
-        dueDate: order.dueDate,
-        notes: order.notes,
-        clientId: order.clientId,
-        clientName: client.name,
-        clientPhone: client.phone,
-        clientEmail: client.email,
-        quotationId: order.quotationId,
-        quotationSlug: quotation.slug,
-      })
-      .from(order)
-      .leftJoin(client, eq(order.clientId, client.id))
-      .leftJoin(quotation, eq(order.quotationId, quotation.id))
-      .where(and(eq(order.code, data.code), eq(order.organizationId, organizationId)));
+    const order = await db.query.order.findFirst({
+      where: { code: data.code, organizationId },
+      columns: {
+        id: true,
+        code: true,
+        status: true,
+        priority: true,
+        totalAmount: true,
+        receivedAt: true,
+        dueDate: true,
+        notes: true,
+        clientId: true,
+        quotationId: true,
+      },
+      with: {
+        client: {
+          columns: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+          },
+        },
+        quotation: {
+          columns: {
+            id: true,
+            slug: true,
+          },
+        },
+        garments: {
+          with: { stage: { columns: { name: true, color: true, isFinalStage: true } } },
+        },
+        payments: {
+          orderBy: { paidAt: "desc" },
+        },
+      },
+    });
+
+    const orderRow = order && {
+      id: order.id,
+      code: order.code,
+      status: order.status,
+      priority: order.priority,
+      totalAmount: order.totalAmount,
+      receivedAt: order.receivedAt,
+      dueDate: order.dueDate,
+      notes: order.notes,
+      clientId: order.clientId,
+      clientName: order.client?.name,
+      clientPhone: order.client?.phone,
+      clientEmail: order.client?.email,
+      quotationId: order.quotationId,
+      quotationSlug: order.quotation?.slug,
+    };
 
     if (!orderRow) throw new Error("Pedido no encontrado");
 
-    const garments = await db
-      .select({
-        id: garment.id,
-        name: garment.name,
-        quantity: garment.quantity,
-        unitPrice: garment.unitPrice,
-        fittingDate: garment.fittingDate,
-        notes: garment.notes,
-        stageId: garment.stageId,
-        stageName: garmentStage.name,
-        stageColor: garmentStage.color,
-        isFinalStage: garmentStage.isFinalStage,
-      })
-      .from(garment)
-      .leftJoin(garmentStage, eq(garment.stageId, garmentStage.id))
-      .where(eq(garment.orderId, orderRow.id));
+    const garments = order.garments.map((garment) => ({
+      id: garment.id,
+      name: garment.name,
+      quantity: garment.quantity,
+      unitPrice: garment.unitPrice,
+      fittingDate: garment.fittingDate,
+      notes: garment.notes,
+      stageId: garment.stageId,
+      stageName: garment.stage.name,
+      stageColor: garment.stage.color,
+      isFinalStage: garment.stage.isFinalStage,
+    }));
 
-    const paymentRows = await db
-      .select()
+    const payments = order.payments.map((p) => ({ ...p, image: p.image && storageUrl(p.image) }));
+    const [{ depositAmount }] = await db
+      .select({ depositAmount: sum(orderPayment.amount) })
       .from(orderPayment)
-      .where(eq(orderPayment.orderId, orderRow.id))
-      .orderBy(desc(orderPayment.paidAt));
-
-    const payments = paymentRows.map((p) => ({ ...p, image: p.image && storageUrl(p.image) }));
-    const depositAmount = payments.reduce((sum, p) => sum + Number(p.amount), 0).toFixed(2);
+      .where(eq(orderPayment.orderId, order.id));
 
     return { ...orderRow, garments, payments, depositAmount };
   });

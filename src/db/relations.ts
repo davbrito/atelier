@@ -39,7 +39,7 @@ const atelierRelations = defineRelations(schema, (r) => ({
       to: r.order.organizationId,
     }),
   },
-  materials: {
+  material: {
     organization: r.one.organization({
       from: r.material.organizationId,
       to: r.organization.id,
@@ -49,7 +49,7 @@ const atelierRelations = defineRelations(schema, (r) => ({
       to: r.materialInventoryMovement.materialId,
     }),
   },
-  materialInventoryMovements: {
+  materialInventoryMovement: {
     material: r.one.material({
       from: r.materialInventoryMovement.materialId,
       to: r.material.id,
@@ -59,13 +59,13 @@ const atelierRelations = defineRelations(schema, (r) => ({
       to: r.user.id,
     }),
   },
-  operations: {
+  operation: {
     organization: r.one.organization({
       from: r.operation.organizationId,
       to: r.organization.id,
     }),
   },
-  budgets: {
+  budget: {
     organization: r.one.organization({
       from: r.budget.organizationId,
       to: r.organization.id,
@@ -79,7 +79,7 @@ const atelierRelations = defineRelations(schema, (r) => ({
       to: r.operation.id.through(r.budgetOperation.operationId),
     }),
   },
-  budgetMaterials: {
+  budgetMaterial: {
     budget: r.one.budget({
       from: r.budgetMaterial.budgetId,
       to: r.budget.id,
@@ -91,7 +91,7 @@ const atelierRelations = defineRelations(schema, (r) => ({
       optional: false,
     }),
   },
-  quotations: {
+  quotation: {
     organization: r.one.organization({
       from: r.quotation.organizationId,
       to: r.organization.id,
@@ -105,7 +105,7 @@ const atelierRelations = defineRelations(schema, (r) => ({
       to: r.quotationLine.quotationId,
     }),
   },
-  quotationLines: {
+  quotationLine: {
     quotation: r.one.quotation({
       from: r.quotationLine.quotationId,
       to: r.quotation.id,
@@ -123,7 +123,7 @@ const atelierRelations = defineRelations(schema, (r) => ({
       to: r.quotationOperation.quotationLineId,
     }),
   },
-  quotationMaterials: {
+  quotationMaterial: {
     line: r.one.quotationLine({
       from: r.quotationMaterial.quotationLineId,
       to: r.quotationLine.id,
@@ -143,7 +143,7 @@ const atelierRelations = defineRelations(schema, (r) => ({
       to: r.operation.id,
     }),
   },
-  clients: {
+  client: {
     organization: r.one.organization({
       from: r.client.organizationId,
       to: r.organization.id,
@@ -161,21 +161,18 @@ const atelierRelations = defineRelations(schema, (r) => ({
       to: r.order.clientId,
     }),
   },
-  garmentStages: {
+  garmentStage: {
     organization: r.one.organization({
       from: r.garmentStage.organizationId,
       to: r.organization.id,
     }),
   },
-  orders: {
+  order: {
     organization: r.one.organization({
       from: r.order.organizationId,
       to: r.organization.id,
     }),
-    client: r.one.client({
-      from: r.order.clientId,
-      to: r.client.id,
-    }),
+    client: r.one.client({ optional: true }),
     quotation: r.one.quotation({
       from: r.order.quotationId,
       to: r.quotation.id,
@@ -189,16 +186,17 @@ const atelierRelations = defineRelations(schema, (r) => ({
       to: r.orderPayment.orderId,
     }),
   },
-  orderPayments: {
+  orderPayment: {
     order: r.one.order({
       from: r.orderPayment.orderId,
       to: r.order.id,
     }),
   },
-  garments: {
+  garment: {
     stage: r.one.garmentStage({
       from: r.garment.stageId,
       to: r.garmentStage.id,
+      optional: false,
     }),
     order: r.one.order({
       from: r.garment.orderId,
