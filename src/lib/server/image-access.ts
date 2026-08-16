@@ -1,20 +1,21 @@
 import { and, eq } from "drizzle-orm";
 import type { Db } from "#/db/client";
-import { budget, material, member } from "#/db/schema";
+import { budget, material, member, orderPayment } from "#/db/schema";
 
 const entityTypesTableMap = {
   budgets: budget,
   materials: material,
+  orderPayments: orderPayment,
 };
 
 export const uploadKeyPattern =
-  /^uploads\/(materials|budgets)\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.[a-z0-9]+$/;
+  /^uploads\/(materials|budgets|orderPayments)\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.[a-z0-9]+$/;
 
 /**
  * Returns true if `userId` is allowed to read the R2 object at `key`.
  *
  * - `uploads/avatars/*`  → any authenticated user
- * - `uploads/{materials|budgets}/{uuid}.{ext}` → members of the owning org only
+ * - `uploads/{materials|budgets|orderPayments}/{uuid}.{ext}` → members of the owning org only
  * - everything else → denied
  */
 export async function canAccessImage(db: Db, userId: string, key: string): Promise<boolean> {

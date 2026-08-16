@@ -1,9 +1,11 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarIcon, Loader2Icon, MailIcon, PhoneIcon } from "lucide-react";
+import { OrderPaymentList } from "#/components/order-payment-list";
 import { PageHeader } from "#/components/page-header";
 import { Badge } from "#/components/ui/badge";
 import { Card, CardContent } from "#/components/ui/card";
+import { Progress, ProgressValue } from "#/components/ui/progress";
 import { formatMoney, LOCALE } from "#/lib/format";
 import { orderByCodeQueryOptions } from "#/lib/query-options";
 
@@ -178,21 +180,30 @@ function OrderDetailPage() {
 
       {/* Payment status */}
       <Card>
-        <CardContent className="grid grid-cols-3 gap-4">
-          <div>
-            <p className="text-muted-foreground text-xs">Total</p>
-            <p className="font-semibold text-sm">{formatMoney(total)}</p>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-muted-foreground text-xs">Total</p>
+              <p className="font-semibold text-sm">{formatMoney(total)}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-xs">Abonado</p>
+              <p className="font-semibold text-sm">{formatMoney(deposit)}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-xs">Saldo</p>
+              <p className="font-semibold text-sm">{formatMoney(balance)}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-muted-foreground text-xs">Abono</p>
-            <p className="font-semibold text-sm">{formatMoney(deposit)}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground text-xs">Saldo</p>
-            <p className="font-semibold text-sm">{formatMoney(balance)}</p>
-          </div>
+          <Progress value={total > 0 ? Math.min(100, (deposit / total) * 100) : 0}>
+            <ProgressValue>
+              {(_, value) => `${value !== null ? Math.round(value) : 0}% pagado`}
+            </ProgressValue>
+          </Progress>
         </CardContent>
       </Card>
+
+      <OrderPaymentList orderId={order.id} orderCode={order.code} payments={order.payments} />
 
       <Link to="/app/orders" className="w-fit text-sm underline">
         Volver a pedidos

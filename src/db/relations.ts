@@ -184,6 +184,16 @@ const atelierRelations = defineRelations(schema, (r) => ({
       from: r.order.id,
       to: r.garment.orderId,
     }),
+    payments: r.many.orderPayment({
+      from: r.order.id,
+      to: r.orderPayment.orderId,
+    }),
+  },
+  orderPayments: {
+    order: r.one.order({
+      from: r.orderPayment.orderId,
+      to: r.order.id,
+    }),
   },
   garments: {
     stage: r.one.garmentStage({

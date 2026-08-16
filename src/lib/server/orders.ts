@@ -7,10 +7,12 @@ import {
   garment,
   garmentStage,
   order,
+  orderPayment,
   quotation,
   quotationLine,
 } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
+import { storageUrl } from "../utils";
 import { generateSequentialCode } from "./codes";
 
 const ORDER_SORT_COLUMNS = {
@@ -89,7 +91,6 @@ export const getOrder = createServerFn({ method: "GET" })
         status: order.status,
         priority: order.priority,
         totalAmount: order.totalAmount,
-        depositAmount: order.depositAmount,
         receivedAt: order.receivedAt,
         dueDate: order.dueDate,
         notes: order.notes,
@@ -124,7 +125,16 @@ export const getOrder = createServerFn({ method: "GET" })
       .leftJoin(garmentStage, eq(garment.stageId, garmentStage.id))
       .where(eq(garment.orderId, orderRow.id));
 
-    return { ...orderRow, garments };
+    const paymentRows = await db
+      .select()
+      .from(orderPayment)
+      .where(eq(orderPayment.orderId, orderRow.id))
+      .orderBy(desc(orderPayment.paidAt));
+
+    const payments = paymentRows.map((p) => ({ ...p, image: p.image && storageUrl(p.image) }));
+    const depositAmount = payments.reduce((sum, p) => sum + Number(p.amount), 0).toFixed(2);
+
+    return { ...orderRow, garments, payments, depositAmount };
   });
 
 const createOrderGarmentSchema = z.object({

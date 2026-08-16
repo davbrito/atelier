@@ -319,7 +319,6 @@ async function seedOrders(
         status: faker.helpers.arrayElement(STATUSES),
         priority: faker.helpers.arrayElement(PRIORITIES),
         totalAmount: faker.commerce.price({ min: 50, max: 800 }),
-        depositAmount: faker.commerce.price({ min: 0, max: 200 }),
         dueDate: faker.date.soon({ days: 45 }),
         notes: faker.lorem.sentence(),
       })

@@ -287,7 +287,6 @@ export const order = snakeCase.table(
     status: orderStatus().notNull().default("pending"),
     priority: orderPriority().notNull().default("medium"),
     totalAmount: decimal({ precision: 12, scale: 2 }).notNull().default("0.00"),
-    depositAmount: decimal({ precision: 12, scale: 2 }).notNull().default("0.00"),
     receivedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     dueDate: timestamp({ withTimezone: true }),
     notes: text(),
@@ -371,5 +370,37 @@ export const garment = snakeCase.table(
   (table) => [
     index("order_garments_order_id_idx").on(table.orderId),
     index("order_garments_stage_id_idx").on(table.stageId),
+  ],
+);
+
+// ── Order Payments (Pagos del pedido) ────────────────────
+//
+// An order can be paid in multiple installments, each of a different
+// method (efectivo, pago móvil, binance, etc). `method` is a free-text
+// column validated in the application layer against `PAYMENT_TYPES`
+// (src/lib/constants/payment-types.ts) rather than a DB enum, so adding a
+// new payment method never requires a migration.
+
+export const orderPayment = snakeCase.table(
+  "order_payments",
+  {
+    id: uuid().primaryKey().default(sql`uuidv7()`),
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    orderId: uuid()
+      .notNull()
+      .references(() => order.id, { onDelete: "cascade" }),
+    method: varchar({ length: 50 }).notNull(),
+    amount: decimal({ precision: 12, scale: 2 }).notNull(),
+    reference: varchar({ length: 100 }), // Código o número de referencia de la transacción
+    image: text(), // Clave R2 del soporte/comprobante de pago
+    notes: text(),
+    paidAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("order_payments_order_id_idx").on(table.orderId),
+    index("order_payments_organization_id_idx").on(table.organizationId),
   ],
 );

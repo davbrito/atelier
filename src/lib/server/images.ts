@@ -1,13 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, eq } from "drizzle-orm";
 import * as z from "zod";
-import { budget, material } from "#/db/schema";
+import { budget, material, orderPayment } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
 import { storageMiddleware } from "../storage";
 
 const entityTypesTableMap = {
   budgets: budget,
   materials: material,
+  orderPayments: orderPayment,
 };
 
 /**
@@ -20,7 +21,7 @@ export const setEntityImage = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
   .validator(
     z.object({
-      entityType: z.enum(["materials", "budgets"]),
+      entityType: z.enum(["materials", "budgets", "orderPayments"]),
       entityId: z.uuid(),
       imageKey: z.string(),
     }),
@@ -93,7 +94,7 @@ export async function uploadEntityImage({
   key,
 }: {
   signedUrl: string;
-  entityType: "materials" | "budgets";
+  entityType: "materials" | "budgets" | "orderPayments";
   entityId: string;
   file: File;
   key: string;
