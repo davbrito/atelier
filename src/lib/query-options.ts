@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { getBudgetById, getBudgetBySlug, listBudgets } from "./server/budgets";
 import { getClientById, listClients } from "./server/clients";
 import { getDashboardCounts, getRecentQuotations } from "./server/dashboard";
@@ -48,6 +48,19 @@ export const budgetsListQueryOptions = (params: {
   queryOptions({
     queryKey: queryKeys.budgetsPage(params),
     queryFn: ({ signal }) => listBudgets({ data: params, signal }),
+  });
+
+export const budgetsInfiniteListQueryOptions = (params: { pageSize: number; search?: string }) =>
+  infiniteQueryOptions({
+    queryKey: ["budgets", "infinite", params],
+    queryFn: ({ pageParam, signal }) =>
+      listBudgets({
+        data: { page: pageParam, pageSize: params.pageSize, search: params.search },
+        signal,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page * lastPage.pageSize < lastPage.total ? lastPage.page + 1 : undefined,
   });
 
 export const budgetBySlugQueryOptions = (slug: string) =>

@@ -1,12 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { EyeIcon, Loader2Icon, PlusIcon, ShirtIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
-import * as z from "zod";
+import { useOnInView } from "react-intersection-observer";
 import { BudgetCreateSheet } from "#/components/budget-create-sheet";
 import { PageHeader } from "#/components/page-header";
-import { Pagination } from "#/components/pagination";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,43 +18,40 @@ import {
 import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { toast } from "#/components/ui/toast.tsx";
-import { budgetsListQueryOptions } from "#/lib/query-options";
+import { budgetsInfiniteListQueryOptions } from "#/lib/query-options";
 import { deleteBudget } from "#/lib/server/budgets";
 
 const PAGE_SIZE = 20;
 
-const budgetsSearchSchema = z.object({
-  page: z.number().int().min(1).default(1).catch(1),
-});
-
 export const Route = createFileRoute("/_app/app/_workspace/garments/")({
   component: BudgetsPage,
-  validateSearch: budgetsSearchSchema,
-  loaderDeps: ({ search: { page } }) => ({ page }),
-  loader: ({ context: { queryClient }, deps: { page } }) =>
-    void queryClient.prefetchQuery(budgetsListQueryOptions({ page, pageSize: PAGE_SIZE })),
+  loader: ({ context: { queryClient } }) =>
+    void queryClient.prefetchInfiniteQuery(
+      budgetsInfiniteListQueryOptions({ pageSize: PAGE_SIZE }),
+    ),
 });
 
 function BudgetsPage() {
-  const { page } = Route.useSearch();
-  const navigate = useNavigate({ from: Route.fullPath });
+  const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
-  const deleteFn = useServerFn(deleteBudget);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery(budgetsListQueryOptions({ page, pageSize: PAGE_SIZE }));
-  const budgets = data?.items ?? [];
-  const total = data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
+    budgetsInfiniteListQueryOptions({ pageSize: PAGE_SIZE }),
+  );
+  const budgets = data?.pages.flatMap((p) => p.items) ?? [];
 
-  function goToPage(nextPage: number) {
-    navigate({ search: { page: nextPage } });
-  }
+  const loadMoreRef = useOnInView(
+    (inView) => {
+      if (inView && hasNextPage && !isFetchingNextPage) fetchNextPage();
+    },
+    { skip: !hasNextPage },
+  );
 
   const deleteMutation = useMutation({
-    mutationFn: deleteFn,
+    mutationFn: deleteBudget,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
       toast.add({ type: "success", description: "Prenda eliminada" });
@@ -165,7 +160,11 @@ function BudgetsPage() {
               </Card>
             ))}
           </div>
-          <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
+          {hasNextPage && (
+            <div ref={loadMoreRef} className="flex justify-center py-4">
+              <Loader2Icon className="size-5 animate-spin text-muted-foreground/50" />
+            </div>
+          )}
         </>
       )}
 
