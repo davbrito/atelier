@@ -166,7 +166,7 @@ function QuotationDetailPage() {
             <div className="flex items-center justify-between border-b px-4 py-3">
               {line.budgetSlug ? (
                 <Link
-                  to="/app/budgets/$slug"
+                  to="/app/garments/$slug"
                   params={{ slug: line.budgetSlug }}
                   className="inline-flex items-center gap-1 font-medium text-primary text-sm hover:underline"
                 >
@@ -174,7 +174,7 @@ function QuotationDetailPage() {
                   <ExternalLinkIcon className="size-3" />
                 </Link>
               ) : (
-                <span className="font-medium text-sm">Prenda sin presupuesto</span>
+                <span className="font-medium text-sm">Prenda eliminada</span>
               )}
               <span className="font-medium text-sm" suppressHydrationWarning>
                 {formatMoney(lineTotal)}

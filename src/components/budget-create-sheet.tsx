@@ -74,19 +74,19 @@ export function BudgetCreateSheet({ open, onOpenChange }: BudgetCreateSheetProps
       if ("imageFailed" in newBudget && newBudget.imageFailed) {
         toast.add({
           type: "warning",
-          description: "Presupuesto creado, pero no se pudo subir la imagen. Intenta editarlo.",
+          description: "Prenda creada, pero no se pudo subir la imagen. Intenta editarlo.",
         });
       } else {
-        toast.add({ type: "success", description: "Presupuesto creado" });
+        toast.add({ type: "success", description: "Prenda creada" });
       }
       onOpenChange(false);
       form.reset();
       navigate({
-        to: "/app/budgets/$slug",
+        to: "/app/garments/$slug",
         params: { slug: newBudget.slug },
       });
     },
-    onError: () => toast.add({ type: "error", description: "Error al crear el presupuesto" }),
+    onError: () => toast.add({ type: "error", description: "Error al crear la prenda" }),
   });
 
   return (
@@ -96,8 +96,8 @@ export function BudgetCreateSheet({ open, onOpenChange }: BudgetCreateSheetProps
         className={cn("w-full sm:max-w-lg", isMobile && "max-h-[85dvh]")}
       >
         <SheetHeader>
-          <SheetTitle>Nuevo presupuesto</SheetTitle>
-          <SheetDescription>Define los datos básicos del presupuesto.</SheetDescription>
+          <SheetTitle>Nueva prenda</SheetTitle>
+          <SheetDescription>Define los datos básicos de la prenda.</SheetDescription>
         </SheetHeader>
         <FormProvider {...form}>
           <form
@@ -115,7 +115,7 @@ export function BudgetCreateSheet({ open, onOpenChange }: BudgetCreateSheetProps
             <SheetFooter className="mt-auto pt-4">
               <Button type="submit" disabled={createMutation.isPending}>
                 {createMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
-                Crear presupuesto
+                Crear prenda
               </Button>
               <SheetClose
                 render={<Button variant="link" type="button" disabled={createMutation.isPending} />}

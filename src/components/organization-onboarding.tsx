@@ -24,7 +24,7 @@ export function OrganizationOnboarding({ count }: OrganizationOnboardingProps) {
         {count === 0 ? (
           <>
             <p className="max-w-xs text-muted-foreground text-sm">
-              Crea tu primera área de trabajo para empezar a gestionar presupuestos y cotizaciones.
+              Crea tu primera área de trabajo para empezar a gestionar prendas y cotizaciones.
             </p>
             <Button onClick={() => setCreateOpen(true)}>Crear área de trabajo</Button>
           </>

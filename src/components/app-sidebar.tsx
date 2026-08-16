@@ -1,12 +1,12 @@
 import { useSession } from "@better-auth-ui/react";
 import { createLink } from "@tanstack/react-router";
 import {
-  Calculator,
   ClipboardList,
   LayoutDashboard,
   Package,
   Scissors,
   Shield,
+  Shirt,
   ShoppingBag,
   Users,
 } from "lucide-react";
@@ -43,7 +43,7 @@ const navItems: { group: string; items: NavItem[] }[] = [
     group: "Ventas",
     items: [
       { label: "Cotizaciones", icon: ClipboardList, to: "/app/quotations" },
-      { label: "Presupuestos", icon: Calculator, to: "/app/budgets" },
+      { label: "Prendas", icon: Shirt, to: "/app/garments" },
       { label: "Pedidos", icon: ShoppingBag, to: "/app/orders" },
     ],
   },

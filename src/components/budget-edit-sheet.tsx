@@ -94,15 +94,14 @@ export function BudgetEditSheet({ budgetId, open, onOpenChange }: BudgetEditShee
       if ("imageFailed" in result && result.imageFailed) {
         toast.add({
           type: "warning",
-          description:
-            "Presupuesto actualizado, pero no se pudo subir la imagen. Intenta de nuevo.",
+          description: "Prenda actualizada, pero no se pudo subir la imagen. Intenta de nuevo.",
         });
       } else {
-        toast.add({ type: "success", description: "Presupuesto actualizado" });
+        toast.add({ type: "success", description: "Prenda actualizada" });
       }
       onOpenChange(false);
     },
-    onError: () => toast.add({ type: "error", description: "Error al actualizar el presupuesto" }),
+    onError: () => toast.add({ type: "error", description: "Error al actualizar la prenda" }),
   });
 
   const isPending = updateMutation.isPending;
@@ -121,7 +120,7 @@ export function BudgetEditSheet({ budgetId, open, onOpenChange }: BudgetEditShee
         className={cn("w-full sm:max-w-lg", isMobile && "max-h-[85dvh]")}
       >
         <SheetHeader>
-          <SheetTitle>Editar presupuesto</SheetTitle>
+          <SheetTitle>Editar prenda</SheetTitle>
         </SheetHeader>
         <FormProvider {...form}>
           <form

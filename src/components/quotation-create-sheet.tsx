@@ -74,7 +74,7 @@ export function QuotationCreateSheet({ open, onOpenChange }: QuotationCreateShee
         <SheetHeader>
           <SheetTitle>Nueva cotización</SheetTitle>
           <SheetDescription>
-            Genera una cotización congelada a partir de uno o más presupuestos.
+            Genera una cotización congelada a partir de una o más prendas.
           </SheetDescription>
         </SheetHeader>
         <form
@@ -84,7 +84,7 @@ export function QuotationCreateSheet({ open, onOpenChange }: QuotationCreateShee
               .filter((id): id is string => id !== "");
 
             if (budgetIds.length === 0) {
-              toast.add({ type: "error", description: "Agrega al menos un presupuesto" });
+              toast.add({ type: "error", description: "Agrega al menos una prenda" });
               return;
             }
 
@@ -108,7 +108,7 @@ export function QuotationCreateSheet({ open, onOpenChange }: QuotationCreateShee
           </div>
 
           <div className="grid gap-2">
-            <span className="font-medium text-sm">Presupuestos</span>
+            <span className="font-medium text-sm">Prendas</span>
             {budgetFields.map((field, i) => (
               <div key={field.id} className="flex items-center gap-2">
                 <Controller
@@ -136,7 +136,7 @@ export function QuotationCreateSheet({ open, onOpenChange }: QuotationCreateShee
               onClick={() => appendBudget({ budgetId: "" })}
             >
               <PlusIcon className="size-3" />
-              Agregar presupuesto
+              Agregar prenda
             </Button>
           </div>
 

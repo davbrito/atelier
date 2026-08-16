@@ -1,12 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import {
-  CalculatorIcon,
-  ClipboardListIcon,
-  PackageIcon,
-  ScissorsIcon,
-  UsersIcon,
-} from "lucide-react";
+import { ClipboardListIcon, PackageIcon, ScissorsIcon, ShirtIcon, UsersIcon } from "lucide-react";
 import { dashboardCountsQueryOptions } from "#/lib/query-options.ts";
 import { Card } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
@@ -14,9 +8,9 @@ import { Skeleton } from "../ui/skeleton";
 const CARDS = [
   {
     key: "budgets" as const,
-    label: "Presupuestos",
-    icon: CalculatorIcon,
-    to: "/app/budgets",
+    label: "Prendas",
+    icon: ShirtIcon,
+    to: "/app/garments",
     color: "text-muted-foreground",
     bg: "bg-muted",
   },

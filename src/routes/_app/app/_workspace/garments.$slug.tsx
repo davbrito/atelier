@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { CalculatorIcon, Loader2Icon, PencilIcon } from "lucide-react";
+import { Loader2Icon, PencilIcon, ShirtIcon } from "lucide-react";
 import { useState } from "react";
 import { BudgetEditSheet } from "#/components/budget-edit-sheet";
 import { ClientCombobox } from "#/components/client-combobox";
@@ -24,7 +24,7 @@ import { formatMoney } from "#/lib/format";
 import { budgetBySlugQueryOptions } from "#/lib/query-options";
 import { createQuotation } from "#/lib/server/quotations";
 
-export const Route = createFileRoute("/_app/app/_workspace/budgets/$slug")({
+export const Route = createFileRoute("/_app/app/_workspace/garments/$slug")({
   component: QuotePage,
   loader: ({ context: { queryClient }, params: { slug } }) =>
     void queryClient.prefetchQuery(budgetBySlugQueryOptions(slug)),
@@ -73,12 +73,12 @@ function QuotePage() {
   if (!budget) {
     return (
       <div className="p-6">
-        <p className="text-muted-foreground">Presupuesto no encontrado.</p>
+        <p className="text-muted-foreground">Prenda no encontrada.</p>
         <Button
           variant="outline"
           className="mt-4"
           nativeButton={false}
-          render={<Link to="/app/budgets" />}
+          render={<Link to="/app/garments" />}
         >
           Volver
         </Button>
@@ -95,8 +95,8 @@ function QuotePage() {
       <PageHeader title={budget.name} description={budget.description ?? undefined} back>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="gap-1.5">
-            <CalculatorIcon className="size-3" />
-            Presupuesto
+            <ShirtIcon className="size-3" />
+            Prenda
           </Badge>
           <Button variant="outline" size="sm" onClick={() => setEditSheetOpen(true)}>
             <PencilIcon className="mr-1 size-3" />
@@ -200,7 +200,7 @@ function QuotePage() {
           <CardTitle className="text-base">Generar cotización</CardTitle>
           <CardDescription>
             Una cotización es un documento que se envía al cliente con los precios finales. A
-            diferencia del presupuesto (que es una estimación interna), la cotización representa un
+            diferencia de la prenda (que es una estimación interna), la cotización representa un
             compromiso de precio por un tiempo limitado y puede usarse como base para un contrato de
             servicio.
           </CardDescription>
@@ -215,7 +215,7 @@ function QuotePage() {
             </StyledField.FieldGroup>
 
             <div className="flex gap-3">
-              <Button variant="outline" nativeButton={false} render={<Link to="/app/budgets" />}>
+              <Button variant="outline" nativeButton={false} render={<Link to="/app/garments" />}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={createMutation.isPending || !clientId}>

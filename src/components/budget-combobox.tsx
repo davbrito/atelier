@@ -60,7 +60,7 @@ export function BudgetCombobox({ value, onChange }: BudgetComboboxProps) {
       onInputValueChange={(val) => setInputValue(typeof val === "string" ? val : "")}
       filter={null}
     >
-      <ComboboxInput placeholder="Buscar presupuesto..." className="w-full" showTrigger />
+      <ComboboxInput placeholder="Buscar prenda..." className="w-full" showTrigger />
 
       <ComboboxContent>
         <ComboboxEmpty>
@@ -71,9 +71,9 @@ export function BudgetCombobox({ value, onChange }: BudgetComboboxProps) {
             </span>
           ) : (
             <span className="flex flex-col gap-1 px-3 py-2 text-muted-foreground text-xs">
-              No se encontraron presupuestos.
-              <Link to="/app/budgets" className="text-primary underline">
-                Ir al catálogo de presupuestos
+              No se encontraron prendas.
+              <Link to="/app/garments" className="text-primary underline">
+                Ir al catálogo de prendas
               </Link>
             </span>
           )}

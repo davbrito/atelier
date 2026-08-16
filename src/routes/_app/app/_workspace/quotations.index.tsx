@@ -92,7 +92,7 @@ function QuotationsPage() {
           <ClipboardListIcon className="mb-4 size-12 text-muted-foreground/20" />
           <h3 className="font-medium text-lg">No hay cotizaciones</h3>
           <p className="max-w-xs text-muted-foreground">
-            Genera cotizaciones a partir de tus presupuestos para enviar a tus clientes.
+            Genera cotizaciones a partir de tus prendas para enviar a tus clientes.
           </p>
           <Button variant="outline" className="mt-4" onClick={() => setIsCreateOpen(true)}>
             Generar mi primera cotización
@@ -106,7 +106,7 @@ function QuotationsPage() {
                 <TableRow>
                   <TableHead>Código</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Presupuesto</TableHead>
+                  <TableHead>Prenda</TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead className="w-12" />

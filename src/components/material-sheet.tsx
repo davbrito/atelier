@@ -639,7 +639,7 @@ export function MaterialSheet({ open, onOpenChange, editingMaterial }: MaterialS
         <SheetHeader>
           <SheetTitle>{isEdit ? "Editar material" : "Nuevo material"}</SheetTitle>
           <SheetDescription>
-            Ingresa los detalles del material para utilizarlo en tus presupuestos.
+            Ingresa los detalles del material para utilizarlo en tus prendas.
           </SheetDescription>
         </SheetHeader>
 

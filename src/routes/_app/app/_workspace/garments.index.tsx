@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { CalculatorIcon, EyeIcon, Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react";
+import { EyeIcon, Loader2Icon, PlusIcon, ShirtIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import * as z from "zod";
 import { BudgetCreateSheet } from "#/components/budget-create-sheet";
@@ -29,7 +29,7 @@ const budgetsSearchSchema = z.object({
   page: z.number().int().min(1).default(1).catch(1),
 });
 
-export const Route = createFileRoute("/_app/app/_workspace/budgets/")({
+export const Route = createFileRoute("/_app/app/_workspace/garments/")({
   component: BudgetsPage,
   validateSearch: budgetsSearchSchema,
   loaderDeps: ({ search: { page } }) => ({ page }),
@@ -59,18 +59,18 @@ function BudgetsPage() {
     mutationFn: deleteFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
-      toast.add({ type: "success", description: "Presupuesto eliminado" });
+      toast.add({ type: "success", description: "Prenda eliminada" });
       setDeletingId(null);
     },
-    onError: () => toast.add({ type: "error", description: "Error al eliminar el presupuesto" }),
+    onError: () => toast.add({ type: "error", description: "Error al eliminar la prenda" }),
   });
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <PageHeader title="Presupuestos" description="Plantillas reusables de presupuestos.">
+      <PageHeader title="Prendas" description="Plantillas reusables de prendas.">
         <Button onClick={() => setIsCreateOpen(true)}>
           <PlusIcon className="mr-2 size-4" />
-          Nuevo presupuesto
+          Nueva prenda
         </Button>
       </PageHeader>
 
@@ -80,18 +80,18 @@ function BudgetsPage() {
         </div>
       ) : budgets.length === 0 ? (
         <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
-          <CalculatorIcon className="mb-4 size-12 text-muted-foreground/20" />
-          <h3 className="font-medium text-lg">No hay presupuestos</h3>
+          <ShirtIcon className="mb-4 size-12 text-muted-foreground/20" />
+          <h3 className="font-medium text-lg">No hay prendas</h3>
           <p className="max-w-xs text-muted-foreground">
             Crea plantillas reusables para tus prendas con materiales y mano de obra.
           </p>
           <Button variant="outline" className="mt-4" onClick={() => setIsCreateOpen(true)}>
-            Crear mi primer presupuesto
+            Crear mi primera prenda
           </Button>
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-[repeat(auto-fill,minmax(14rem,1fr))]">
             {budgets.map((budget) => (
               <Card key={budget.id} className="relative overflow-hidden pt-0">
                 <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
@@ -103,7 +103,7 @@ function BudgetsPage() {
                   />
                 ) : (
                   <div className="relative z-20 flex aspect-video w-full items-center justify-center bg-gradient-to-br from-muted to-muted/40">
-                    <CalculatorIcon className="size-10 text-muted-foreground/30" />
+                    <ShirtIcon className="size-10 text-muted-foreground/30" />
                   </div>
                 )}
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -114,7 +114,7 @@ function BudgetsPage() {
                       size="icon"
                       onClick={() =>
                         navigate({
-                          to: "/app/budgets/$slug",
+                          to: "/app/garments/$slug",
                           params: { slug: budget.slug },
                         })
                       }
@@ -151,8 +151,8 @@ function BudgetsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el presupuesto y todos
-              sus materiales y operaciones asociados.
+              Esta acción no se puede deshacer. Se eliminará permanentemente la prenda y todos sus
+              materiales y operaciones asociados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -163,7 +163,7 @@ function BudgetsPage() {
               onClick={() => deletingId && deleteMutation.mutate({ data: { id: deletingId } })}
             >
               <Button variant="destructive" disabled={deleteMutation.isPending}>
-                {deleteMutation.isPending ? "Eliminando..." : "Eliminar presupuesto"}
+                {deleteMutation.isPending ? "Eliminando..." : "Eliminar prenda"}
               </Button>
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_app/app/_workspace/")({
 });
 
 const quickActions = [
-  { label: "Nuevo presupuesto", icon: PlusIcon, to: "/app/budgets" },
+  { label: "Nueva prenda", icon: PlusIcon, to: "/app/garments" },
   { label: "Nuevo material", icon: PlusIcon, to: "/app/materials" },
   { label: "Nueva operación", icon: PlusIcon, to: "/app/operations" },
 ];
@@ -93,7 +93,7 @@ function DashboardPage() {
                 <ClipboardListIcon className="mb-3 size-8 text-muted-foreground/25" />
                 <p className="text-muted-foreground text-sm">No hay cotizaciones aún.</p>
                 <p className="mt-1 text-muted-foreground/70 text-xs">
-                  Crea una cotización desde un presupuesto.
+                  Crea una cotización desde una prenda.
                 </p>
               </div>
             ) : (
