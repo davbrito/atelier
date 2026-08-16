@@ -36,7 +36,7 @@ export const moveGarmentStage = createServerFn({ method: "POST" })
   .handler(async ({ data, context: { activeOrganizationId, db } }) => {
     await db.transaction(async (tx) => {
       const [owned] = await tx
-        .select({ id: garment.id })
+        .select({ id: garment.id, orderId: garment.orderId, orderStatus: order.status })
         .from(garment)
         .innerJoin(order, eq(garment.orderId, order.id))
         .where(and(eq(garment.id, data.id), eq(order.organizationId, activeOrganizationId)));
@@ -58,6 +58,27 @@ export const moveGarmentStage = createServerFn({ method: "POST" })
       }
 
       await tx.update(garment).set({ stageId: data.stageId }).where(eq(garment.id, data.id));
+
+      // A pending order that gets its first garment moved starts production.
+      // An in-progress order whose garments have all reached a final stage
+      // is ready — both transitions happen automatically, without the user
+      // touching the order's own status.
+      if (owned.orderStatus === "pending") {
+        await tx.update(order).set({ status: "in_progress" }).where(eq(order.id, owned.orderId));
+      } else if (owned.orderStatus === "in_progress") {
+        const orderGarments = await tx
+          .select({ isFinalStage: garmentStage.isFinalStage })
+          .from(garment)
+          .leftJoin(garmentStage, eq(garment.stageId, garmentStage.id))
+          .where(eq(garment.orderId, owned.orderId));
+
+        const allFinal =
+          orderGarments.length > 0 && orderGarments.every((g) => g.isFinalStage === true);
+
+        if (allFinal) {
+          await tx.update(order).set({ status: "ready" }).where(eq(order.id, owned.orderId));
+        }
+      }
     });
 
     return { success: true };

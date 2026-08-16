@@ -235,6 +235,10 @@ export function OrderKanbanBoard() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.kanbanGarments });
+      // A garment moving stage can silently flip its order's status
+      // (pending -> in_progress, or in_progress -> ready), so the order
+      // status Kanban's cache can't be trusted stale after this.
+      queryClient.invalidateQueries({ queryKey: queryKeys.kanbanOrders });
     },
   });
 

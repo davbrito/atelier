@@ -3,6 +3,15 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { Link } from "@tanstack/react-router";
 import { CalendarIcon } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "#/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import {
   Select,
@@ -16,7 +25,11 @@ import { ORDER_STATUSES } from "#/lib/constants/order-status";
 import { formatMoney } from "#/lib/format";
 import { kanbanOrdersListQueryOptions, queryKeys } from "#/lib/query-options";
 import { optimisticUpdate } from "#/lib/query-utils";
-import { type listKanbanOrders, updateOrderStatus } from "#/lib/server/orders";
+import {
+  type listKanbanOrders,
+  PAYMENT_INCOMPLETE_ERROR,
+  updateOrderStatus,
+} from "#/lib/server/orders";
 
 type KanbanOrdersData = Awaited<ReturnType<typeof listKanbanOrders>>;
 type KanbanOrder = KanbanOrdersData["items"][number];
@@ -143,6 +156,7 @@ export function OrderStatusKanbanBoard() {
 
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
+  const [paymentWarningOrder, setPaymentWarningOrder] = useState<string | null>(null);
 
   const clientOptions = useMemo(() => {
     const names = new Set(orders.map((o) => o.clientName).filter((name): name is string => !!name));
@@ -176,9 +190,13 @@ export function OrderStatusKanbanBoard() {
 
       return { previous };
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(kanbanOrdersListQueryOptions.queryKey, context.previous);
+      }
+      if (err instanceof Error && err.message === PAYMENT_INCOMPLETE_ERROR) {
+        setPaymentWarningOrder(vars.data.id);
+        return;
       }
       toast.add({ type: "error", description: "Error al mover el pedido" });
     },
@@ -275,6 +293,30 @@ export function OrderStatusKanbanBoard() {
           }}
         </DragOverlay>
       </DragDropProvider>
+
+      <AlertDialog
+        open={!!paymentWarningOrder}
+        onOpenChange={(open) => !open && setPaymentWarningOrder(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Falta saldo por pagar</AlertDialogTitle>
+            <AlertDialogDescription>
+              {(() => {
+                const order = orders.find((o) => o.id === paymentWarningOrder);
+                return order
+                  ? `El pedido ${order.code} aún tiene saldo pendiente. Registra el pago completo antes de marcarlo como entregado.`
+                  : "Este pedido aún tiene saldo pendiente. Registra el pago completo antes de marcarlo como entregado.";
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setPaymentWarningOrder(null)}>
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
