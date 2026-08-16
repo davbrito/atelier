@@ -7,6 +7,7 @@ import { Button } from "#/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu";
@@ -41,11 +42,13 @@ function OrdersPage() {
               <DropdownMenuTrigger render={<Button variant="outline" size="icon" />}>
                 <SettingsIcon className="size-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem render={<Link to="/app/orders/stages" />}>
-                  <ListOrderedIcon className="size-3.5" />
-                  Gestionar etapas del Kanban
-                </DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-auto">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem render={<Link to="/app/orders/stages" />}>
+                    <ListOrderedIcon className="size-3.5" />
+                    Gestionar etapas del Kanban
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
             <Button nativeButton={false} render={<Link to="/app/orders/new" />}>

@@ -4,8 +4,16 @@ import { ArrowRightIcon, ClipboardListIcon, PlusIcon } from "lucide-react";
 import { Suspense } from "react";
 import { SystemStats, SystemStatsLoader } from "#/components/dasboard/system-counts.tsx";
 import { PageHeader } from "#/components/page-header";
-import { buttonVariants } from "#/components/ui/button";
+import { Button, buttonVariants } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "#/components/ui/item.tsx";
 import { dashboardCountsQueryOptions, recentQuotationsQueryOptions } from "#/lib/query-options";
 import { formatBudgetNames } from "#/lib/utils";
 
@@ -56,14 +64,16 @@ function DashboardPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {quickActions.map(({ label, icon: Icon, to }) => (
-              <Link
+              <Button
                 key={to}
-                to={to}
-                className={buttonVariants({ variant: "outline", className: "justify-start" })}
+                variant="outline"
+                className="justify-start"
+                render={<Link to={to} />}
+                nativeButton={false}
               >
                 <Icon className="mr-2 size-4" />
                 {label}
-              </Link>
+              </Button>
             ))}
           </CardContent>
         </Card>
@@ -87,26 +97,26 @@ function DashboardPage() {
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-border">
+              <ItemGroup>
                 {data.map((q) => (
-                  <Link
+                  <Item
                     key={q.id}
-                    to="/app/quotations/$slug"
-                    params={{ slug: q.slug }}
-                    className="-mx-2 flex items-center justify-between rounded-md px-2 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-muted/50"
+                    render={<Link to="/app/quotations/$slug" params={{ slug: q.slug }} />}
+                    size="xs"
                   >
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-sm">{q.clientTitle}</p>
-                      <p className="truncate text-muted-foreground text-xs">
-                        {formatBudgetNames(q.budgetNames)} ·{" "}
+                    <ItemContent className="gap-0">
+                      <ItemTitle className="truncate text-sm">{q.clientTitle}</ItemTitle>
+                      <ItemDescription className="truncate" suppressHydrationWarning>
+                        {formatBudgetNames(q.budgetNames)}
+                        {" · "}
                         {new Date(q.createdAt).toLocaleDateString("es-VE", {
                           day: "numeric",
                           month: "short",
                           year: "numeric",
                         })}
-                      </p>
-                    </div>
-                    <div className="ml-2 flex shrink-0 items-center gap-2">
+                      </ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
                       <span className="font-medium text-sm" suppressHydrationWarning>
                         {Number(q.total).toLocaleString("es-VE", {
                           style: "currency",
@@ -115,10 +125,10 @@ function DashboardPage() {
                         })}
                       </span>
                       <ArrowRightIcon className="size-4 text-muted-foreground/50" />
-                    </div>
-                  </Link>
+                    </ItemActions>
+                  </Item>
                 ))}
-              </div>
+              </ItemGroup>
             )}
           </CardContent>
         </Card>
