@@ -1,15 +1,11 @@
 import { and, eq } from "drizzle-orm";
 import type { Db } from "#/db/client";
-import { budget, material, member, orderPayment } from "#/db/schema";
+import { member } from "#/db/schema";
+import { ENTITY_TYPES, entityTypesTableMap } from "#/lib/entity-images";
 
-const entityTypesTableMap = {
-  budgets: budget,
-  materials: material,
-  orderPayments: orderPayment,
-};
-
-export const uploadKeyPattern =
-  /^uploads\/(materials|budgets|orderPayments)\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.[a-z0-9]+$/;
+export const uploadKeyPattern = new RegExp(
+  `^uploads/(${ENTITY_TYPES.join("|")})/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\.[a-z0-9]+$`,
+);
 
 /**
  * Returns true if `userId` is allowed to read the R2 object at `key`.

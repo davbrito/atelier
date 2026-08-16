@@ -1,5 +1,6 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { AwsClient } from "aws4fetch";
+import type { EntityType } from "#/lib/entity-images";
 
 export const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
@@ -11,7 +12,7 @@ export const ALLOWED_IMAGE_TYPES = [
 
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 
-export type EntityType = "materials" | "budgets" | "orderPayments";
+export type { EntityType };
 
 export type PresignedResult = {
   error?: false;

@@ -1,15 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, eq } from "drizzle-orm";
 import * as z from "zod";
-import { budget, material, orderPayment } from "#/db/schema";
+import { ENTITY_TYPES, type EntityType, entityTypesTableMap } from "#/lib/entity-images";
 import { organizationMiddleware } from "../auth/functions";
 import { storageMiddleware } from "../storage";
-
-const entityTypesTableMap = {
-  budgets: budget,
-  materials: material,
-  orderPayments: orderPayment,
-};
 
 /**
  * After a client uploads an image directly to S3 via a pre-signed URL,
@@ -21,7 +15,7 @@ export const setEntityImage = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
   .validator(
     z.object({
-      entityType: z.enum(["materials", "budgets", "orderPayments"]),
+      entityType: z.enum(ENTITY_TYPES),
       entityId: z.uuid(),
       imageKey: z.string(),
     }),
@@ -94,7 +88,7 @@ export async function uploadEntityImage({
   key,
 }: {
   signedUrl: string;
-  entityType: "materials" | "budgets" | "orderPayments";
+  entityType: EntityType;
   entityId: string;
   file: File;
   key: string;
