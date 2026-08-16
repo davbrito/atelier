@@ -104,6 +104,7 @@ function QuotationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Código</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Presupuesto</TableHead>
                   <TableHead>Fecha</TableHead>
@@ -120,6 +121,9 @@ function QuotationsPage() {
                       navigate({ to: "/app/quotations/$slug", params: { slug: q.slug } })
                     }
                   >
+                    <TableCell className="font-mono text-muted-foreground text-xs">
+                      {q.slug}
+                    </TableCell>
                     <TableCell className="font-medium">{q.clientTitle}</TableCell>
                     <TableCell>
                       {q.lineCount > 0 ? (
