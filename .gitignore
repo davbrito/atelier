@@ -19,3 +19,5 @@ routeTree.gen.ts
 !.env.example
 
 .playwright-mcp
+
+coverage/

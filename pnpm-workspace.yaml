@@ -1,7 +1,9 @@
 allowBuilds:
+  cpu-features: true
   esbuild: false
   protobufjs: false
   sharp: false
+  ssh2: true
   workerd: false
 # minimumReleaseAge: 1440
 minimumReleaseAge: 0

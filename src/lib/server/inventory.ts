@@ -1,9 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, desc, eq, sql } from "drizzle-orm";
 import * as z from "zod";
-import type { Db } from "#/db/client";
 import { material, materialInventoryMovement, user } from "#/db/schema";
 import { organizationMiddleware } from "../auth/functions";
+import { getCurrentStock } from "./inventory-stock";
+
+export { getCurrentStock };
 
 /**
  * Namespace seed for material-inventory advisory locks (pg_advisory_xact_lock
@@ -20,26 +22,6 @@ const decimalString = z
     const [, decimals = ""] = v.split(".");
     return decimals.length <= 4;
   }, "Cantidad inválida");
-
-export async function getCurrentStock(
-  executor: Db,
-  materialId: string,
-  organizationId: string,
-): Promise<string> {
-  const [{ currentStock }] = await executor
-    .select({
-      currentStock: sql<string>`COALESCE(SUM(${materialInventoryMovement.delta}), '0')`,
-    })
-    .from(materialInventoryMovement)
-    .where(
-      and(
-        eq(materialInventoryMovement.materialId, materialId),
-        eq(materialInventoryMovement.organizationId, organizationId),
-      ),
-    );
-
-  return currentStock;
-}
 
 export const getMaterialInventory = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])

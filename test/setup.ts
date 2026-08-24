@@ -1,47 +1,34 @@
-import assert from "node:assert";
-import events from "node:events";
-import net from "node:net";
-import util from "node:util";
+import { PostgreSqlContainer } from "@testcontainers/postgresql";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { Client } from "pg";
 import type { TestProject } from "vitest/node";
 
 declare module "vitest" {
   interface ProvidedContext {
-    echoServerPort: number;
+    postgresConnectionString: string;
   }
 }
 
-export const POSTGRES_SSL_REQUEST_PACKET = Buffer.from([
-  0x00, 0x00, 0x00, 0x08, 0x04, 0xd2, 0x16, 0x2f,
-]);
+async function setupTestPostgres({ provide }: TestProject): Promise<AsyncDisposable> {
+  const container = await new PostgreSqlContainer("postgres:18-alpine").start();
+  const connectionString = container.getConnectionUri();
 
-async function setupPostgresEchoServer({ provide }: TestProject): Promise<AsyncDisposable> {
-  // Start echo server on random port
-  const server = net.createServer((socket) => {
-    socket.on("data", (chunk) => {
-      // on postgres ssl request packet respond with 'N' to indicate no SSL support
-      if (POSTGRES_SSL_REQUEST_PACKET.equals(chunk as Buffer<ArrayBuffer>)) {
-        socket.write("N");
-      } else {
-        socket.write(chunk);
-      }
-    });
-  });
-  const listeningPromise = events.once(server, "listening");
-  server.listen(0, "127.0.0.1");
-  await listeningPromise;
+  const migrationClient = new Client({ connectionString });
+  await migrationClient.connect();
+  try {
+    await migrate(drizzle({ client: migrationClient }), { migrationsFolder: "./drizzle" });
+  } finally {
+    await migrationClient.end();
+  }
 
-  // Get randomly assigned port and provide for config
-  const address = server.address();
-  assert(typeof address === "object" && address !== null);
-  const port = address.port;
-  provide("echoServerPort", port);
-  console.log(`Started echo server on port ${port}`);
+  provide("postgresConnectionString", connectionString);
+  console.log(`Started Postgres testcontainer at ${connectionString}`);
 
   return {
     async [Symbol.asyncDispose]() {
-      // Stop echo server on teardown
-      await util.promisify(server.close.bind(server))();
-      console.log("Stopped echo server");
+      await container.stop();
+      console.log("Stopped Postgres testcontainer");
     },
   };
 }
@@ -49,7 +36,7 @@ async function setupPostgresEchoServer({ provide }: TestProject): Promise<AsyncD
 // Global setup runs inside Node.js, not `workerd`
 export default async function (project: TestProject) {
   const stack = new AsyncDisposableStack();
-  stack.use(await setupPostgresEchoServer(project));
+  stack.use(await setupTestPostgres(project));
 
   return async () => {
     await stack.disposeAsync();
