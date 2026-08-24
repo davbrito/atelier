@@ -14,20 +14,16 @@ catalogs:
     drizzle-kit: 1.0.0-rc.4
 
   auth:
-    "@better-auth-ui/core": ^1.6.45
+    "@better-auth-ui/core": ^1.7.12
     "@better-auth-ui/react": ^1.6.45
 
-    "auth": 1.7.0-rc.6
-    "better-auth": 1.7.0-rc.6
-    "@better-auth/drizzle-adapter": 1.7.0-rc.6
-    "@better-auth/passkey": 1.7.0-rc.6
+    "auth": 1.7.1
+    "better-auth": 1.7.1
+    "@better-auth/drizzle-adapter": 1.7.1
+    "@better-auth/passkey": 1.7.1
 
 overrides:
   drizzle-orm: catalog:drizzle
-  "@better-auth/kysely-adapter": 1.7.0-rc.6
-  "@better-auth/api-key": 1.7.0-rc.6
+  "@better-auth/kysely-adapter": 1.7.1
+  "@better-auth/api-key": 1.7.1
   kysely: ^0.28.17 # https://github.com/better-auth/better-auth/issues/9901
-
-patchedDependencies:
-  '@better-auth-ui/react': patches/@better-auth-ui__react.patch
-  better-auth: patches/better-auth.patch
