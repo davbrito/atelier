@@ -3,6 +3,7 @@ import { ensureSession as ensureSessionClient } from "@better-auth-ui/core";
 import {
   ensureActiveOrganization as ensureActiveOrganizationClient,
   ensureListOrganizations as ensureListOrganizationsClient,
+  type OrganizationAuthClient,
 } from "@better-auth-ui/core/plugins/organization";
 import {
   ensureActiveOrganization as ensureActiveOrganizationServer,
@@ -29,7 +30,13 @@ export const ensureActiveOrganization = createIsomorphicFn()
     }),
   )
   .client((queryClient: QueryClient, userId: string) =>
-    ensureActiveOrganizationClient(queryClient, authClient, userId),
+    // @better-auth-ui/core's OrganizationAuthClient type hardcodes teams/dynamicAccessControl
+    // as enabled, which we don't use — see https://github.com/better-auth-ui/better-auth-ui/issues/534
+    ensureActiveOrganizationClient(
+      queryClient,
+      authClient as unknown as OrganizationAuthClient,
+      userId,
+    ),
   );
 
 export const ensureOrganizationList = createIsomorphicFn()
@@ -42,7 +49,11 @@ export const ensureOrganizationList = createIsomorphicFn()
     );
   })
   .client((queryClient: QueryClient, userId: string) =>
-    ensureListOrganizationsClient(queryClient, authClient, userId),
+    ensureListOrganizationsClient(
+      queryClient,
+      authClient as unknown as OrganizationAuthClient,
+      userId,
+    ),
   );
 
 export const authMiddleware = createMiddleware().server(

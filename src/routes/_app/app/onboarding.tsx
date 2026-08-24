@@ -1,10 +1,12 @@
-import { organizationMutationKeys } from "@better-auth-ui/core/plugins/organization";
+import {
+  type OrganizationAuthClient,
+  organizationMutationKeys,
+} from "@better-auth-ui/core/plugins/organization";
 import { useAuth } from "@better-auth-ui/react";
 import { useActiveOrganization } from "@better-auth-ui/react/plugins/organization";
 import { useIsMutating, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { OrganizationOnboarding } from "#/components/organization-onboarding";
-import type { AppAuthClient } from "#/lib/auth/client.ts";
 import { ensureOrganizationList } from "#/lib/auth/functions";
 import { userOrganizationCountQueryOptions } from "#/lib/query-options";
 
@@ -26,7 +28,7 @@ export const Route = createFileRoute("/_app/app/onboarding")({
 function RouteComponent() {
   const { data: count = 0 } = useSuspenseQuery(userOrganizationCountQueryOptions);
 
-  const { authClient } = useAuth<AppAuthClient>();
+  const { authClient } = useAuth<OrganizationAuthClient>();
   // useSetActiveOrganization updates this query's cache optimistically in
   // onMutate, before the set-active request actually reaches the server.
   // Gate the redirect on isFetching too, so we don't navigate to the
