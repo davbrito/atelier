@@ -1,5 +1,6 @@
 import type { DeepPartial, Localization } from "@better-auth-ui/core";
-import type { OrganizationLocalization, PasskeyLocalization } from "@better-auth-ui/core/plugins";
+import type { OrganizationLocalization } from "@better-auth-ui/core/plugins/organization";
+import type { PasskeyLocalization } from "@better-auth-ui/core/plugins/passkey";
 
 export const authLocalization: DeepPartial<Localization> = {
   auth: {

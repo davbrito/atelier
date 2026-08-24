@@ -1,5 +1,4 @@
 import { passkeyClient } from "@better-auth/passkey/client";
-import type { AuthClient } from "@better-auth-ui/react";
 import {
   adminClient,
   lastLoginMethodClient,
@@ -23,10 +22,6 @@ export const authClient = createAuthClient({
     }),
     lastLoginMethodClient(),
   ],
-}) satisfies AuthClient;
+});
 
-declare module "@better-auth-ui/core" {
-  interface AuthConfig {
-    authClient: AuthClient;
-  }
-}
+export type AppAuthClient = typeof authClient;

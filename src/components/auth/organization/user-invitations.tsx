@@ -1,9 +1,6 @@
-import {
-  type OrganizationAuthClient,
-  useAuth,
-  useAuthPlugin,
-  useListUserInvitations,
-} from "@better-auth-ui/react";
+import type { OrganizationAuthClient } from "@better-auth-ui/core/plugins/organization";
+import { useAuth, useAuthPlugin, useSession } from "@better-auth-ui/react";
+import { useListUserInvitations } from "@better-auth-ui/react/plugins/organization";
 import { Fragment } from "react";
 
 import { Card, CardContent } from "#/components/ui/card.tsx";
@@ -22,12 +19,14 @@ export type UserInvitationsProps = {
  * card; uses `UserInvitationsEmpty` when there are no pending invitations.
  */
 export function UserInvitations({ className }: UserInvitationsProps) {
-  const { authClient } = useAuth();
+  const { authClient } = useAuth<OrganizationAuthClient>();
   const { localization: organizationLocalization } = useAuthPlugin(organizationPlugin);
+  const session = useSession(authClient);
+  const emailVerified = session.data?.user.emailVerified === true;
 
-  const { data: invitations, isPending } = useListUserInvitations(
-    authClient as OrganizationAuthClient,
-  );
+  const { data: invitations, isPending } = useListUserInvitations(authClient, {
+    enabled: emailVerified,
+  });
 
   return (
     <div className={className}>
@@ -36,12 +35,12 @@ export function UserInvitations({ className }: UserInvitationsProps) {
 
         <Card className="p-0">
           <CardContent className="p-0">
-            {isPending ? (
+            {session.isPending || (emailVerified && isPending) ? (
               <ItemGroup>
                 <UserInvitationRowSkeleton />
               </ItemGroup>
             ) : !invitations?.length ? (
-              <UserInvitationsEmpty />
+              <UserInvitationsEmpty verificationRequired={!emailVerified} />
             ) : (
               <ItemGroup className="gap-0">
                 {invitations.map((invitation, index) => (

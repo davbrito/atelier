@@ -1,10 +1,7 @@
 import { type AuthView, authMutationKeys } from "@better-auth-ui/core";
-import {
-  type PasskeyAuthClient,
-  useAuth,
-  useAuthPlugin,
-  useSignInPasskey,
-} from "@better-auth-ui/react";
+import type { PasskeyAuthClient } from "@better-auth-ui/core/plugins/passkey";
+import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
+import { usePasskeyAutoFill, useSignInPasskey } from "@better-auth-ui/react/plugins/passkey";
 import { useIsMutating } from "@tanstack/react-query";
 import { Fingerprint } from "lucide-react";
 
@@ -26,15 +23,19 @@ export type PasskeyButtonProps = {
  * @param view - Current auth view. Hides the button on `"signUp"`.
  */
 export function PasskeyButton({ view }: PasskeyButtonProps) {
-  const { authClient, localization, redirectTo, navigate } = useAuth();
+  const { authClient, localization, redirectTo, navigate } = useAuth<PasskeyAuthClient>();
   const { localization: passkeyLocalization } = useAuthPlugin(passkeyPlugin);
 
-  const { mutate: signInPasskey, isPending: passkeyPending } = useSignInPasskey(
-    authClient as PasskeyAuthClient,
-    {
-      onSuccess: () => navigate({ to: redirectTo }),
-    },
-  );
+  const { mutate: signInPasskey, isPending: passkeyPending } = useSignInPasskey(authClient, {
+    onSuccess: () => navigate({ to: redirectTo }),
+  });
+
+  // Surfaces passkeys in the browser's autofill dropdown while the sign-in
+  // form is open. The button stays for anyone who dismisses it.
+  usePasskeyAutoFill(authClient, {
+    enabled: view !== "signUp",
+    onSuccess: () => navigate({ to: redirectTo }),
+  });
 
   const signInMutating = useIsMutating({
     mutationKey: authMutationKeys.signIn.all,
@@ -53,7 +54,7 @@ export function PasskeyButton({ view }: PasskeyButtonProps) {
       variant="outline"
       disabled={isPending}
       className={cn("w-full", isPending && "pointer-events-none opacity-50")}
-      onClick={() => signInPasskey()}
+      onClick={() => signInPasskey({ autoFill: false })}
     >
       {passkeyPending ? <Spinner /> : <Fingerprint />}
       {localization.auth.continueWith.replace("{{provider}}", passkeyLocalization.passkey)}

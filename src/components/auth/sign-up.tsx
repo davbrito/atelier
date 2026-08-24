@@ -1,4 +1,9 @@
-import { authMutationKeys, getAuthLinkURL, parseAdditionalFieldValue } from "@better-auth-ui/core";
+import {
+  authMutationKeys,
+  getAuthLinkURL,
+  isPasswordCompromisedError,
+  parseAdditionalFieldValue,
+} from "@better-auth-ui/core";
 import { AuthPrompts, useAuth, useFetchOptions, useSignUpEmail } from "@better-auth-ui/react";
 import { useIsMutating } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
@@ -24,6 +29,7 @@ import {
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { cn } from "#/lib/utils.ts";
 import { AdditionalField } from "./additional-field";
+import { PasswordStrengthMeter } from "./password-strength-meter";
 import { ProviderButtons, type SocialLayout } from "./provider-buttons";
 
 export type SignUpProps = {
@@ -79,7 +85,16 @@ export function SignUp({
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const { mutate: signUpEmail, isPending: signUpEmailPending } = useSignUpEmail(authClient, {
-    onError: () => {
+    onError: (error) => {
+      // The haveIBeenPwned plugin rejects on the password itself,
+      // so it belongs against the field rather than in a toast.
+      if (isPasswordCompromisedError(error)) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          password: localization.auth.passwordCompromised,
+        }));
+      }
+
       setPassword("");
       setConfirmPassword("");
       resetFetchOptions();
@@ -127,7 +142,10 @@ export function SignUp({
     const email = formData.get("email") as string;
 
     if (emailAndPassword?.confirmPassword && password !== confirmPassword) {
-      toast.add({ type: "error", description: localization.auth.passwordsDoNotMatch });
+      toast.add({
+        type: "error",
+        description: localization.auth.passwordsDoNotMatch,
+      });
       setPassword("");
       setConfirmPassword("");
       return;
@@ -338,6 +356,8 @@ export function SignUp({
                   </InputGroup>
 
                   <FieldError>{fieldErrors.password}</FieldError>
+
+                  <PasswordStrengthMeter password={password} />
                 </Field>
 
                 {emailAndPassword?.confirmPassword && (

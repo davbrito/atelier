@@ -1,5 +1,5 @@
 import { useAuthPlugin } from "@better-auth-ui/react";
-import { Send } from "lucide-react";
+import { MailWarning, Send } from "lucide-react";
 
 import {
   Empty,
@@ -13,18 +13,26 @@ import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
 /**
  * Empty state for `UserInvitations`.
  */
-export function UserInvitationsEmpty() {
+export function UserInvitationsEmpty({
+  verificationRequired = false,
+}: {
+  verificationRequired?: boolean;
+}) {
   const { localization: organizationLocalization } = useAuthPlugin(organizationPlugin);
 
   return (
     <Empty>
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <Send />
-        </EmptyMedia>
-        <EmptyTitle>{organizationLocalization.noInvitations}</EmptyTitle>
+        <EmptyMedia variant="icon">{verificationRequired ? <MailWarning /> : <Send />}</EmptyMedia>
+        <EmptyTitle>
+          {verificationRequired
+            ? organizationLocalization.verifyEmailToViewInvitations
+            : organizationLocalization.noInvitations}
+        </EmptyTitle>
         <EmptyDescription>
-          {organizationLocalization.userInvitationsEmptyDescription}
+          {verificationRequired
+            ? organizationLocalization.verifyEmailToViewInvitationsDescription
+            : organizationLocalization.userInvitationsEmptyDescription}
         </EmptyDescription>
       </EmptyHeader>
     </Empty>

@@ -1,26 +1,34 @@
-import type { OrganizationView } from "@better-auth-ui/core/plugins";
+import type {
+  OrganizationAuthClient,
+  OrganizationView,
+} from "@better-auth-ui/core/plugins/organization";
+import { useAuth, useAuthenticate, useAuthPlugin } from "@better-auth-ui/react";
 import {
-  type OrganizationAuthClient,
   useActiveOrganization,
-  useAuth,
-  useAuthenticate,
-  useAuthPlugin,
-} from "@better-auth-ui/react";
-import { Settings as SettingsIcon, User2 as UserIcon } from "lucide-react";
+  useHasPermission,
+} from "@better-auth-ui/react/plugins/organization";
+import {
+  ShieldCheck as RolesIcon,
+  Settings as SettingsIcon,
+  UsersRound as TeamsIcon,
+  User2 as UserIcon,
+} from "lucide-react";
 import { useEffect, useMemo } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
 import { cn } from "#/lib/utils.ts";
 import { OrganizationPeople } from "./organization-people";
+import { OrganizationRoles } from "./organization-roles";
 import { OrganizationSettings } from "./organization-settings";
+import { OrganizationTeams } from "./organization-teams";
 
 export type OrganizationProps = {
   className?: string;
   hideNav?: boolean;
   path?: string;
   /** @remarks `OrganizationView` */
-  view?: OrganizationView;
+  view?: OrganizationView | string;
 };
 
 /**
@@ -33,7 +41,8 @@ export function Organization({ className, hideNav, path, view }: OrganizationPro
     throw new Error("[Better Auth UI] Either `view` or `path` must be provided");
   }
 
-  const { authClient, basePaths, localization, navigate } = useAuth();
+  const { authClient, basePaths, localization, navigate, plugins } =
+    useAuth<OrganizationAuthClient>();
   useAuthenticate(authClient);
 
   const {
@@ -41,11 +50,21 @@ export function Organization({ className, hideNav, path, view }: OrganizationPro
     viewPaths: organizationViewPaths,
     slug,
     slugPrefix,
+    teams,
+    dynamicAccessControl,
   } = useAuthPlugin(organizationPlugin);
 
-  const { data: activeOrganization, isPending } = useActiveOrganization(
-    authClient as OrganizationAuthClient,
+  const { data: activeOrganization, isPending } = useActiveOrganization(authClient);
+  const extensionTabs = useMemo(
+    () => plugins.flatMap((plugin) => plugin.organizationTabs ?? []),
+    [plugins],
   );
+  const rolesEnabled = dynamicAccessControl?.enabled === true;
+  const canReadRoles = useHasPermission(authClient, {
+    organizationId: activeOrganization?.id,
+    permissions: { ac: ["read"] },
+    enabled: rolesEnabled && Boolean(activeOrganization?.id),
+  });
 
   useEffect(() => {
     if (!isPending && !activeOrganization) {
@@ -63,17 +82,23 @@ export function Organization({ className, hideNav, path, view }: OrganizationPro
   ]);
 
   const currentView = useMemo(() => {
-    if (view) return view;
+    if (view) return view === "roles" && !rolesEnabled ? undefined : view;
 
-    const match = Object.entries(organizationViewPaths.organization).find(
-      ([, segment]) => segment === path,
-    );
+    const match = [
+      ...Object.entries(organizationViewPaths.organization).filter(
+        ([name]) => rolesEnabled || name !== "roles",
+      ),
+      ...extensionTabs.map((tab) => [tab.id, tab.path] as const),
+    ].find(([, segment]) => segment === path);
 
     return match?.[0] as OrganizationView | undefined;
-  }, [view, path, organizationViewPaths.organization]);
+  }, [extensionTabs, view, path, organizationViewPaths.organization, rolesEnabled]);
 
   if (!currentView) {
-    const validPaths = Object.values(organizationViewPaths.organization).join(", ");
+    const validPaths = Object.entries(organizationViewPaths.organization)
+      .filter(([name]) => rolesEnabled || name !== "roles")
+      .map(([, segment]) => segment)
+      .join(", ");
     throw new Error(
       `[Better Auth UI] Unknown organization path "${path}". Valid paths are: ${validPaths}`,
     );
@@ -83,8 +108,13 @@ export function Organization({ className, hideNav, path, view }: OrganizationPro
     return null;
   }
 
+  const selectedView =
+    currentView === "roles" && !canReadRoles.isPending && !canReadRoles.data?.success
+      ? "settings"
+      : currentView;
+
   return (
-    <Tabs value={currentView} className={cn("w-full gap-4 md:gap-6", className)}>
+    <Tabs value={selectedView} className={cn("w-full gap-4 md:gap-6", className)}>
       <div className={cn(hideNav && "hidden")}>
         <TabsList aria-label={localization.settings.settings}>
           <TabsTrigger
@@ -102,6 +132,57 @@ export function Organization({ className, hideNav, path, view }: OrganizationPro
 
             {localization.settings.settings}
           </TabsTrigger>
+
+          {teams && (
+            <TabsTrigger
+              value="teams"
+              className="gap-1"
+              onClick={() =>
+                navigate({
+                  to: slug
+                    ? `${basePaths.organization}/${slugPrefix}${slug}/${organizationViewPaths.organization.teams}`
+                    : `${basePaths.organization}/${organizationViewPaths.organization.teams}`,
+                })
+              }
+            >
+              <TeamsIcon className="text-muted-foreground" />
+              {organizationLocalization.teams}
+            </TabsTrigger>
+          )}
+
+          {rolesEnabled && (
+            <TabsTrigger
+              disabled={canReadRoles.isPending || !canReadRoles.data?.success}
+              value="roles"
+              className="gap-1"
+              onClick={() =>
+                navigate({
+                  to: slug
+                    ? `${basePaths.organization}/${slugPrefix}${slug}/${organizationViewPaths.organization.roles}`
+                    : `${basePaths.organization}/${organizationViewPaths.organization.roles}`,
+                })
+              }
+            >
+              <RolesIcon className="text-muted-foreground" />
+              {organizationLocalization.roles}
+            </TabsTrigger>
+          )}
+
+          {extensionTabs.map((tab) => (
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              onClick={() =>
+                navigate({
+                  to: slug
+                    ? `${basePaths.organization}/${slugPrefix}${slug}/${tab.path}`
+                    : `${basePaths.organization}/${tab.path}`,
+                })
+              }
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
 
           <TabsTrigger
             value="people"
@@ -122,12 +203,43 @@ export function Organization({ className, hideNav, path, view }: OrganizationPro
       </div>
 
       <TabsContent value="settings" tabIndex={-1}>
-        <OrganizationSettings />
+        {activeOrganization && (
+          <OrganizationSettings
+            organizationId={activeOrganization.id}
+            organizationSlug={activeOrganization.slug}
+          />
+        )}
       </TabsContent>
 
       <TabsContent value="people" tabIndex={-1}>
         <OrganizationPeople />
       </TabsContent>
+
+      {teams && (
+        <TabsContent value="teams" tabIndex={-1}>
+          <OrganizationTeams />
+        </TabsContent>
+      )}
+
+      {rolesEnabled && (
+        <TabsContent value="roles" tabIndex={-1}>
+          {canReadRoles.data?.success ? (
+            <OrganizationRoles organizationId={activeOrganization?.id ?? ""} />
+          ) : null}
+        </TabsContent>
+      )}
+
+      {extensionTabs.map((tab) => {
+        const Extension = tab.component;
+        return (
+          <TabsContent key={tab.id} value={tab.id} tabIndex={-1}>
+            <Extension
+              organizationId={activeOrganization?.id ?? ""}
+              organizationSlug={activeOrganization?.slug ?? ""}
+            />
+          </TabsContent>
+        );
+      })}
     </Tabs>
   );
 }

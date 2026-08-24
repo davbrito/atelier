@@ -14,8 +14,9 @@ catalogs:
     drizzle-kit: 1.0.0-rc.4
 
   auth:
-    "@better-auth-ui/core": ^1.7.12
-    "@better-auth-ui/react": ^1.6.45
+    "@better-auth-ui/core": 1.7.12
+    "@better-auth-ui/react": 1.7.12
+    "@better-auth-ui/locales": 1.7.12
 
     "auth": 1.7.1
     "better-auth": 1.7.1

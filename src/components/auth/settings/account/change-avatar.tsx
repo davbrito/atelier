@@ -48,12 +48,18 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
         { image },
         {
           onSuccess: () =>
-            toast.add({ type: "success", description: localization.settings.avatarChangedSuccess }),
+            toast.add({
+              type: "success",
+              description: localization.settings.avatarChangedSuccess,
+            }),
         },
       );
     } catch (error) {
       if (error instanceof Error) {
-        toast.add({ type: "error", description: error.message });
+        toast.add({
+          type: "error",
+          description: error.message,
+        });
       }
     }
 
@@ -76,7 +82,10 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
             }
           }
 
-          toast.add({ type: "success", description: localization.settings.avatarDeletedSuccess });
+          toast.add({
+            type: "success",
+            description: localization.settings.avatarDeletedSuccess,
+          });
         },
       },
     );

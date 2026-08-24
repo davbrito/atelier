@@ -1,14 +1,14 @@
 import { tracing } from "cloudflare:workers";
+import { ensureSession as ensureSessionClient } from "@better-auth-ui/core";
 import {
   ensureActiveOrganization as ensureActiveOrganizationClient,
   ensureListOrganizations as ensureListOrganizationsClient,
-  ensureSession as ensureSessionClient,
-} from "@better-auth-ui/react";
+} from "@better-auth-ui/core/plugins/organization";
 import {
   ensureActiveOrganization as ensureActiveOrganizationServer,
   ensureListOrganizations as ensureListOrganizationsServer,
-  ensureSession as ensureSessionServer,
-} from "@better-auth-ui/react/server";
+} from "@better-auth-ui/core/plugins/organization/server";
+import { ensureSessionServer } from "@better-auth-ui/core/server";
 import type { QueryClient } from "@tanstack/react-query";
 import { createIsomorphicFn, createMiddleware } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";

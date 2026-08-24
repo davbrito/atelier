@@ -1,4 +1,4 @@
-import { oneTapPlugin } from "@better-auth-ui/react/plugins";
+import { oneTapPlugin } from "@better-auth-ui/react/plugins/one-tap";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { authLocalization, organizationLocalization, passkeyLocalization } from "#/i18n/auth";

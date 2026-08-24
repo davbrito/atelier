@@ -54,7 +54,10 @@ export function VerifyEmail({ className }: VerifyEmailProps) {
 
   const { mutate: sendVerificationEmail, isPending } = useSendVerificationEmail(authClient, {
     onSuccess: () => {
-      toast.add({ type: "success", description: localization.auth.verificationEmailSent });
+      toast.add({
+        type: "success",
+        description: localization.auth.verificationEmailSent,
+      });
       setCooldown(RESEND_COOLDOWN_SECONDS);
     },
   });

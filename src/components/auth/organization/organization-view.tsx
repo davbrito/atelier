@@ -1,11 +1,9 @@
+import type { OrganizationAuthClient } from "@better-auth-ui/core/plugins/organization";
+import { useAuth, useAuthPlugin, useSession } from "@better-auth-ui/react";
 import {
-  type OrganizationAuthClient,
   useActiveOrganization,
-  useAuth,
-  useAuthPlugin,
   useListOrganizationMembers,
-  useSession,
-} from "@better-auth-ui/react";
+} from "@better-auth-ui/react/plugins/organization";
 import type { Organization } from "better-auth/client";
 import type { ComponentProps } from "react";
 
@@ -36,13 +34,13 @@ export function OrganizationView({
   organization,
   ...props
 }: OrganizationViewProps & ComponentProps<"div">) {
-  const { authClient } = useAuth();
+  const { authClient } = useAuth<OrganizationAuthClient>();
   const { roles, slugPrefix } = useAuthPlugin(organizationPlugin);
 
   const { data: session } = useSession(authClient);
 
   const { data: activeOrganization, isPending: activeOrganizationPending } = useActiveOrganization(
-    authClient as OrganizationAuthClient,
+    authClient,
     {
       enabled: !organization && !isPending,
     },
@@ -50,15 +48,12 @@ export function OrganizationView({
 
   const resolvedOrganization = organization ?? activeOrganization;
 
-  const { data: membersList, isPending: membersPending } = useListOrganizationMembers(
-    authClient as OrganizationAuthClient,
-    {
-      query: {
-        organizationId: resolvedOrganization?.id,
-      },
-      enabled: !!resolvedOrganization?.id && !hideRole,
+  const { data: membersList, isPending: membersPending } = useListOrganizationMembers(authClient, {
+    query: {
+      organizationId: resolvedOrganization?.id,
     },
-  );
+    enabled: !!resolvedOrganization?.id && !hideRole,
+  });
 
   const membership = membersList?.members?.find((member) => member.userId === session?.user.id);
 

@@ -30,7 +30,10 @@ export function ChangeEmail({ className }: ChangeEmailProps) {
 
   const { mutate: changeEmail, isPending } = useChangeEmail(authClient, {
     onSuccess: () =>
-      toast.add({ type: "success", description: localization.settings.changeEmailSuccess }),
+      toast.add({
+        type: "success",
+        description: localization.settings.changeEmailSuccess,
+      }),
   });
 
   const [fieldErrors, setFieldErrors] = useState<{

@@ -1,9 +1,6 @@
-import {
-  type OrganizationAuthClient,
-  useAuth,
-  useAuthPlugin,
-  useLeaveOrganization,
-} from "@better-auth-ui/react";
+import type { OrganizationAuthClient } from "@better-auth-ui/core/plugins/organization";
+import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
+import { useLeaveOrganization } from "@better-auth-ui/react/plugins/organization";
 import type { Organization } from "better-auth/client";
 import { LogOut } from "lucide-react";
 import { toast } from "#/components/ui/toast.tsx";
@@ -35,24 +32,24 @@ export function LeaveOrganizationDialog({
   onOpenChange,
   organization,
 }: LeaveOrganizationDialogProps) {
-  const { authClient, basePaths, localization, navigate } = useAuth();
+  const { authClient, basePaths, localization, navigate } = useAuth<OrganizationAuthClient>();
   const { localization: organizationLocalization, viewPaths: organizationPluginViewPaths } =
     useAuthPlugin(organizationPlugin);
 
-  const { mutate: leaveOrganization, isPending } = useLeaveOrganization(
-    authClient as OrganizationAuthClient,
-    {
-      onSuccess: () => {
-        onOpenChange(false);
-        toast.add({ type: "success", description: organizationLocalization.leftOrganization });
+  const { mutate: leaveOrganization, isPending } = useLeaveOrganization(authClient, {
+    onSuccess: () => {
+      onOpenChange(false);
+      toast.add({
+        type: "success",
+        description: organizationLocalization.leftOrganization,
+      });
 
-        navigate({
-          to: `${basePaths.settings}/${organizationPluginViewPaths.settings.organizations}`,
-          replace: true,
-        });
-      },
+      navigate({
+        to: `${basePaths.settings}/${organizationPluginViewPaths.settings.organizations}`,
+        replace: true,
+      });
     },
-  );
+  });
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

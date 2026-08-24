@@ -1,5 +1,6 @@
 import { type AdditionalFieldValue, parseAdditionalFieldValue } from "@better-auth-ui/core";
-import { type UsernameAuthClient, useAuth, useSession, useUpdateUser } from "@better-auth-ui/react";
+import type { UsernameAuthClient } from "@better-auth-ui/core/plugins/username";
+import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react";
 import { type SyntheticEvent, useState } from "react";
 import { toast } from "#/components/ui/toast.tsx";
 
@@ -24,12 +25,15 @@ export type UserProfileProps = {
  * @returns A JSX element containing the profile card with avatar upload and editable name/username fields
  */
 export function UserProfile({ className }: UserProfileProps) {
-  const { additionalFields, authClient, localization } = useAuth();
-  const { data: session } = useSession(authClient as UsernameAuthClient);
+  const { additionalFields, authClient, localization } = useAuth<UsernameAuthClient>();
+  const { data: session } = useSession(authClient);
 
   const { mutate: updateUser, isPending } = useUpdateUser(authClient, {
     onSuccess: () =>
-      toast.add({ type: "success", description: localization.settings.profileUpdatedSuccess }),
+      toast.add({
+        type: "success",
+        description: localization.settings.profileUpdatedSuccess,
+      }),
   });
 
   const [fieldErrors, setFieldErrors] = useState<{

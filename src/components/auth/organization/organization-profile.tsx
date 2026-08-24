@@ -1,10 +1,11 @@
+import { parseAdditionalFieldValue } from "@better-auth-ui/core";
+import type { OrganizationAuthClient } from "@better-auth-ui/core/plugins/organization";
+import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
 import {
-  type OrganizationAuthClient,
   useActiveOrganization,
-  useAuth,
-  useAuthPlugin,
+  useHasPermission,
   useUpdateOrganization,
-} from "@better-auth-ui/react";
+} from "@better-auth-ui/react/plugins/organization";
 import { type SyntheticEvent, useEffect, useState } from "react";
 import { toast } from "#/components/ui/toast.tsx";
 
@@ -16,6 +17,7 @@ import { Skeleton } from "#/components/ui/skeleton.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
 import { cn } from "#/lib/utils.ts";
+import { AdditionalField } from "../additional-field";
 import { ChangeOrganizationLogo } from "./change-organization-logo";
 import { SlugField } from "./slug-field";
 
@@ -27,10 +29,14 @@ export type OrganizationProfileProps = {
  * Profile card for the active organization: logo (when enabled), display name, and slug.
  */
 export function OrganizationProfile({ className }: OrganizationProfileProps) {
-  const { authClient, localization } = useAuth();
-  const { localization: organizationLocalization } = useAuthPlugin(organizationPlugin);
+  const { authClient, localization } = useAuth<OrganizationAuthClient>();
+  const { additionalFields, localization: organizationLocalization } =
+    useAuthPlugin(organizationPlugin);
 
-  const { data: activeOrganization } = useActiveOrganization(authClient as OrganizationAuthClient);
+  const { data: activeOrganization } = useActiveOrganization(authClient);
+  const canUpdate = useHasPermission(authClient, {
+    permissions: { organization: ["update"] },
+  });
 
   const [slug, setSlug] = useState(activeOrganization?.slug ?? "");
 
@@ -38,31 +44,42 @@ export function OrganizationProfile({ className }: OrganizationProfileProps) {
     setSlug(activeOrganization?.slug ?? "");
   }, [activeOrganization?.slug]);
 
-  const { mutate: commitOrganizationUpdate, isPending } = useUpdateOrganization(
-    authClient as OrganizationAuthClient,
-    {
-      onSuccess: () =>
-        toast.add({
-          type: "success",
-          description: organizationLocalization.organizationUpdatedSuccess,
-        }),
-    },
-  );
+  const { mutate: commitOrganizationUpdate, isPending } = useUpdateOrganization(authClient, {
+    onSuccess: () =>
+      toast.add({
+        type: "success",
+        description: organizationLocalization.organizationUpdatedSuccess,
+      }),
+  });
 
-  function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
+  async function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!activeOrganization) return;
-
+    if (!activeOrganization || !canUpdate.data?.success) return;
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
+    const additionalValues: Record<string, unknown> = {};
+    try {
+      for (const field of additionalFields) {
+        const value = parseAdditionalFieldValue(field, formData.get(field.name) as string | null);
+        await field.validate?.(value);
+        if (value !== undefined) additionalValues[field.name] = value;
+      }
+    } catch (error) {
+      toast.add({
+        type: "error",
+        description: error instanceof Error ? error.message : String(error),
+      });
+      return;
+    }
 
     commitOrganizationUpdate({
-      data: { name, slug },
+      data: { name, slug, ...additionalValues },
     });
   }
 
   const nameInputId = `${activeOrganization?.id ?? "org"}-name`;
   const slugInputId = `${activeOrganization?.id ?? "org"}-slug`;
+  const formDisabled = isPending || canUpdate.isPending || !canUpdate.data?.success;
 
   return (
     <div>
@@ -86,7 +103,7 @@ export function OrganizationProfile({ className }: OrganizationProfileProps) {
                   defaultValue={activeOrganization.name}
                   autoComplete="organization"
                   placeholder={organizationLocalization.namePlaceholder}
-                  disabled={isPending}
+                  disabled={formDisabled}
                 />
               ) : (
                 <Skeleton className="h-8 w-full rounded-md" />
@@ -101,7 +118,7 @@ export function OrganizationProfile({ className }: OrganizationProfileProps) {
                 value={slug}
                 onChange={setSlug}
                 currentSlug={activeOrganization.slug}
-                disabled={isPending}
+                disabled={formDisabled}
               />
             ) : (
               <Field>
@@ -110,16 +127,34 @@ export function OrganizationProfile({ className }: OrganizationProfileProps) {
               </Field>
             )}
 
-            <Button
-              type="submit"
-              disabled={isPending || !activeOrganization}
-              size="sm"
-              className="mt-1 w-fit"
-            >
-              {isPending && <Spinner />}
+            {activeOrganization &&
+              additionalFields.map((field) => (
+                <AdditionalField
+                  key={field.name}
+                  field={{
+                    ...field,
+                    defaultValue: (activeOrganization as Record<string, unknown>)[
+                      field.name
+                    ] as never,
+                  }}
+                  isPending={formDisabled}
+                  name={field.name}
+                  optionalLabel={localization.settings.optional}
+                />
+              ))}
 
-              {localization.settings.saveChanges}
-            </Button>
+            {(canUpdate.isPending || canUpdate.data?.success) && (
+              <Button
+                type="submit"
+                disabled={formDisabled || !activeOrganization}
+                size="sm"
+                className="mt-1 w-fit"
+              >
+                {isPending && <Spinner />}
+
+                {localization.settings.saveChanges}
+              </Button>
+            )}
           </form>
         </CardContent>
       </Card>

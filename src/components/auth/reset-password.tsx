@@ -1,4 +1,4 @@
-import { getAuthLinkURL } from "@better-auth-ui/core";
+import { getAuthLinkURL, isPasswordCompromisedError } from "@better-auth-ui/core";
 import { useAuth, useResetPassword } from "@better-auth-ui/react";
 import { Eye, EyeOff } from "lucide-react";
 import { type SyntheticEvent, useEffect, useState } from "react";
@@ -21,6 +21,7 @@ import {
 } from "#/components/ui/input-group.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { cn } from "#/lib/utils.ts";
+import { PasswordStrengthMeter } from "./password-strength-meter";
 
 export type ResetPasswordProps = {
   className?: string;
@@ -47,12 +48,26 @@ export function ResetPassword({ className }: ResetPasswordProps) {
   const signInURL = getAuthLinkURL(`${basePaths.auth}/${viewPaths.auth.signIn}`, redirectTo);
 
   const { mutate: resetPassword, isPending } = useResetPassword(authClient, {
+    onError: (error) => {
+      // The haveIBeenPwned plugin rejects on the password itself, so it
+      // belongs against the field rather than in a toast.
+      if (isPasswordCompromisedError(error)) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          password: localization.auth.passwordCompromised,
+        }));
+      }
+    },
     onSuccess: () => {
-      toast.add({ type: "success", description: localization.auth.passwordResetSuccess });
+      toast.add({
+        type: "success",
+        description: localization.auth.passwordResetSuccess,
+      });
       navigate({ to: signInURL });
     },
   });
 
+  const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
 
@@ -66,7 +81,10 @@ export function ResetPassword({ className }: ResetPasswordProps) {
     const token = searchParams.get("token") as string;
 
     if (!token) {
-      toast.add({ type: "error", description: localization.auth.invalidResetPasswordToken });
+      toast.add({
+        type: "error",
+        description: localization.auth.invalidResetPasswordToken,
+      });
       navigate({ to: signInURL });
     }
   }, [localization.auth.invalidResetPasswordToken, navigate, signInURL]);
@@ -78,7 +96,10 @@ export function ResetPassword({ className }: ResetPasswordProps) {
     const token = searchParams.get("token") as string;
 
     if (!token) {
-      toast.add({ type: "error", description: localization.auth.invalidResetPasswordToken });
+      toast.add({
+        type: "error",
+        description: localization.auth.invalidResetPasswordToken,
+      });
       navigate({ to: signInURL });
       return;
     }
@@ -88,7 +109,10 @@ export function ResetPassword({ className }: ResetPasswordProps) {
     const confirmPassword = formData.get("confirmPassword") as string;
 
     if (emailAndPassword?.confirmPassword && password !== confirmPassword) {
-      toast.add({ type: "error", description: localization.auth.passwordsDoNotMatch });
+      toast.add({
+        type: "error",
+        description: localization.auth.passwordsDoNotMatch,
+      });
       return;
     }
 
@@ -118,7 +142,9 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                   minLength={emailAndPassword?.minPasswordLength}
                   maxLength={emailAndPassword?.maxPasswordLength}
                   disabled={isPending}
-                  onChange={() => {
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+
                     setFieldErrors((prev) => ({
                       ...prev,
                       password: undefined,
@@ -166,6 +192,8 @@ export function ResetPassword({ className }: ResetPasswordProps) {
               </InputGroup>
 
               <FieldError>{fieldErrors.password}</FieldError>
+
+              <PasswordStrengthMeter password={password} />
             </Field>
 
             {emailAndPassword?.confirmPassword && (

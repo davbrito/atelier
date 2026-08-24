@@ -1,12 +1,21 @@
+import { parseAdditionalFieldValues } from "@better-auth-ui/core";
 import {
+  mergeOrganizationRoleLabels,
   type OrganizationAuthClient,
-  useAuth,
-  useAuthPlugin,
+} from "@better-auth-ui/core/plugins/organization";
+import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
+import {
+  useActiveOrganization,
+  useHasPermission,
   useInviteMember,
-} from "@better-auth-ui/react";
-import { UserPlus } from "lucide-react";
-import { type SyntheticEvent, useEffect, useState } from "react";
+  useListOrganizationInvitations,
+  useListRoles,
+  useListTeams,
+} from "@better-auth-ui/react/plugins/organization";
+import { ChevronDown, UserPlus } from "lucide-react";
+import { type SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "#/components/ui/toast.tsx";
+import { AdditionalField } from "#/components/auth/additional-field.tsx";
 import { Button, buttonVariants } from "#/components/ui/button.tsx";
 import {
   Dialog,
@@ -17,6 +26,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "#/components/ui/dialog.tsx";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "#/components/ui/dropdown-menu.tsx";
 import { Field, FieldError, FieldLabel } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import {
@@ -29,6 +44,7 @@ import {
 } from "#/components/ui/select.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
+import { cn } from "#/lib/utils.ts";
 
 /** Props for the `InviteMemberDialog` component. */
 export type InviteMemberDialogProps = {
@@ -43,59 +59,140 @@ const pickDefaultRole = (keys: string[]) =>
  * Render a dialog for inviting a member to the organization.
  */
 export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogProps) {
-  const { authClient, localization } = useAuth();
-  const { localization: organizationLocalization, roles } = useAuthPlugin(organizationPlugin);
+  const { authClient, localization } = useAuth<OrganizationAuthClient>();
+  const {
+    modelFields: { invitation: invitationFields },
+    dynamicAccessControl,
+    invitationLimit,
+    localization: organizationLocalization,
+    roles,
+    teams: teamsEnabled,
+  } = useAuthPlugin(organizationPlugin);
+  const { data: activeOrganization } = useActiveOrganization(authClient);
+  const teams = useListTeams(authClient, {
+    query: { organizationId: activeOrganization?.id },
+    enabled: teamsEnabled,
+  });
+  const invitations = useListOrganizationInvitations(authClient);
+  const canInvite = useHasPermission(authClient, {
+    organizationId: activeOrganization?.id,
+    permissions: { invitation: ["create"] },
+  });
+  const canReadRoles = useHasPermission(authClient, {
+    organizationId: activeOrganization?.id,
+    permissions: { ac: ["read"] },
+  });
+  const dynamicRoles = useListRoles(authClient, {
+    query: { organizationId: activeOrganization?.id },
+    enabled: dynamicAccessControl?.enabled === true && canReadRoles.data?.success === true,
+  });
+  const assignableRoles = useMemo(
+    () => mergeOrganizationRoleLabels(roles, dynamicRoles.data),
+    [dynamicRoles.data, roles],
+  );
 
-  const [role, setRole] = useState(() => pickDefaultRole(Object.keys(roles)));
+  const [selectedRoles, setSelectedRoles] = useState(() => {
+    const fallback = pickDefaultRole(Object.keys(assignableRoles));
+    return fallback ? [fallback] : [];
+  });
+  const [teamId, setTeamId] = useState("");
   const [emailError, setEmailError] = useState<string>();
-  const roleItems = Object.entries(roles).map(([value, label]) => ({
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const activeOrganizationId = activeOrganization?.id;
+  const previousOrganizationId = useRef(activeOrganizationId);
+  const roleItems = Object.entries(assignableRoles).map(([value, label]) => ({
     label,
     value,
   }));
+  const teamItems = teams.data?.map((team) => ({ label: team.name, value: team.id })) ?? [];
 
   useEffect(() => {
-    setRole((current) => {
-      const keys = Object.keys(roles);
-      return keys.includes(current) ? current : pickDefaultRole(keys);
+    setSelectedRoles((current) => {
+      const keys = Object.keys(assignableRoles);
+      const kept = current.filter((entry) => keys.includes(entry));
+
+      if (kept.length > 0) return kept;
+
+      const fallback = pickDefaultRole(keys);
+      return fallback ? [fallback] : [];
     });
-  }, [roles]);
+  }, [assignableRoles]);
 
   useEffect(() => {
+    const organizationChanged = previousOrganizationId.current !== activeOrganizationId;
+
+    if (open || organizationChanged) setTeamId("");
     if (!open) setEmailError(undefined);
-  }, [open]);
+    previousOrganizationId.current = activeOrganizationId;
+  }, [open, activeOrganizationId]);
 
-  const { mutate: inviteMember, isPending: isInviting } = useInviteMember(
-    authClient as OrganizationAuthClient,
-    {
-      onSuccess: () => {
-        onOpenChange(false);
-        toast.add({ type: "success", description: organizationLocalization.inviteMemberSuccess });
-      },
+  const { mutate: inviteMember, isPending: isInviting } = useInviteMember(authClient, {
+    onSuccess: () => {
+      onOpenChange(false);
+      toast.add({
+        type: "success",
+        description: organizationLocalization.inviteMemberSuccess,
+      });
     },
-  );
+  });
 
-  const isRoleValid = Object.keys(roles).includes(role);
+  const isRoleValid = selectedRoles.length > 0;
 
-  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
+  const roleSummary = selectedRoles.map((entry) => assignableRoles[entry] ?? entry).join(", ");
+
+  const toggleRole = (role: string) => {
+    setSelectedRoles((current) =>
+      current.includes(role) ? current.filter((entry) => entry !== role) : [...current, role],
+    );
+  };
+
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!isRoleValid) return;
+    if (!activeOrganizationId || !canInvite.data?.success || !isRoleValid || atInvitationLimit)
+      return;
 
-    const formData = new FormData(e.target as HTMLFormElement);
-    const email = formData.get("email") as string;
+    const formData = new FormData(e.currentTarget);
+    const invitationEmail = (formData.get("email") as string).trim();
+    const invitationRoles = [...selectedRoles] as Parameters<typeof inviteMember>[0]["role"];
+    const selectedTeamId = teams.data?.some((team) => team.id === teamId) ? teamId : undefined;
 
-    inviteMember({
-      email: email.trim(),
-      role: role as Parameters<typeof inviteMember>[0]["role"],
-    });
+    setIsSubmitting(true);
+    let invitationValues: Record<string, unknown>;
+    try {
+      invitationValues = await parseAdditionalFieldValues(invitationFields, formData);
+    } catch (error) {
+      toast.add({
+        type: "error",
+        description: error instanceof Error ? error.message : String(error),
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    inviteMember(
+      {
+        ...invitationValues,
+        email: invitationEmail,
+        organizationId: activeOrganizationId,
+        role: invitationRoles,
+        teamId: selectedTeamId,
+      },
+      { onSettled: () => setIsSubmitting(false) },
+    );
   };
+
+  const atInvitationLimit =
+    invitationLimit !== undefined &&
+    (invitations.data?.filter((invitation) => invitation.status === "pending").length ?? 0) >=
+      invitationLimit;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
               <UserPlus />
               {organizationLocalization.inviteMember}
             </DialogTitle>
@@ -135,42 +232,101 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
             <Field>
               <FieldLabel htmlFor="invite-member-role">{organizationLocalization.role}</FieldLabel>
 
-              <Select
-                items={roleItems}
-                value={role}
-                onValueChange={(value) => setRole(value ?? "")}
-                disabled={isInviting}
-              >
-                <SelectTrigger id="invite-member-role" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  id="invite-member-role"
+                  disabled={isInviting}
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "w-full justify-between font-normal",
+                  )}
+                >
+                  <span className={cn(!roleSummary && "text-muted-foreground")}>
+                    {roleSummary || organizationLocalization.selectRoles}
+                  </span>
+                  <ChevronDown className="opacity-50" />
+                </DropdownMenuTrigger>
 
-                <SelectContent>
-                  <SelectGroup>
-                    {roleItems.map((item) => (
-                      <SelectItem key={item.value} value={item.value}>
+                <DropdownMenuContent align="start">
+                  {roleItems.map((item) => {
+                    const checked = selectedRoles.includes(item.value);
+
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={item.value}
+                        checked={checked}
+                        disabled={checked && selectedRoles.length === 1}
+                        onCheckedChange={() => toggleRole(item.value)}
+                      >
                         {item.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               <FieldError />
             </Field>
+
+            {teamsEnabled && (
+              <Field>
+                <FieldLabel htmlFor="invite-member-team">
+                  {organizationLocalization.team}
+                </FieldLabel>
+                <Select
+                  items={teamItems}
+                  value={teamId}
+                  onValueChange={(value) => setTeamId(value ?? "")}
+                  disabled={isInviting}
+                >
+                  <SelectTrigger id="invite-member-team" className="w-full">
+                    <SelectValue placeholder={organizationLocalization.selectTeam} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {teamItems.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
+
+            {invitationFields.map((field) => (
+              <AdditionalField
+                key={field.name}
+                field={field}
+                name={field.name}
+                isPending={isInviting || isSubmitting}
+                optionalLabel={localization.settings.optional}
+              />
+            ))}
           </div>
 
           <DialogFooter>
             <DialogClose
               className={buttonVariants({ variant: "outline" })}
-              disabled={isInviting}
+              disabled={isInviting || isSubmitting}
               type="button"
             >
               {localization.settings.cancel}
             </DialogClose>
 
-            <Button type="submit" disabled={isInviting || !isRoleValid}>
-              {isInviting && <Spinner />}
+            <Button
+              type="submit"
+              disabled={
+                isInviting ||
+                isSubmitting ||
+                !isRoleValid ||
+                atInvitationLimit ||
+                canInvite.isPending ||
+                !canInvite.data?.success
+              }
+            >
+              {(isInviting || isSubmitting) && <Spinner />}
 
               {organizationLocalization.inviteMember}
             </Button>

@@ -58,7 +58,10 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
 
   const { mutate: revokeSession, isPending: isRevoking } = useRevokeSession(authClient, {
     onSuccess: () =>
-      toast.add({ type: "success", description: localization.settings.revokeSessionSuccess }),
+      toast.add({
+        type: "success",
+        description: localization.settings.revokeSessionSuccess,
+      }),
   });
 
   const isCurrentSession = activeSession.token === session?.session.token;

@@ -1,4 +1,4 @@
-import { getViewURL } from "@better-auth-ui/core";
+import { getViewURL, isPasswordCompromisedError } from "@better-auth-ui/core";
 import {
   useAuth,
   useChangePassword,
@@ -25,6 +25,7 @@ import { Skeleton } from "#/components/ui/skeleton.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { cn } from "#/lib/utils.ts";
 import { OpenEmailButton } from "../../open-email-button";
+import { PasswordStrengthMeter } from "../../password-strength-meter";
 
 export type ChangePasswordProps = {
   className?: string;
@@ -147,7 +148,16 @@ function ChangePasswordForm({
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const { mutate: changePassword, isPending } = useChangePassword(authClient, {
-    onError: () => {
+    onError: (error) => {
+      // The haveIBeenPwned plugin rejects on the password itself, so it
+      // belongs against the field rather than in a toast.
+      if (isPasswordCompromisedError(error)) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          newPassword: localization.auth.passwordCompromised,
+        }));
+      }
+
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -156,7 +166,10 @@ function ChangePasswordForm({
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      toast.add({ type: "success", description: localization.settings.changePasswordSuccess });
+      toast.add({
+        type: "success",
+        description: localization.settings.changePasswordSuccess,
+      });
     },
   });
 
@@ -177,7 +190,10 @@ function ChangePasswordForm({
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      toast.add({ type: "error", description: localization.auth.passwordsDoNotMatch });
+      toast.add({
+        type: "error",
+        description: localization.auth.passwordsDoNotMatch,
+      });
       return;
     }
 
@@ -315,6 +331,8 @@ function ChangePasswordForm({
               )}
 
               <FieldError>{fieldErrors.newPassword}</FieldError>
+
+              <PasswordStrengthMeter password={newPassword} />
             </Field>
 
             {emailAndPassword.confirmPassword && (
