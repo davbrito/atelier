@@ -13,7 +13,7 @@ const config = defineConfig({
     tailwindcss(),
     cloudflare({ viteEnvironment: { name: "ssr" } }),
     tanstackStart(),
-    viteReact(),
+    viteReact({ compiler: true }),
   ],
 });
 
