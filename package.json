@@ -21,7 +21,7 @@
     "db:migrate:prod": "DOTENV_CONFIG_PATH=\".env.production\" node --run db:migrate",
     "db:seed:dev": "tsx scripts/seed-dev.ts",
     "generate-routes": "tsr generate",
-    "codemod:sonner-to-ui-toast": "jscodeshift --parser=tsx -t scripts/codemods/sonner-to-ui-toast.cjs src",
+    "codemod:sonner-to-ui-toast": "jscodeshift --parser=tsx -t scripts/codemods/sonner-to-ui-toast.ts src",
     "deploy": "pnpm run build && wrangler deploy",
     "cf-typegen": "wrangler types",
     "knip": "knip"

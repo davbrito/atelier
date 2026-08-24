@@ -27,13 +27,17 @@
  *   toast.add({ type: "error", title: message, description })
  *
  * Usage:
- *   pnpm jscodeshift -t scripts/codemods/sonner-to-ui-toast.cjs "src/**\/*.{ts,tsx}"
+ *   pnpm jscodeshift -t scripts/codemods/sonner-to-ui-toast.ts "src/**\/*.{ts,tsx}"
  */
+
+import type { API, FileInfo, ObjectExpression, Options } from "jscodeshift";
+
+type ObjectExpressionProperty = ObjectExpression["properties"][number];
 
 const SONNER_SOURCE = "sonner";
 const UI_TOAST_SOURCE = "#/components/ui/toast.tsx";
 
-module.exports = function transformer(file, api) {
+export default function transformer(file: FileInfo, api: API, _options?: Options) {
   const j = api.jscodeshift;
   const root = j(file.source);
 
@@ -48,14 +52,14 @@ module.exports = function transformer(file, api) {
     return file.source;
   }
 
-  let toastLocalName = null;
+  let toastLocalName: string | null = null;
 
   sonnerImports.forEach((path) => {
     let hadToastSpecifier = false;
 
-    const specifiers = path.node.specifiers.filter((spec) => {
+    const specifiers = (path.node.specifiers ?? []).filter((spec) => {
       if (j.ImportSpecifier.check(spec) && spec.imported.name === "toast") {
-        toastLocalName = spec.local ? spec.local.name : spec.imported.name;
+        toastLocalName = j.Identifier.check(spec.local) ? spec.local.name : spec.imported.name;
         hadToastSpecifier = true;
         return false;
       }
@@ -95,6 +99,9 @@ module.exports = function transformer(file, api) {
     })
     .forEach((path) => {
       const callee = path.node.callee;
+      if (!j.MemberExpression.check(callee) || !j.Identifier.check(callee.property)) {
+        return;
+      }
       const method = callee.property.name;
 
       if (method === "add") {
@@ -107,16 +114,24 @@ module.exports = function transformer(file, api) {
       }
 
       const [messageArg, ...restArgs] = args;
+      if (j.SpreadElement.check(messageArg)) {
+        return;
+      }
       const optionsArg =
         restArgs.length > 0 && j.ObjectExpression.check(restArgs[0]) ? restArgs[0] : null;
 
       const optionsHasDescription = optionsArg
         ? optionsArg.properties.some(
-            (prop) => j.Identifier.check(prop.key) && prop.key.name === "description",
+            (prop) =>
+              j.ObjectProperty.check(prop) &&
+              j.Identifier.check(prop.key) &&
+              prop.key.name === "description",
           )
         : false;
 
-      const properties = [j.objectProperty(j.identifier("type"), j.literal(method))];
+      const properties: ObjectExpressionProperty[] = [
+        j.objectProperty(j.identifier("type"), j.literal(method)),
+      ];
 
       // If the options object already carries its own `description`, the message
       // argument becomes the `title` instead of being dropped.
@@ -129,9 +144,11 @@ module.exports = function transformer(file, api) {
       // emit a duplicate property.
       if (optionsArg) {
         for (const prop of optionsArg.properties) {
-          const key = j.Identifier.check(prop.key) ? prop.key.name : null;
+          const key = j.ObjectProperty.check(prop) && j.Identifier.check(prop.key) ? prop.key.name : null;
           const existingIndex = key
-            ? properties.findIndex((p) => j.Identifier.check(p.key) && p.key.name === key)
+            ? properties.findIndex(
+                (p) => j.ObjectProperty.check(p) && j.Identifier.check(p.key) && p.key.name === key,
+              )
             : -1;
 
           if (existingIndex !== -1) {
@@ -148,4 +165,4 @@ module.exports = function transformer(file, api) {
     });
 
   return mutated ? root.toSource({ quote: "double", trailingComma: true }) : file.source;
-};
+}

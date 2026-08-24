@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import jscodeshift from "jscodeshift";
 import { describe, expect, it } from "vitest";
-import transformer from "./sonner-to-ui-toast.cjs";
+import transformer from "./sonner-to-ui-toast.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixturesDir = join(__dirname, "__fixtures__/sonner-to-ui-toast");

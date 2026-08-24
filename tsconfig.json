@@ -1,5 +1,6 @@
 {
   "include": ["**/*.ts", "**/*.tsx", "src/assets/js/*.js"],
+  "exclude": ["scripts/codemods/__fixtures__"],
   "compilerOptions": {
     "target": "ES2025",
     "jsx": "react-jsx",
