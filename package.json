@@ -33,6 +33,7 @@
     "@better-auth-ui/locales": "catalog:auth",
     "@better-auth-ui/react": "catalog:auth",
     "@better-auth/drizzle-adapter": "catalog:auth",
+    "@better-auth/i18n": "catalog:auth",
     "@better-auth/passkey": "catalog:auth",
     "@dnd-kit/helpers": "^0.5.0",
     "@dnd-kit/react": "^0.5.0",
