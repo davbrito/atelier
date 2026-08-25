@@ -1,8 +1,12 @@
 import { viewPaths } from "@better-auth-ui/core";
 import { createFileRoute } from "@tanstack/react-router";
 import { Admin } from "#/components/auth/admin/admin";
+import { whitelistPlugin } from "#/lib/auth-custom/plugins/whitelist-plugin";
 
-const validAdminPaths = Object.values(viewPaths.admin);
+const validAdminPaths = [
+  ...Object.values(viewPaths.admin),
+  ...(whitelistPlugin().adminTabs?.map((tab) => tab.path) ?? []),
+];
 
 export const Route = createFileRoute("/_app/app/admin/$path")({
   params: {

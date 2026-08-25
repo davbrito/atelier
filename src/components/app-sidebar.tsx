@@ -112,7 +112,8 @@ export function AppSidebar() {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarLink
-                    to="/app/admin/whitelist"
+                    to="/app/admin/$path"
+                    params={{ path: "whitelist" }}
                     activeOptions={{ exact: true }}
                     activeProps={{ isActive: true }}
                     onClick={closeIfMobile}

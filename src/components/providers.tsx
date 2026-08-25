@@ -6,6 +6,7 @@ import { adminPlugin } from "#/lib/auth/admin-plugin.ts";
 import { authClient } from "#/lib/auth/client";
 import { organizationPlugin } from "#/lib/auth/organization-plugin";
 import { passkeyPlugin } from "#/lib/auth/passkey-plugin";
+import { whitelistPlugin } from "#/lib/auth-custom/plugins/whitelist-plugin";
 import { avatarConfig } from "#/lib/avatar-upload";
 import { AuthProvider } from "./auth/auth-provider";
 import { Toaster } from "./ui/toast";
@@ -22,7 +23,13 @@ export function Providers({ children }: { children: ReactNode }) {
       avatar={avatarConfig}
       basePaths={{ settings: "/app/settings", admin: "/app/admin" }}
       navigate={navigate}
-      plugins={[passkeyPlugin(), organizationPlugin(), oneTapPlugin(), adminPlugin()]}
+      plugins={[
+        passkeyPlugin(),
+        organizationPlugin(),
+        oneTapPlugin(),
+        adminPlugin(),
+        whitelistPlugin(),
+      ]}
       Link={({ href, ...props }) => <Link to={href} {...props} />}
       locale={esES}
     >

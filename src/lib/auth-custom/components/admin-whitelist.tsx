@@ -1,7 +1,6 @@
 import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
 import { Loader2Icon, MailIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import {
@@ -23,13 +22,7 @@ import { toast } from "#/components/ui/toast.tsx";
 import { queryKeys, whitelistEmailsQueryOptions } from "#/lib/query-options";
 import { addWhitelistedEmail, removeWhitelistedEmail } from "#/server/functions/whitelist";
 
-export const Route = createFileRoute("/_app/app/admin/whitelist")({
-  component: WhitelistPage,
-  loader: ({ context: { queryClient } }) =>
-    void queryClient.prefetchQuery(whitelistEmailsQueryOptions),
-});
-
-function WhitelistPage() {
+export function AdminWhitelist() {
   const queryClient = useQueryClient();
 
   const [formKey, setFormKey] = useState(0);
@@ -67,7 +60,7 @@ function WhitelistPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-2xl">Usuarios Permitidos</h1>
