@@ -50,6 +50,11 @@ export function createAuth(db: Db, env: Env, ctx: ExecutionContext) {
         });
       },
     },
+    account: {
+      accountLinking: {
+        trustedProviders: ["google"],
+      },
+    },
     socialProviders: {
       google: {
         clientId: env.PUBLIC_GOOGLE_CLIENT_ID,
