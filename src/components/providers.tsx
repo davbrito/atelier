@@ -1,7 +1,7 @@
 import { oneTapPlugin } from "@better-auth-ui/react/plugins/one-tap";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { authLocalization, organizationLocalization, passkeyLocalization } from "#/i18n/auth";
+import { esES } from "#/i18n/auth";
 import { adminPlugin } from "#/lib/auth/admin-plugin.ts";
 import { authClient } from "#/lib/auth/client";
 import { organizationPlugin } from "#/lib/auth/organization-plugin";
@@ -21,14 +21,9 @@ export function Providers({ children }: { children: ReactNode }) {
       emailAndPassword={{ requireEmailVerification: false }}
       avatar={avatarConfig}
       navigate={navigate}
-      plugins={[
-        passkeyPlugin({ localization: passkeyLocalization }),
-        organizationPlugin({ localization: organizationLocalization }),
-        oneTapPlugin(),
-        adminPlugin(),
-      ]}
+      plugins={[passkeyPlugin(), organizationPlugin(), oneTapPlugin(), adminPlugin()]}
       Link={({ href, ...props }) => <Link to={href} {...props} />}
-      localization={authLocalization}
+      locale={esES}
     >
       {children}
       <Toaster />

@@ -1,8 +1,9 @@
-import type { DeepPartial, Localization } from "@better-auth-ui/core";
-import type { OrganizationLocalization } from "@better-auth-ui/core/plugins/organization";
-import type { PasskeyLocalization } from "@better-auth-ui/core/plugins/passkey";
+import { deepmerge, defineAuthLocale, localization as enLocalization } from "@better-auth-ui/core";
+import { adminLocalization as enAdminLocalization } from "@better-auth-ui/core/plugins/admin";
+import { organizationLocalization as enOrganizationLocalization } from "@better-auth-ui/core/plugins/organization";
+import { passkeyLocalization as enPasskeyLocalization } from "@better-auth-ui/core/plugins/passkey";
 
-export const authLocalization: DeepPartial<Localization> = {
+const esLocalization = deepmerge(enLocalization, {
   auth: {
     account: "Cuenta",
     alreadyHaveAnAccount: "¿Ya tienes una cuenta?",
@@ -88,9 +89,9 @@ export const authLocalization: DeepPartial<Localization> = {
     uploadAvatar: "Subir avatar",
     userProfile: "Perfil de usuario",
   },
-};
+});
 
-export const passkeyLocalization: DeepPartial<PasskeyLocalization> = {
+const passkeyLocalization = deepmerge(enPasskeyLocalization, {
   passkey: "Llave de acceso",
   addPasskey: "Agregar llave de acceso",
   deletePasskey: "Eliminar llave de acceso {{name}}",
@@ -101,9 +102,9 @@ export const passkeyLocalization: DeepPartial<PasskeyLocalization> = {
   passkeysDescription: "Crea una llave de acceso para acceder a tu cuenta de forma segura.",
   noPasskeys: "Sin llaves de acceso",
   name: "Nombre",
-};
+});
 
-export const organizationLocalization: DeepPartial<OrganizationLocalization> = {
+const organizationLocalization = deepmerge(enOrganizationLocalization, {
   accept: "Aceptar",
   accepted: "Aceptada",
   actions: "Acciones",
@@ -167,4 +168,84 @@ export const organizationLocalization: DeepPartial<OrganizationLocalization> = {
   uploadLogo: "Subir logo",
   userInvitationsEmptyDescription:
     "Las invitaciones para unirte a un área de trabajo aparecerán aquí.",
-};
+});
+
+const adminLocalization = deepmerge(enAdminLocalization, {
+  accessDenied: "Acceso denegado",
+  accessDeniedDescription: "No tienes permiso para gestionar usuarios.",
+  active: "Activo",
+  accountInformation: "Información de la cuenta",
+  admin: "Administración",
+  banned: "Suspendido",
+  banDuration: "Duración de la suspensión (días)",
+  banDurationDescription: "Déjalo en blanco para una suspensión permanente.",
+  banExpires: "La suspensión expira",
+  banReason: "Motivo de la suspensión",
+  banUser: "Suspender usuario",
+  cancel: "Cancelar",
+  close: "Cerrar",
+  copyUserId: "Copiar ID de usuario",
+  created: "Creado",
+  createUser: "Crear usuario",
+  deleteUser: "Eliminar usuario",
+  dangerZone: "Zona de peligro",
+  email: "Correo electrónico",
+  emailVerified: "Correo verificado",
+  endsWith: "Termina con",
+  filterAllStatuses: "Todos los estados",
+  loadUsersError: "Error al cargar usuarios",
+  loadUsersErrorDescription: "Intenta de nuevo o revisa la configuración del plugin Admin.",
+  name: "Nombre",
+  moreActions: "Más acciones",
+  noUsers: "No se encontraron usuarios",
+  noUsersDescription: "Cambia la búsqueda o crea un usuario.",
+  nextPage: "Página siguiente",
+  previousPage: "Página anterior",
+  impersonateUser: "Suplantar usuario",
+  overview: "Resumen",
+  password: "Contraseña",
+  profileAndAccess: "Perfil y acceso",
+  retry: "Reintentar",
+  role: "Rol",
+  search: "Buscar",
+  searchOperator: "Operador de búsqueda",
+  searchContains: "Contiene",
+  startsWith: "Empieza con",
+  searchByEmail: "Buscar por correo",
+  searchByName: "Buscar por nombre",
+  sessions: "Sesiones",
+  noSessions: "Sin sesiones activas",
+  revoke: "Revocar",
+  revokeAllSessions: "Revocar todas las sesiones",
+  saveRole: "Guardar rol",
+  saveChanges: "Guardar cambios",
+  saveUser: "Guardar usuario",
+  setPassword: "Establecer contraseña",
+  security: "Seguridad",
+  status: "Estado",
+  sort: "Ordenar",
+  sortNewest: "Más recientes primero",
+  sortOldest: "Más antiguos primero",
+  sortNameAscending: "Nombre A-Z",
+  sortNameDescending: "Nombre Z-A",
+  stopImpersonating: "Dejar de suplantar",
+  userDetails: "Detalles del usuario",
+  userId: "ID de usuario",
+  unknownView: "Vista de administración desconocida",
+  unknownViewDescription: "Esta ruta de administración estática no está registrada.",
+  unbanUser: "Reactivar usuario",
+  users: "Usuarios",
+  usersDescription: "Gestiona el acceso, roles y sesiones de los usuarios.",
+  usersPaginationRange: "{{from}}-{{to}} de {{total}}",
+});
+
+export const esES = defineAuthLocale({
+  languageTag: "es-VE",
+  direction: "ltr",
+  localization: esLocalization,
+  plugins: {
+    passkey: passkeyLocalization,
+    organization: organizationLocalization,
+    admin: adminLocalization,
+  },
+});
