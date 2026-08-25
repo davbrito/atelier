@@ -1,5 +1,5 @@
 import { viewPaths } from "@better-auth-ui/core";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Admin } from "#/components/auth/admin/admin";
 import { whitelistPlugin } from "#/lib/auth-custom/plugins/whitelist-plugin";
 
@@ -14,6 +14,11 @@ export const Route = createFileRoute("/_app/app/admin/$path")({
       if (!validAdminPaths.includes(path)) return false;
       return { path };
     },
+  },
+  beforeLoad: async ({ context: { session } }) => {
+    if (session.user.role !== "admin") {
+      throw redirect({ to: "/app" });
+    }
   },
   component: AdminPage,
 });
