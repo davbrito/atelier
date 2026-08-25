@@ -26,7 +26,7 @@ import { ORDER_STATUSES } from "#/lib/constants/order-status";
 import { formatMoney } from "#/lib/format";
 import { kanbanOrdersListQueryOptions, queryKeys } from "#/lib/query-options";
 import { optimisticUpdate } from "#/lib/query-utils";
-import { type listKanbanOrders, updateOrderStatus } from "#/lib/server/orders";
+import { type listKanbanOrders, updateOrderStatus } from "#/server/functions/orders";
 
 type KanbanOrdersData = Awaited<ReturnType<typeof listKanbanOrders>>;
 type KanbanOrder = KanbanOrdersData["items"][number];

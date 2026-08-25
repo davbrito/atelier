@@ -31,7 +31,7 @@ import {
 } from "#/components/ui/table";
 import { formatMoney, LOCALE } from "#/lib/format";
 import { ordersListQueryOptions } from "#/lib/query-options";
-import type { listOrders } from "#/lib/server/orders";
+import type { listOrders } from "#/server/functions/orders";
 
 type OrderRow = Awaited<ReturnType<typeof listOrders>>["items"][number];
 

@@ -1,21 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, count, desc, eq, ilike, or, type SQL, sql, sum } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or, type SQL, sql } from "drizzle-orm";
 import * as z from "zod";
-import type { Db } from "#/db/client";
-import { budget, client, garment, order, orderPayment, quotationLine } from "#/db/schema";
-import { organizationMiddleware } from "../auth/functions";
-import { storageUrl } from "../utils";
-import { generateSequentialCode } from "./codes";
-
-/** Total amount paid so far for an order, across all its payments. */
-async function getOrderPaidAmount(db: Db, orderId: string): Promise<number> {
-  const [row] = await db
-    .select({ paid: sum(orderPayment.amount) })
-    .from(orderPayment)
-    .where(eq(orderPayment.orderId, orderId));
-
-  return Number(row?.paid ?? 0);
-}
+import { client, order, orderPayment } from "#/db/schema";
+import { organizationMiddleware } from "#/lib/auth/functions";
+import { storageUrl } from "#/lib/utils";
+import { createOrder as createOrderUseCase, getOrderPaidAmount } from "../application/orders";
 
 const ORDER_SORT_COLUMNS = {
   code: order.code,
@@ -185,81 +174,7 @@ export const createOrder = createServerFn({ method: "POST" })
   .validator(createOrderSchema)
   .middleware([organizationMiddleware])
   .handler(async ({ data, context: { activeOrganizationId: organizationId, db } }) => {
-    return await db.transaction(async (tx) => {
-      const client = await tx.query.client.findFirst({
-        where: { id: data.clientId, organizationId },
-      });
-
-      if (!client) throw new Error("Cliente no encontrado");
-
-      let validQuotationLineIds: Set<string> | null = null;
-      if (data.quotationId) {
-        const quotation = await tx.query.quotation.findFirst({
-          where: { id: data.quotationId, organizationId },
-        });
-        if (!quotation) throw new Error("Cotización no encontrada");
-
-        const lines = await tx
-          .select({ id: quotationLine.id })
-          .from(quotationLine)
-          .where(eq(quotationLine.quotationId, data.quotationId));
-        validQuotationLineIds = new Set(lines.map((l) => l.id));
-      }
-
-      const now = new Date();
-      const prefix = `PED${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-`;
-      const code = await generateSequentialCode(tx, organizationId, prefix);
-
-      const totalAmount = data.garments
-        .reduce((sum, g) => sum + g.quantity * Number(g.unitPrice), 0)
-        .toFixed(2);
-
-      const budgets = await tx
-        .select()
-        .from(budget)
-        .where(eq(budget.organizationId, organizationId));
-      const budgetMap = new Map(budgets.map((b) => [b.id, b]));
-
-      const [newOrder] = await tx
-        .insert(order)
-        .values({
-          organizationId,
-          clientId: data.clientId,
-          quotationId: data.quotationId || null,
-          code,
-          priority: data.priority,
-          totalAmount,
-          dueDate: data.dueDate ? new Date(data.dueDate) : null,
-          notes: data.notes || null,
-        })
-        .returning();
-
-      await tx.insert(garment).values(
-        data.garments.map((g) => {
-          const selectedBudget = budgetMap.get(g.budgetId);
-          if (!selectedBudget) throw new Error("Presupuesto no encontrado");
-
-          const quotationLineId =
-            g.quotationLineId && validQuotationLineIds?.has(g.quotationLineId)
-              ? g.quotationLineId
-              : null;
-
-          return {
-            orderId: newOrder.id,
-            name: selectedBudget.name,
-            budgetId: g.budgetId,
-            quotationLineId,
-            quantity: g.quantity,
-            unitPrice: g.unitPrice,
-            stageId: g.stageId || null,
-            fittingDate: g.fittingDate ? new Date(g.fittingDate) : null,
-            notes: g.notes || null,
-          };
-        }),
-      );
-
-      return newOrder;
-    });
+    return await db.transaction((tx) => createOrderUseCase(tx, organizationId, data));
   });
 
 export const updateOrderPriority = createServerFn({ method: "POST" })

@@ -1,5 +1,5 @@
 import type { Db } from "#/db/client";
-import { client, material, member, order, organization, user } from "#/db/schema";
+import { budget, client, material, member, order, organization, user } from "#/db/schema";
 
 function randomId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`;
@@ -85,6 +85,24 @@ export async function seedMaterial(
       name: "Test Material",
       unit: "m",
       currentPrice: "10.00",
+      ...overrides,
+    })
+    .returning();
+  return row;
+}
+
+export async function seedBudget(
+  db: Db,
+  organizationId: string,
+  overrides?: Partial<typeof budget.$inferInsert>,
+) {
+  const [row] = await db
+    .insert(budget)
+    .values({
+      organizationId,
+      slug: overrides?.slug ?? randomId("budget"),
+      name: "Test Budget",
+      hourlyRate: "20.00",
       ...overrides,
     })
     .returning();

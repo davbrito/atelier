@@ -1,11 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import * as z from "zod";
-import { order, orderPayment } from "#/db/schema";
+import { orderPayment } from "#/db/schema";
+import { organizationMiddleware } from "#/lib/auth/functions";
 import { PAYMENT_TYPE_CODES } from "#/lib/constants/payment-types";
-import { organizationMiddleware } from "../auth/functions";
-import { MAX_IMAGE_SIZE, storageMiddleware } from "../storage";
-import { storageUrl } from "../utils";
+import { MAX_IMAGE_SIZE, storageMiddleware } from "#/lib/storage";
+import { storageUrl } from "#/lib/utils";
+import { createOrderPayment as createOrderPaymentUseCase } from "../application/order-payments";
 
 // ── Queries ──────────────────────────────────────────────
 
@@ -47,44 +48,9 @@ export const createOrderPayment = createServerFn({ method: "POST" })
   .validator(createOrderPaymentSchema)
   .middleware([organizationMiddleware, storageMiddleware])
   .handler(async ({ data, context: { activeOrganizationId, db, createEntityPresignedUrl } }) => {
-    const payment = await db.transaction(async (tx) => {
-      // Lock the order row so two concurrent payments can't both pass the
-      // balance check and jointly overpay the order.
-      const [owningOrder] = await tx
-        .select({ totalAmount: order.totalAmount })
-        .from(order)
-        .where(and(eq(order.id, data.orderId), eq(order.organizationId, activeOrganizationId)))
-        .for("update");
-
-      if (!owningOrder) throw new Error("Pedido no encontrado");
-
-      const [{ paid }] = await tx
-        .select({ paid: sql<string>`coalesce(sum(${orderPayment.amount}), 0)` })
-        .from(orderPayment)
-        .where(eq(orderPayment.orderId, data.orderId));
-
-      const balance = Number(owningOrder.totalAmount) - Number(paid);
-      if (Number(data.amount) > balance) {
-        throw new Error(
-          `El monto excede el saldo pendiente (${balance.toFixed(2)}). No se puede pagar de más.`,
-        );
-      }
-
-      const [newPayment] = await tx
-        .insert(orderPayment)
-        .values({
-          organizationId: activeOrganizationId,
-          orderId: data.orderId,
-          method: data.method,
-          amount: data.amount,
-          reference: data.reference || null,
-          notes: data.notes || null,
-          paidAt: data.paidAt ? new Date(data.paidAt) : new Date(),
-        })
-        .returning();
-
-      return newPayment;
-    });
+    const payment = await db.transaction((tx) =>
+      createOrderPaymentUseCase(tx, activeOrganizationId, data),
+    );
 
     if (data.imageContentType && data.imageSize) {
       const presigned = await createEntityPresignedUrl(

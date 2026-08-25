@@ -52,7 +52,7 @@ import {
   createOrderPayment,
   createOrderPaymentSchema,
   deleteOrderPayment,
-} from "#/lib/server/order-payments";
+} from "#/server/functions/order-payments";
 
 type Payment = {
   id: string;

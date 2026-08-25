@@ -22,7 +22,7 @@ import {
 import { toast } from "#/components/ui/toast.tsx";
 import { formatMoney } from "#/lib/format";
 import { budgetBySlugQueryOptions } from "#/lib/query-options";
-import { createQuotation } from "#/lib/server/quotations";
+import { createQuotation } from "#/server/functions/quotations";
 
 export const Route = createFileRoute("/_app/app/_workspace/garments/$slug")({
   component: QuotePage,

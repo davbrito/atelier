@@ -1,4 +1,11 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
+import {
+  getOrder,
+  type ListOrderOptions,
+  listKanbanOrders,
+  listOrders,
+} from "#/server/functions/orders";
+import { getQuotation, getQuotationBySlug, listQuotations } from "#/server/functions/quotations";
 import { getBudgetById, getBudgetBySlug, listBudgets } from "./server/budgets";
 import { getClientById, listClients } from "./server/clients";
 import { getDashboardCounts, getRecentQuotations } from "./server/dashboard";
@@ -7,9 +14,7 @@ import { listKanbanGarments } from "./server/garments";
 import { getMaterialInventory } from "./server/inventory";
 import { getMaterialById, listMaterials } from "./server/materials";
 import { getOperationById, listOperations } from "./server/operations";
-import { getOrder, type ListOrderOptions, listKanbanOrders, listOrders } from "./server/orders";
 import { getUserOrganizationCount } from "./server/organizations";
-import { getQuotation, getQuotationBySlug, listQuotations } from "./server/quotations";
 import { listWhitelistedEmails } from "./server/whitelist";
 
 export const queryKeys = {

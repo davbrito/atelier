@@ -21,7 +21,7 @@ import {
 } from "#/lib/query-options";
 import { optimisticUpdate } from "#/lib/query-utils";
 import { type listKanbanGarments, moveGarmentStage } from "#/lib/server/garments";
-import { updateOrderPriority } from "#/lib/server/orders";
+import { updateOrderPriority } from "#/server/functions/orders";
 
 type KanbanGarmentsData = Awaited<ReturnType<typeof listKanbanGarments>>;
 type KanbanGarment = KanbanGarmentsData["items"][number];

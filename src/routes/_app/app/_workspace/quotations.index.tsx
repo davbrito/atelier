@@ -29,8 +29,8 @@ import {
 } from "#/components/ui/table";
 import { toast } from "#/components/ui/toast.tsx";
 import { quotationsListQueryOptions } from "#/lib/query-options";
-import { deleteQuotation } from "#/lib/server/quotations";
 import { formatBudgetNames } from "#/lib/utils";
+import { deleteQuotation } from "#/server/functions/quotations";
 
 const PAGE_SIZE = 20;
 
