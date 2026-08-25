@@ -1,15 +1,12 @@
-import { useSession } from "@better-auth-ui/react";
 import { createLink } from "@tanstack/react-router";
 import {
   ClipboardList,
   LayoutDashboard,
   Package,
   Scissors,
-  Shield,
   Shirt,
   ShoppingBag,
   Users,
-  UsersRound,
 } from "lucide-react";
 import { OrganizationSwitcher } from "#/components/auth/organization/organization-switcher";
 import { ThemeToggle } from "#/components/theme-toggle";
@@ -26,7 +23,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "#/components/ui/sidebar";
-import { authClient } from "#/lib/auth/client";
 
 type NavItem = {
   label: string;
@@ -64,8 +60,6 @@ const navItems: { group: string; items: NavItem[] }[] = [
 const SidebarLink = createLink(SidebarMenuButton);
 
 export function AppSidebar() {
-  const { data: session } = useSession<typeof authClient>(authClient);
-  const isAdmin = session?.user?.role === "admin";
   const { isMobile, setOpenMobile } = useSidebar();
 
   function closeIfMobile() {
@@ -105,39 +99,6 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
-        {isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administración</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarLink
-                    to="/app/admin/$path"
-                    params={{ path: "whitelist" }}
-                    activeOptions={{ exact: true }}
-                    activeProps={{ isActive: true }}
-                    onClick={closeIfMobile}
-                  >
-                    <Shield className="size-4" />
-                    <span>Usuarios Permitidos</span>
-                  </SidebarLink>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarLink
-                    to="/app/admin/$path"
-                    params={{ path: "users" }}
-                    activeOptions={{ exact: true }}
-                    activeProps={{ isActive: true }}
-                    onClick={closeIfMobile}
-                  >
-                    <UsersRound className="size-4" />
-                    <span>Usuarios</span>
-                  </SidebarLink>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
       <SidebarFooter>
         <ThemeToggle />
