@@ -1,7 +1,58 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { Db } from "#/db/client";
 import * as schema from "#/db/schema";
+import {
+  quotationBySlugQuery,
+  quotationsCountQuery,
+  quotationsQuery,
+} from "#/lib/services/quotations";
 import { generateSequentialCode } from "#/server/application/codes";
+
+export type ListQuotationsInput = { page: number; pageSize: number };
+
+export async function listQuotations(db: Db, organizationId: string, params: ListQuotationsInput) {
+  const [items, total] = await Promise.all([
+    quotationsQuery(db, { ...params, organizationId }),
+    quotationsCountQuery(db, { ...params, organizationId }),
+  ]);
+
+  return { items, total, page: params.page, pageSize: params.pageSize };
+}
+
+export async function getQuotation(db: Db, organizationId: string, id: string) {
+  const [quotation] = await db
+    .select()
+    .from(schema.quotation)
+    .where(and(eq(schema.quotation.id, id), eq(schema.quotation.organizationId, organizationId)));
+
+  if (!quotation) throw new Error("Cotización no encontrada");
+
+  const lines = await loadQuotationLines(db, quotation.id);
+
+  return { ...quotation, lines };
+}
+
+export async function getQuotationBySlug(db: Db, organizationId: string, slug: string) {
+  const [quotation] = await quotationBySlugQuery(db, { slug, organizationId });
+
+  if (!quotation) throw new Error("Cotización no encontrada");
+
+  const [lines, [relatedOrder]] = await Promise.all([
+    loadQuotationLines(db, quotation.id),
+    db
+      .select({ code: schema.order.code, status: schema.order.status })
+      .from(schema.order)
+      .where(eq(schema.order.quotationId, quotation.id)),
+  ]);
+
+  return { ...quotation, lines, relatedOrder: relatedOrder ?? null };
+}
+
+export async function deleteQuotation(db: Db, organizationId: string, id: string) {
+  await db
+    .delete(schema.quotation)
+    .where(and(eq(schema.quotation.id, id), eq(schema.quotation.organizationId, organizationId)));
+}
 
 export async function loadQuotationLines(db: Db, quotationId: string) {
   const lines = await db

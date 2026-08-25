@@ -1,16 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq } from "drizzle-orm";
 import * as z from "zod";
-import * as schema from "#/db/schema";
 import { organizationMiddleware } from "#/lib/auth/functions";
 import {
-  quotationBySlugQuery,
-  quotationsCountQuery,
-  quotationsQuery,
-} from "#/lib/services/quotations";
-import {
   createQuotation as createQuotationUseCase,
-  loadQuotationLines,
+  deleteQuotation as deleteQuotationUseCase,
+  getQuotationBySlug as getQuotationBySlugUseCase,
+  getQuotation as getQuotationUseCase,
+  listQuotations as listQuotationsUseCase,
 } from "../application/quotations";
 
 // ── Queries ──────────────────────────────────────────────
@@ -23,65 +19,23 @@ export const listQuotations = createServerFn({ method: "GET" })
     }),
   )
   .middleware([organizationMiddleware])
-  .handler(async ({ data: { page, pageSize }, context: { activeOrganizationId, db } }) => {
-    const [items, total] = await Promise.all([
-      quotationsQuery(db, {
-        page,
-        pageSize,
-        organizationId: activeOrganizationId,
-      }),
-      quotationsCountQuery(db, {
-        page,
-        pageSize,
-        organizationId: activeOrganizationId,
-      }),
-    ]);
-
-    return { items, total, page, pageSize };
-  });
+  .handler(async ({ data, context: { activeOrganizationId, db } }) =>
+    listQuotationsUseCase(db, activeOrganizationId, data),
+  );
 
 export const getQuotation = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .validator(z.object({ id: z.uuid() }))
-  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
-    const [quotation] = await db
-      .select()
-      .from(schema.quotation)
-      .where(
-        and(
-          eq(schema.quotation.id, data.id),
-          eq(schema.quotation.organizationId, activeOrganizationId),
-        ),
-      );
-
-    if (!quotation) throw new Error("Cotización no encontrada");
-
-    const lines = await loadQuotationLines(db, quotation.id);
-
-    return { ...quotation, lines };
-  });
+  .handler(async ({ data, context: { activeOrganizationId, db } }) =>
+    getQuotationUseCase(db, activeOrganizationId, data.id),
+  );
 
 export const getQuotationBySlug = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .validator(z.object({ slug: z.string() }))
-  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
-    const [quotation] = await quotationBySlugQuery(db, {
-      slug: data.slug,
-      organizationId: activeOrganizationId,
-    });
-
-    if (!quotation) throw new Error("Cotización no encontrada");
-
-    const [lines, [relatedOrder]] = await Promise.all([
-      loadQuotationLines(db, quotation.id),
-      db
-        .select({ code: schema.order.code, status: schema.order.status })
-        .from(schema.order)
-        .where(eq(schema.order.quotationId, quotation.id)),
-    ]);
-
-    return { ...quotation, lines, relatedOrder: relatedOrder ?? null };
-  });
+  .handler(async ({ data, context: { activeOrganizationId, db } }) =>
+    getQuotationBySlugUseCase(db, activeOrganizationId, data.slug),
+  );
 
 // ── Mutations ────────────────────────────────────────────
 
@@ -101,10 +55,6 @@ export const deleteQuotation = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])
   .validator(z.object({ id: z.uuid() }))
   .handler(async ({ data: { id }, context: { activeOrganizationId, db } }) => {
-    await db
-      .delete(schema.quotation)
-      .where(
-        and(eq(schema.quotation.id, id), eq(schema.quotation.organizationId, activeOrganizationId)),
-      );
+    await deleteQuotationUseCase(db, activeOrganizationId, id);
     return { success: true };
   });

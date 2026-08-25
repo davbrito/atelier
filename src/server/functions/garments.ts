@@ -1,31 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
 import * as z from "zod";
-import { client, garment, order } from "#/db/schema";
 import { organizationMiddleware } from "#/lib/auth/functions";
-import { moveGarmentStage as moveGarmentStageUseCase } from "../application/garments";
+import {
+  listKanbanGarments as listKanbanGarmentsUseCase,
+  moveGarmentStage as moveGarmentStageUseCase,
+} from "../application/garments";
 
 // ── Queries ──────────────────────────────────────────────
 
 export const listKanbanGarments = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .handler(async ({ context: { activeOrganizationId, db } }) => {
-    const items = await db
-      .select({
-        id: garment.id,
-        name: garment.name,
-        stageId: garment.stageId,
-        orderId: order.id,
-        orderCode: order.code,
-        priority: order.priority,
-        dueDate: order.dueDate,
-        clientName: client.name,
-      })
-      .from(garment)
-      .innerJoin(order, eq(garment.orderId, order.id))
-      .leftJoin(client, eq(order.clientId, client.id))
-      .where(eq(order.organizationId, activeOrganizationId));
-
+    const items = await listKanbanGarmentsUseCase(db, activeOrganizationId);
     return { items };
   });
 

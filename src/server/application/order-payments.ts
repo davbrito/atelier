@@ -1,7 +1,18 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import type { Db } from "#/db/client";
 import { order, orderPayment } from "#/db/schema";
 import type { PAYMENT_TYPE_CODES } from "#/lib/constants/payment-types";
+import { storageUrl } from "#/lib/utils";
+
+export async function listOrderPayments(db: Db, organizationId: string, orderId: string) {
+  const rows = await db
+    .select()
+    .from(orderPayment)
+    .where(and(eq(orderPayment.orderId, orderId), eq(orderPayment.organizationId, organizationId)))
+    .orderBy(desc(orderPayment.paidAt));
+
+  return rows.map((p) => ({ ...p, image: p.image && storageUrl(p.image) }));
+}
 
 export type CreateOrderPaymentInput = {
   orderId: string;
@@ -57,4 +68,15 @@ export async function createOrderPayment(
     .returning();
 
   return newPayment;
+}
+
+export async function deleteOrderPayment(db: Db, organizationId: string, id: string) {
+  const [deleted] = await db
+    .delete(orderPayment)
+    .where(and(eq(orderPayment.id, id), eq(orderPayment.organizationId, organizationId)))
+    .returning({ image: orderPayment.image });
+
+  if (!deleted) throw new Error("Pago no encontrado");
+
+  return deleted;
 }

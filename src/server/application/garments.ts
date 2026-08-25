@@ -1,6 +1,24 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import type { Db } from "#/db/client";
-import { garment, garmentStage, order } from "#/db/schema";
+import { client, garment, garmentStage, order } from "#/db/schema";
+
+export async function listKanbanGarments(db: Db, organizationId: string) {
+  return db
+    .select({
+      id: garment.id,
+      name: garment.name,
+      stageId: garment.stageId,
+      orderId: order.id,
+      orderCode: order.code,
+      priority: order.priority,
+      dueDate: order.dueDate,
+      clientName: client.name,
+    })
+    .from(garment)
+    .innerJoin(order, eq(garment.orderId, order.id))
+    .leftJoin(client, eq(order.clientId, client.id))
+    .where(eq(order.organizationId, organizationId));
+}
 
 /**
  * Moves a garment to a stage and, if that changes the order's overall

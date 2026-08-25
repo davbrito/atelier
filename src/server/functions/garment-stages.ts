@@ -1,11 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { asc, eq } from "drizzle-orm";
 import * as z from "zod";
-import { garmentStage } from "#/db/schema";
 import { organizationMiddleware } from "#/lib/auth/functions";
 import {
   createGarmentStage as createGarmentStageUseCase,
   deleteGarmentStage as deleteGarmentStageUseCase,
+  listGarmentStages as listGarmentStagesUseCase,
   reorderGarmentStages as reorderGarmentStagesUseCase,
   seedDefaultGarmentStages as seedDefaultGarmentStagesUseCase,
   updateGarmentStage as updateGarmentStageUseCase,
@@ -16,12 +15,7 @@ import {
 export const listGarmentStages = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .handler(async ({ context: { activeOrganizationId, db } }) => {
-    const items = await db
-      .select()
-      .from(garmentStage)
-      .where(eq(garmentStage.organizationId, activeOrganizationId))
-      .orderBy(asc(garmentStage.position));
-
+    const items = await listGarmentStagesUseCase(db, activeOrganizationId);
     return { items };
   });
 

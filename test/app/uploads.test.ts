@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { it } from "vitest";
-import { handleAccessUpload } from "../src/lib/uploads.ts";
+import { handleAccessUpload } from "../../src/lib/uploads.ts";
 
 it("bucket uploads and etags work", async ({ expect }) => {
   let response = await handleAccessUpload(env.STORAGE, "test.jpg", null);

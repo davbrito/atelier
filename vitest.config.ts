@@ -5,7 +5,7 @@ const config = defineConfig({
   test: {
     coverage: {
       provider: "v8",
-      include: ["src/server/**"],
+      include: ["src/server/application/**"],
       reporter: ["text", "html", "lcov"],
       // No enforced thresholds yet — starting point is ~1.3% file-level
       // coverage repo-wide. Ratchet this up as test batches land instead
@@ -16,6 +16,11 @@ const config = defineConfig({
       // workerd runtime the "app" project runs under, so instrumenting it
       // crashes with ERR_METHOD_NOT_IMPLEMENTED. Business logic (the thing
       // this threshold tracks) lives in the "db" project anyway.
+      //
+      // src/server/functions/** is excluded on purpose: those are thin
+      // createServerFn wrappers that only run inside a request/workerd
+      // context, so there's no way to exercise them under this coverage
+      // run — including them would just pad the report with permanent 0%s.
     },
     projects: [
       {

@@ -1,6 +1,44 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, count, eq, ilike } from "drizzle-orm";
 import type { Db } from "#/db/client";
 import * as schema from "#/db/schema";
+
+export type ListClientsInput = { page: number; pageSize: number; search?: string };
+
+export async function listClients(db: Db, organizationId: string, params: ListClientsInput) {
+  const whereClause = and(
+    eq(schema.client.organizationId, organizationId),
+    params.search ? ilike(schema.client.name, `%${params.search}%`) : undefined,
+  );
+
+  const [items, [{ total }]] = await Promise.all([
+    db
+      .select()
+      .from(schema.client)
+      .where(whereClause)
+      .orderBy(asc(schema.client.name))
+      .limit(params.pageSize)
+      .offset((params.page - 1) * params.pageSize),
+    db.select({ total: count() }).from(schema.client).where(whereClause),
+  ]);
+
+  return { items, total, page: params.page, pageSize: params.pageSize };
+}
+
+export async function getClientById(db: Db, organizationId: string, id: string) {
+  const [client] = await db
+    .select()
+    .from(schema.client)
+    .where(and(eq(schema.client.id, id), eq(schema.client.organizationId, organizationId)));
+
+  if (!client) throw new Error("Cliente no encontrado");
+
+  const measurements = await db
+    .select()
+    .from(schema.clientMeasurement)
+    .where(eq(schema.clientMeasurement.clientId, client.id));
+
+  return { ...client, measurements };
+}
 
 export type ClientMeasurementInput = { name: string; value: number };
 

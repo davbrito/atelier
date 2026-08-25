@@ -1,13 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, count, eq, getColumns, ilike, sql } from "drizzle-orm";
 import * as z from "zod";
-import { material, materialInventoryMovement } from "#/db/schema";
 import { organizationMiddleware } from "#/lib/auth/functions";
 import { MAX_IMAGE_SIZE, storageMiddleware } from "#/lib/storage";
-import { storageUrl } from "#/lib/utils";
 import {
   createMaterial as createMaterialUseCase,
   deleteMaterial as deleteMaterialUseCase,
+  getMaterialById as getMaterialByIdUseCase,
+  listMaterials as listMaterialsUseCase,
   updateMaterial as updateMaterialUseCase,
 } from "../application/materials";
 
@@ -20,72 +19,16 @@ export const listMaterials = createServerFn({ method: "GET" })
     }),
   )
   .middleware([organizationMiddleware])
-  .handler(async ({ data: { page, pageSize, search }, context: { activeOrganizationId, db } }) => {
-    const stockSq = db
-      .select({
-        materialId: materialInventoryMovement.materialId,
-        stock: sql<string>`COALESCE(SUM(${materialInventoryMovement.delta}), '0')`.as("stock"),
-      })
-      .from(materialInventoryMovement)
-      .where(eq(materialInventoryMovement.organizationId, activeOrganizationId))
-      .groupBy(materialInventoryMovement.materialId)
-      .as("stock_sq");
-
-    const whereClause = and(
-      eq(material.organizationId, activeOrganizationId),
-      search ? ilike(material.name, `%${search}%`) : undefined,
-    );
-
-    const [items, [{ total }]] = await Promise.all([
-      db
-        .select({
-          ...getColumns(material),
-          currentStock: sql<string>`COALESCE(${stockSq.stock}, '0')`,
-        })
-        .from(material)
-        .leftJoin(stockSq, eq(material.id, stockSq.materialId))
-        .where(whereClause)
-        .orderBy(asc(material.name))
-        .limit(pageSize)
-        .offset((page - 1) * pageSize),
-      db.select({ total: count() }).from(material).where(whereClause),
-    ]);
-
-    return {
-      items: items.map((item) => ({ ...item, image: item.image && storageUrl(item.image) })),
-      total,
-      page,
-      pageSize,
-    };
-  });
+  .handler(async ({ data, context: { activeOrganizationId, db } }) =>
+    listMaterialsUseCase(db, activeOrganizationId, data),
+  );
 
 export const getMaterialById = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .validator(z.object({ id: z.uuid() }))
-  .handler(async ({ data: { id }, context: { activeOrganizationId, db } }) => {
-    const stockSq = db
-      .select({
-        materialId: materialInventoryMovement.materialId,
-        stock: sql<string>`COALESCE(SUM(${materialInventoryMovement.delta}), '0')`.as("stock"),
-      })
-      .from(materialInventoryMovement)
-      .where(eq(materialInventoryMovement.organizationId, activeOrganizationId))
-      .groupBy(materialInventoryMovement.materialId)
-      .as("stock_sq");
-
-    const [found] = await db
-      .select({
-        ...getColumns(material),
-        currentStock: sql<string>`COALESCE(${stockSq.stock}, '0')`,
-      })
-      .from(material)
-      .leftJoin(stockSq, eq(material.id, stockSq.materialId))
-      .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)));
-
-    if (!found) throw new Error("Material no encontrado");
-
-    return { ...found, image: found.image && storageUrl(found.image) };
-  });
+  .handler(async ({ data: { id }, context: { activeOrganizationId, db } }) =>
+    getMaterialByIdUseCase(db, activeOrganizationId, id),
+  );
 
 export const createMaterial = createServerFn({ method: "POST" })
   .validator(

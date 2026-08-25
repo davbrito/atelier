@@ -1,32 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq } from "drizzle-orm";
 import * as z from "zod";
-import { orderPayment } from "#/db/schema";
 import { organizationMiddleware } from "#/lib/auth/functions";
 import { PAYMENT_TYPE_CODES } from "#/lib/constants/payment-types";
 import { MAX_IMAGE_SIZE, storageMiddleware } from "#/lib/storage";
-import { storageUrl } from "#/lib/utils";
-import { createOrderPayment as createOrderPaymentUseCase } from "../application/order-payments";
+import {
+  createOrderPayment as createOrderPaymentUseCase,
+  deleteOrderPayment as deleteOrderPaymentUseCase,
+  listOrderPayments as listOrderPaymentsUseCase,
+} from "../application/order-payments";
 
 // ── Queries ──────────────────────────────────────────────
 
 export const listOrderPayments = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .validator(z.object({ orderId: z.uuid() }))
-  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
-    const rows = await db
-      .select()
-      .from(orderPayment)
-      .where(
-        and(
-          eq(orderPayment.orderId, data.orderId),
-          eq(orderPayment.organizationId, activeOrganizationId),
-        ),
-      )
-      .orderBy(desc(orderPayment.paidAt));
-
-    return rows.map((p) => ({ ...p, image: p.image && storageUrl(p.image) }));
-  });
+  .handler(async ({ data, context: { activeOrganizationId, db } }) =>
+    listOrderPaymentsUseCase(db, activeOrganizationId, data.orderId),
+  );
 
 // ── Mutations ────────────────────────────────────────────
 
@@ -73,14 +63,7 @@ export const deleteOrderPayment = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware, storageMiddleware])
   .validator(z.object({ id: z.uuid() }))
   .handler(async ({ data, context: { activeOrganizationId, db, removeItemSafe } }) => {
-    const [deleted] = await db
-      .delete(orderPayment)
-      .where(
-        and(eq(orderPayment.id, data.id), eq(orderPayment.organizationId, activeOrganizationId)),
-      )
-      .returning({ image: orderPayment.image });
-
-    if (!deleted) throw new Error("Pago no encontrado");
+    const deleted = await deleteOrderPaymentUseCase(db, activeOrganizationId, data.id);
 
     if (deleted.image) {
       await removeItemSafe(deleted.image);

@@ -1,12 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, count, eq, ilike } from "drizzle-orm";
 import * as z from "zod";
-import * as schema from "#/db/schema";
 import { organizationMiddleware } from "#/lib/auth/functions";
 import { cacheMeasurementNames } from "#/server/application/measurement-names";
 import {
   createClient as createClientUseCase,
   deleteClient as deleteClientUseCase,
+  getClientById as getClientByIdUseCase,
+  listClients as listClientsUseCase,
   updateClient as updateClientUseCase,
 } from "../application/clients";
 
@@ -36,46 +36,16 @@ export const listClients = createServerFn({ method: "GET" })
     }),
   )
   .middleware([organizationMiddleware])
-  .handler(async ({ data: { page, pageSize, search }, context: { activeOrganizationId, db } }) => {
-    const whereClause = and(
-      eq(schema.client.organizationId, activeOrganizationId),
-      search ? ilike(schema.client.name, `%${search}%`) : undefined,
-    );
-
-    const [items, [{ total }]] = await Promise.all([
-      db
-        .select()
-        .from(schema.client)
-        .where(whereClause)
-        .orderBy(asc(schema.client.name))
-        .limit(pageSize)
-        .offset((page - 1) * pageSize),
-      db.select({ total: count() }).from(schema.client).where(whereClause),
-    ]);
-
-    return { items, total, page, pageSize };
-  });
+  .handler(async ({ data, context: { activeOrganizationId, db } }) =>
+    listClientsUseCase(db, activeOrganizationId, data),
+  );
 
 export const getClientById = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .validator(z.object({ id: z.uuid() }))
-  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
-    const [client] = await db
-      .select()
-      .from(schema.client)
-      .where(
-        and(eq(schema.client.id, data.id), eq(schema.client.organizationId, activeOrganizationId)),
-      );
-
-    if (!client) throw new Error("Cliente no encontrado");
-
-    const measurements = await db
-      .select()
-      .from(schema.clientMeasurement)
-      .where(eq(schema.clientMeasurement.clientId, client.id));
-
-    return { ...client, measurements };
-  });
+  .handler(async ({ data, context: { activeOrganizationId, db } }) =>
+    getClientByIdUseCase(db, activeOrganizationId, data.id),
+  );
 
 // ── Mutations ────────────────────────────────────────────
 

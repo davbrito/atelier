@@ -1,6 +1,69 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, count, eq, getColumns, ilike, sql } from "drizzle-orm";
 import type { Db } from "#/db/client";
-import { material, materialPriceHistory } from "#/db/schema";
+import { material, materialInventoryMovement, materialPriceHistory } from "#/db/schema";
+import { storageUrl } from "#/lib/utils";
+
+function stockSubquery(db: Db, organizationId: string) {
+  return db
+    .select({
+      materialId: materialInventoryMovement.materialId,
+      stock: sql<string>`COALESCE(SUM(${materialInventoryMovement.delta}), '0')`.as("stock"),
+    })
+    .from(materialInventoryMovement)
+    .where(eq(materialInventoryMovement.organizationId, organizationId))
+    .groupBy(materialInventoryMovement.materialId)
+    .as("stock_sq");
+}
+
+export type ListMaterialsInput = { page: number; pageSize: number; search?: string };
+
+export async function listMaterials(db: Db, organizationId: string, params: ListMaterialsInput) {
+  const stockSq = stockSubquery(db, organizationId);
+
+  const whereClause = and(
+    eq(material.organizationId, organizationId),
+    params.search ? ilike(material.name, `%${params.search}%`) : undefined,
+  );
+
+  const [items, [{ total }]] = await Promise.all([
+    db
+      .select({
+        ...getColumns(material),
+        currentStock: sql<string>`COALESCE(${stockSq.stock}, '0')`,
+      })
+      .from(material)
+      .leftJoin(stockSq, eq(material.id, stockSq.materialId))
+      .where(whereClause)
+      .orderBy(asc(material.name))
+      .limit(params.pageSize)
+      .offset((params.page - 1) * params.pageSize),
+    db.select({ total: count() }).from(material).where(whereClause),
+  ]);
+
+  return {
+    items: items.map((item) => ({ ...item, image: item.image && storageUrl(item.image) })),
+    total,
+    page: params.page,
+    pageSize: params.pageSize,
+  };
+}
+
+export async function getMaterialById(db: Db, organizationId: string, id: string) {
+  const stockSq = stockSubquery(db, organizationId);
+
+  const [found] = await db
+    .select({
+      ...getColumns(material),
+      currentStock: sql<string>`COALESCE(${stockSq.stock}, '0')`,
+    })
+    .from(material)
+    .leftJoin(stockSq, eq(material.id, stockSq.materialId))
+    .where(and(eq(material.id, id), eq(material.organizationId, organizationId)));
+
+  if (!found) throw new Error("Material no encontrado");
+
+  return { ...found, image: found.image && storageUrl(found.image) };
+}
 
 export type CreateMaterialInput = {
   name: string;

@@ -1,11 +1,121 @@
 import slugify from "@sindresorhus/slugify";
 import { generateRandomString } from "better-auth/crypto";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq, getColumns, ilike, sql } from "drizzle-orm";
 import type { Db } from "#/db/client";
 import * as schema from "#/db/schema";
+import { storageUrl } from "#/lib/utils";
 
 export type BudgetLineInput = { materialId: string; quantity: string };
 export type BudgetOperationInput = { operationId: string; durationMinutes: number };
+
+export type ListBudgetsInput = { page: number; pageSize: number; search?: string };
+
+export async function listBudgets(db: Db, organizationId: string, params: ListBudgetsInput) {
+  const whereClause = and(
+    eq(schema.budget.organizationId, organizationId),
+    params.search ? ilike(schema.budget.name, `%${params.search}%`) : undefined,
+  );
+
+  const [rows, total] = await Promise.all([
+    db
+      .select()
+      .from(schema.budget)
+      .where(whereClause)
+      .orderBy(asc(schema.budget.name))
+      .limit(params.pageSize)
+      .offset((params.page - 1) * params.pageSize),
+    db.$count(schema.budget, whereClause),
+  ]);
+
+  const items = rows.map((b) => ({ ...b, image: b.image && storageUrl(b.image) }));
+
+  return { items, total, page: params.page, pageSize: params.pageSize };
+}
+
+async function loadBudgetLines(db: Db, budgetId: string) {
+  const materials = await db
+    .select({
+      ...getColumns(schema.budgetMaterial),
+      name: schema.material.name,
+      unit: schema.material.unit,
+      currentPrice: schema.material.currentPrice,
+    })
+    .from(schema.budgetMaterial)
+    .innerJoin(schema.material, eq(schema.material.id, schema.budgetMaterial.materialId))
+    .where(eq(schema.budgetMaterial.budgetId, budgetId));
+
+  const operations = await db
+    .select({
+      ...getColumns(schema.budgetOperation),
+      name: schema.operation.name,
+    })
+    .from(schema.budgetOperation)
+    .innerJoin(schema.operation, eq(schema.operation.id, schema.budgetOperation.operationId))
+    .where(eq(schema.budgetOperation.budgetId, budgetId));
+
+  return { materials, operations };
+}
+
+export async function getBudgetBySlug(db: Db, organizationId: string, slug: string) {
+  const budget = await db.query.budget.findFirst({
+    where: { slug, organizationId },
+  });
+
+  if (!budget) throw new Error("Presupuesto no encontrado");
+
+  const materials = await db
+    .select({
+      ...getColumns(schema.budgetMaterial),
+      name: schema.material.name,
+      unit: schema.material.unit,
+      currentPrice: schema.material.currentPrice,
+      amount: sql<string>`${schema.budgetMaterial.quantity} * ${schema.material.currentPrice}`.as(
+        "amount",
+      ),
+    })
+    .from(schema.budgetMaterial)
+    .innerJoin(schema.material, eq(schema.material.id, schema.budgetMaterial.materialId))
+    .where(eq(schema.budgetMaterial.budgetId, budget.id));
+
+  const operations = await db
+    .select({
+      ...getColumns(schema.budgetOperation),
+      name: schema.operation.name,
+      amount:
+        sql<string>`(${schema.budgetOperation.durationMinutes} / 60.0) * ${schema.budget.hourlyRate}`.as(
+          "amount",
+        ),
+    })
+    .from(schema.budgetOperation)
+    .innerJoin(schema.operation, eq(schema.operation.id, schema.budgetOperation.operationId))
+    .innerJoin(schema.budget, eq(schema.budget.id, schema.budgetOperation.budgetId))
+    .where(eq(schema.budgetOperation.budgetId, budget.id));
+
+  return {
+    ...budget,
+    image: budget.image && storageUrl(budget.image),
+    materials,
+    operations,
+  };
+}
+
+export async function getBudgetById(db: Db, organizationId: string, id: string) {
+  const [budget] = await db
+    .select()
+    .from(schema.budget)
+    .where(and(eq(schema.budget.id, id), eq(schema.budget.organizationId, organizationId)));
+
+  if (!budget) throw new Error("Presupuesto no encontrado");
+
+  const { materials, operations } = await loadBudgetLines(db, id);
+
+  return {
+    ...budget,
+    image: budget.image && storageUrl(budget.image),
+    materials,
+    operations,
+  };
+}
 
 export type CreateBudgetInput = {
   name: string;

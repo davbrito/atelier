@@ -1,13 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, getColumns, ilike, sql } from "drizzle-orm";
 import * as z from "zod";
-import * as schema from "#/db/schema";
 import { organizationMiddleware } from "#/lib/auth/functions";
 import { MAX_IMAGE_SIZE, storageMiddleware } from "#/lib/storage";
-import { storageUrl } from "#/lib/utils";
 import {
   createBudget as createBudgetUseCase,
   deleteBudget as deleteBudgetUseCase,
+  getBudgetById as getBudgetByIdUseCase,
+  getBudgetBySlug as getBudgetBySlugUseCase,
+  listBudgets as listBudgetsUseCase,
   updateBudget as updateBudgetUseCase,
 } from "../application/budgets";
 
@@ -47,117 +47,23 @@ export const listBudgets = createServerFn({ method: "GET" })
     }),
   )
   .middleware([organizationMiddleware])
-  .handler(async ({ data: { page, pageSize, search }, context: { activeOrganizationId, db } }) => {
-    const whereClause = and(
-      eq(schema.budget.organizationId, activeOrganizationId),
-      search ? ilike(schema.budget.name, `%${search}%`) : undefined,
-    );
-
-    const [rows, total] = await Promise.all([
-      db
-        .select()
-        .from(schema.budget)
-        .where(whereClause)
-        .orderBy(asc(schema.budget.name))
-        .limit(pageSize)
-        .offset((page - 1) * pageSize),
-      db.$count(schema.budget, whereClause),
-    ]);
-
-    const items = rows.map((b) => ({ ...b, image: b.image && storageUrl(b.image) }));
-
-    return { items, total, page, pageSize };
-  });
+  .handler(async ({ data, context: { activeOrganizationId, db } }) =>
+    listBudgetsUseCase(db, activeOrganizationId, data),
+  );
 
 export const getBudgetBySlug = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .validator(z.object({ slug: z.string() }))
-  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
-    const budget = await db.query.budget.findFirst({
-      where: {
-        slug: data.slug,
-        organizationId: activeOrganizationId,
-      },
-    });
-
-    if (!budget) throw new Error("Presupuesto no encontrado");
-
-    const mats = await db
-      .select({
-        ...getColumns(schema.budgetMaterial),
-        name: schema.material.name,
-        unit: schema.material.unit,
-        currentPrice: schema.material.currentPrice,
-        amount: sql<string>`${schema.budgetMaterial.quantity} * ${schema.material.currentPrice}`.as(
-          "amount",
-        ),
-      })
-      .from(schema.budgetMaterial)
-      .innerJoin(schema.material, eq(schema.material.id, schema.budgetMaterial.materialId))
-      .where(eq(schema.budgetMaterial.budgetId, budget.id));
-
-    const ops = await db
-      .select({
-        ...getColumns(schema.budgetOperation),
-        name: schema.operation.name,
-        amount:
-          sql<string>`(${schema.budgetOperation.durationMinutes} / 60.0) * ${schema.budget.hourlyRate}`.as(
-            "amount",
-          ),
-      })
-      .from(schema.budgetOperation)
-      .innerJoin(schema.operation, eq(schema.operation.id, schema.budgetOperation.operationId))
-      .innerJoin(schema.budget, eq(schema.budget.id, schema.budgetOperation.budgetId))
-      .where(eq(schema.budgetOperation.budgetId, budget.id));
-
-    return {
-      ...budget,
-      image: budget.image && storageUrl(budget.image),
-      materials: mats,
-      operations: ops,
-    };
-  });
+  .handler(async ({ data, context: { activeOrganizationId, db } }) =>
+    getBudgetBySlugUseCase(db, activeOrganizationId, data.slug),
+  );
 
 export const getBudgetById = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])
   .validator(z.object({ id: z.uuid() }))
-  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
-    const [budget] = await db
-      .select()
-      .from(schema.budget)
-      .where(
-        and(eq(schema.budget.id, data.id), eq(schema.budget.organizationId, activeOrganizationId)),
-      );
-
-    if (!budget) throw new Error("Presupuesto no encontrado");
-
-    const mats = await db
-      .select({
-        ...getColumns(schema.budgetMaterial),
-        name: schema.material.name,
-        unit: schema.material.unit,
-        currentPrice: schema.material.currentPrice,
-      })
-      .from(schema.budgetMaterial)
-      .innerJoin(schema.material, eq(schema.material.id, schema.budgetMaterial.materialId))
-      .where(eq(schema.budgetMaterial.budgetId, data.id));
-
-    const ops = await db
-      .select({
-        ...getColumns(schema.budgetOperation),
-        name: schema.operation.name,
-      })
-      .from(schema.budgetOperation)
-      .innerJoin(schema.operation, eq(schema.operation.id, schema.budgetOperation.operationId))
-      .where(eq(schema.budgetOperation.budgetId, data.id));
-
-    return {
-      ...budget,
-      image: budget.image && storageUrl(budget.image),
-      materials: mats,
-      operations: ops,
-    };
-  });
+  .handler(async ({ data, context: { activeOrganizationId, db } }) =>
+    getBudgetByIdUseCase(db, activeOrganizationId, data.id),
+  );
 
 // ── Mutations ────────────────────────────────────────────
 

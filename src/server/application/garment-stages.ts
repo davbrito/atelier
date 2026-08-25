@@ -1,7 +1,15 @@
-import { and, count, eq, inArray } from "drizzle-orm";
+import { and, asc, count, eq, inArray } from "drizzle-orm";
 import type { Db } from "#/db/client";
 import { garmentStage } from "#/db/schema";
 import { DEFAULT_GARMENT_STAGES } from "#/lib/constants/garment-stages";
+
+export async function listGarmentStages(db: Db, organizationId: string) {
+  return db
+    .select()
+    .from(garmentStage)
+    .where(eq(garmentStage.organizationId, organizationId))
+    .orderBy(asc(garmentStage.position));
+}
 
 export type CreateGarmentStageInput = {
   name: string;
