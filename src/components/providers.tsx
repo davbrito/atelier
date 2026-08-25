@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { esES } from "#/i18n/auth";
 import { adminPlugin } from "#/lib/auth/admin-plugin.ts";
 import { authClient } from "#/lib/auth/client";
+import { lastLoginMethodPlugin } from "#/lib/auth/last-login-method-plugin";
 import { organizationPlugin } from "#/lib/auth/organization-plugin";
 import { passkeyPlugin } from "#/lib/auth/passkey-plugin";
 import { whitelistPlugin } from "#/lib/auth-custom/plugins/whitelist-plugin";
@@ -29,6 +30,7 @@ export function Providers({ children }: { children: ReactNode }) {
         oneTapPlugin(),
         adminPlugin(),
         whitelistPlugin(),
+        lastLoginMethodPlugin(),
       ]}
       Link={({ href, ...props }) => <Link to={href} {...props} />}
       locale={esES}

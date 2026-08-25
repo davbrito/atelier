@@ -7,14 +7,14 @@ settings:
 catalogs:
   auth:
     '@better-auth-ui/core':
-      specifier: 1.7.12
-      version: 1.7.12
+      specifier: 1.7.14
+      version: 1.7.14
     '@better-auth-ui/locales':
-      specifier: 1.7.12
-      version: 1.7.12
+      specifier: 1.7.14
+      version: 1.7.14
     '@better-auth-ui/react':
-      specifier: 1.7.12
-      version: 1.7.12
+      specifier: 1.7.14
+      version: 1.7.14
     '@better-auth/drizzle-adapter':
       specifier: 1.7.1
       version: 1.7.1
@@ -50,13 +50,13 @@ importers:
         version: 1.7.0(@date-fns/tz@1.5.0)(@types/react@19.2.18)(date-fns@4.4.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@better-auth-ui/core':
         specifier: catalog:auth
-        version: 1.7.12(2f9bd9c518ff0950d68515aaf1acd95e)
+        version: 1.7.14(2f9bd9c518ff0950d68515aaf1acd95e)
       '@better-auth-ui/locales':
         specifier: catalog:auth
-        version: 1.7.12(@better-auth-ui/core@1.7.12(2f9bd9c518ff0950d68515aaf1acd95e))
+        version: 1.7.14(@better-auth-ui/core@1.7.14(2f9bd9c518ff0950d68515aaf1acd95e))
       '@better-auth-ui/react':
         specifier: catalog:auth
-        version: 1.7.12(474823f104d9a7ee19bb082626911d1f)
+        version: 1.7.14(2b666114268f75e27b8521300a8a1362)
       '@better-auth/drizzle-adapter':
         specifier: catalog:auth
         version: 1.7.1(@better-auth/core@1.7.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.8)(kysely@0.28.17)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(drizzle-orm@1.0.0-rc.4(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(pg@8.23.0)(zod@4.4.3))
@@ -555,8 +555,8 @@ packages:
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
 
-  '@better-auth-ui/core@1.7.12':
-    resolution: {integrity: sha512-+qUo2ED4fJ97PvIkk7ZdvdzV20vuSn2jCFeAieAdqyjYOIm9CD8Il3wqN+8uR+jqv5ODxB7Yi8uycZ8ItFhkXw==}
+  '@better-auth-ui/core@1.7.14':
+    resolution: {integrity: sha512-/HspqRkvkxetvaExje3zeSk/aGGFeWYIVpRnIrQhxhld0L3Gu6H1d8hl5JqdxAbjA41fDFBWTFd0gZ+bi3htFQ==}
     peerDependencies:
       '@better-auth/agent-auth': '>=0.6.2'
       '@better-auth/api-key': 1.7.1
@@ -597,13 +597,13 @@ packages:
       autumn-js:
         optional: true
 
-  '@better-auth-ui/locales@1.7.12':
-    resolution: {integrity: sha512-iuWVGBzTQNXPoFsSdjJM9prdZnncKAHTmq7X8b15Q538NocT1UwfCBUt5UTjVLvFh+qX0MmdaoCTZbclrFk51Q==}
+  '@better-auth-ui/locales@1.7.14':
+    resolution: {integrity: sha512-NvWP/dvBDwltGnlIWxcbhrj68qyZOgkTzGU4OzY5rDC/qCd1NmYG2qKwHVEwr9kztl6TTePCnEvrcax4/vfcHQ==}
     peerDependencies:
       '@better-auth-ui/core': '*'
 
-  '@better-auth-ui/react@1.7.12':
-    resolution: {integrity: sha512-4k8g4ygCt7tg0/28CkRVLMKrROoIdiL/yVxw55/TcLHBl44Gxm3RqWvipJWJTz3dty7y5Q4CRkB13o49U9LX1A==}
+  '@better-auth-ui/react@1.7.14':
+    resolution: {integrity: sha512-CpPCRWkLwZa9u4LsK0JsS87mGfqT3r/wBwpD7IyTnnsK5UGP4+t4HhzPQnrvYyWYlJh49L1gklXCbV5UBlN0BA==}
     peerDependencies:
       '@better-auth-ui/core': '*'
       '@better-auth/api-key': 1.7.1
@@ -6677,7 +6677,7 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
-  '@better-auth-ui/core@1.7.12(2f9bd9c518ff0950d68515aaf1acd95e)':
+  '@better-auth-ui/core@1.7.14(2f9bd9c518ff0950d68515aaf1acd95e)':
     dependencies:
       '@better-auth/agent-auth': 0.6.2(@better-auth/core@1.7.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.8)(kysely@0.28.17)(nanostores@1.4.0))(better-auth@1.7.1(@opentelemetry/api@1.9.1)(@tanstack/react-start@1.168.49(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.2.5)(supports-color@10.2.2)(vite@8.2.2(@types/node@26.3.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(pg@8.23.0)(zod@4.4.3))(pg@8.23.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.13)(vitest@4.1.11)(vue@3.5.38(typescript@7.0.2)))
       '@mikkelscheike/email-provider-links': 5.2.2
@@ -6690,13 +6690,13 @@ snapshots:
       '@better-auth/oauth-provider': 1.7.1(@better-auth/core@1.7.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.8)(kysely@0.28.17)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.1(@opentelemetry/api@1.9.1)(@tanstack/react-start@1.168.49(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.2.5)(supports-color@10.2.2)(vite@8.2.2(@types/node@26.3.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(pg@8.23.0)(zod@4.4.3))(pg@8.23.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.13)(vitest@4.1.11)(vue@3.5.38(typescript@7.0.2)))(better-call@1.4.0(zod@4.4.3))
       '@better-auth/passkey': 1.7.1(@better-auth/core@1.7.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.8)(kysely@0.28.17)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.1(@opentelemetry/api@1.9.1)(@tanstack/react-start@1.168.49(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.2.5)(supports-color@10.2.2)(vite@8.2.2(@types/node@26.3.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(pg@8.23.0)(zod@4.4.3))(pg@8.23.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.13)(vitest@4.1.11)(vue@3.5.38(typescript@7.0.2)))(better-call@1.4.0(zod@4.4.3))(nanostores@1.4.0)
 
-  '@better-auth-ui/locales@1.7.12(@better-auth-ui/core@1.7.12(2f9bd9c518ff0950d68515aaf1acd95e))':
+  '@better-auth-ui/locales@1.7.14(@better-auth-ui/core@1.7.14(2f9bd9c518ff0950d68515aaf1acd95e))':
     dependencies:
-      '@better-auth-ui/core': 1.7.12(2f9bd9c518ff0950d68515aaf1acd95e)
+      '@better-auth-ui/core': 1.7.14(2f9bd9c518ff0950d68515aaf1acd95e)
 
-  '@better-auth-ui/react@1.7.12(474823f104d9a7ee19bb082626911d1f)':
+  '@better-auth-ui/react@1.7.14(2b666114268f75e27b8521300a8a1362)':
     dependencies:
-      '@better-auth-ui/core': 1.7.12(2f9bd9c518ff0950d68515aaf1acd95e)
+      '@better-auth-ui/core': 1.7.14(2f9bd9c518ff0950d68515aaf1acd95e)
       '@better-auth/api-key': 1.7.1(@better-auth/core@1.7.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.8)(kysely@0.28.17)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(better-auth@1.7.1(@opentelemetry/api@1.9.1)(@tanstack/react-start@1.168.49(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.2.5)(supports-color@10.2.2)(vite@8.2.2(@types/node@26.3.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(pg@8.23.0)(zod@4.4.3))(pg@8.23.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.13)(vitest@4.1.11)(vue@3.5.38(typescript@7.0.2)))(better-call@1.4.0(zod@4.4.3))
       '@better-auth/passkey': 1.7.1(@better-auth/core@1.7.1(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.8)(kysely@0.28.17)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.1(@opentelemetry/api@1.9.1)(@tanstack/react-start@1.168.49(crossws@0.4.6(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.2.5)(supports-color@10.2.2)(vite@8.2.2(@types/node@26.3.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)))(drizzle-kit@1.0.0-rc.4)(drizzle-orm@1.0.0-rc.4(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(pg@8.23.0)(zod@4.4.3))(pg@8.23.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.13)(vitest@4.1.11)(vue@3.5.38(typescript@7.0.2)))(better-call@1.4.0(zod@4.4.3))(nanostores@1.4.0)
       '@tanstack/query-core': 5.102.3
