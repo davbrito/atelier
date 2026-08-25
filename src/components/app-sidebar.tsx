@@ -9,6 +9,7 @@ import {
   Shirt,
   ShoppingBag,
   Users,
+  UsersRound,
 } from "lucide-react";
 import { OrganizationSwitcher } from "#/components/auth/organization/organization-switcher";
 import { ThemeToggle } from "#/components/theme-toggle";
@@ -118,6 +119,18 @@ export function AppSidebar() {
                   >
                     <Shield className="size-4" />
                     <span>Usuarios Permitidos</span>
+                  </SidebarLink>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarLink
+                    to="/app/admin/$path"
+                    params={{ path: "users" }}
+                    activeOptions={{ exact: true }}
+                    activeProps={{ isActive: true }}
+                    onClick={closeIfMobile}
+                  >
+                    <UsersRound className="size-4" />
+                    <span>Usuarios</span>
                   </SidebarLink>
                 </SidebarMenuItem>
               </SidebarMenu>
