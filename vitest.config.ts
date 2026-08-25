@@ -5,7 +5,7 @@ const config = defineConfig({
   test: {
     coverage: {
       provider: "v8",
-      include: ["src/lib/server/**"],
+      include: ["src/lib/server/**", "src/server/**"],
       reporter: ["text", "html", "lcov"],
       // No enforced thresholds yet — starting point is ~1.3% file-level
       // coverage repo-wide. Ratchet this up as test batches land instead

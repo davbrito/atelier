@@ -1,11 +1,17 @@
 import { eq } from "drizzle-orm";
 import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
 import type { Db } from "#/db/client";
-import { codeCounter, garment, order } from "#/db/schema";
-import { createOrder } from "#/server/application/orders";
+import { codeCounter, garment, order, orderPayment, quotationLine } from "#/db/schema";
+import { createOrder, getOrderPaidAmount } from "#/server/application/orders";
 import { createTestDb } from "../../helpers/create-test-db.ts";
 import { resetDb } from "../../helpers/reset-db.ts";
-import { seedBudget, seedClient, seedOrganization } from "../../helpers/seed.ts";
+import {
+  seedBudget,
+  seedClient,
+  seedOrder,
+  seedOrganization,
+  seedQuotation,
+} from "../../helpers/seed.ts";
 
 let db: Db;
 
@@ -81,5 +87,85 @@ describe("createOrder", () => {
       .from(codeCounter)
       .where(eq(codeCounter.organizationId, org.id));
     expect(counters).toHaveLength(0);
+  });
+
+  it("links the garment to a valid quotation line and ignores one from another quotation", async () => {
+    const org = await seedOrganization(db);
+    const client = await seedClient(db, org.id);
+    const budget = await seedBudget(db, org.id);
+    const quotation = await seedQuotation(db, org.id, client.id);
+    const otherQuotation = await seedQuotation(db, org.id, client.id);
+
+    const [line] = await db
+      .insert(quotationLine)
+      .values({ quotationId: quotation.id, budgetId: budget.id })
+      .returning();
+    const [otherLine] = await db
+      .insert(quotationLine)
+      .values({ quotationId: otherQuotation.id, budgetId: budget.id })
+      .returning();
+
+    const newOrder = await db.transaction((tx) =>
+      createOrder(tx, org.id, {
+        clientId: client.id,
+        quotationId: quotation.id,
+        priority: "medium",
+        garments: [
+          { budgetId: budget.id, quotationLineId: line.id, quantity: 1, unitPrice: "10.00" },
+          { budgetId: budget.id, quotationLineId: otherLine.id, quantity: 1, unitPrice: "10.00" },
+        ],
+      }),
+    );
+
+    const garments = await db
+      .select()
+      .from(garment)
+      .where(eq(garment.orderId, newOrder.id))
+      .orderBy(garment.quotationLineId);
+
+    expect(garments.find((g) => g.quotationLineId === line.id)).toBeDefined();
+    expect(garments.some((g) => g.quotationLineId === otherLine.id)).toBe(false);
+    expect(garments.some((g) => g.quotationLineId === null)).toBe(true);
+  });
+
+  it("rejects when the given quotation doesn't belong to the organization", async () => {
+    const org = await seedOrganization(db);
+    const otherOrg = await seedOrganization(db);
+    const client = await seedClient(db, org.id);
+    const budget = await seedBudget(db, org.id);
+    const otherOrgClient = await seedClient(db, otherOrg.id);
+    const quotation = await seedQuotation(db, otherOrg.id, otherOrgClient.id);
+
+    await expect(
+      db.transaction((tx) =>
+        createOrder(tx, org.id, {
+          clientId: client.id,
+          quotationId: quotation.id,
+          priority: "medium",
+          garments: [{ budgetId: budget.id, quantity: 1, unitPrice: "10.00" }],
+        }),
+      ),
+    ).rejects.toThrow(/Cotización no encontrada/);
+  });
+});
+
+describe("getOrderPaidAmount", () => {
+  it("returns 0 when the order has no payments", async () => {
+    const org = await seedOrganization(db);
+    const newOrder = await seedOrder(db, org.id, { totalAmount: "100.00" });
+
+    expect(await getOrderPaidAmount(db, newOrder.id)).toBe(0);
+  });
+
+  it("sums all payments for the order", async () => {
+    const org = await seedOrganization(db);
+    const newOrder = await seedOrder(db, org.id, { totalAmount: "100.00" });
+
+    await db.insert(orderPayment).values([
+      { organizationId: org.id, orderId: newOrder.id, method: "efectivo", amount: "30.00" },
+      { organizationId: org.id, orderId: newOrder.id, method: "zelle", amount: "20.50" },
+    ]);
+
+    expect(await getOrderPaidAmount(db, newOrder.id)).toBe(50.5);
   });
 });

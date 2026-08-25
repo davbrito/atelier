@@ -1,11 +1,23 @@
 import { eq } from "drizzle-orm";
 import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
 import type { Db } from "#/db/client";
-import { budgetMaterial, material, quotationMaterial } from "#/db/schema";
-import { createQuotation } from "#/server/application/quotations";
+import {
+  budgetMaterial,
+  budgetOperation,
+  material,
+  quotationMaterial,
+  quotationOperation,
+} from "#/db/schema";
+import { createQuotation, loadQuotationLines } from "#/server/application/quotations";
 import { createTestDb } from "../../helpers/create-test-db.ts";
 import { resetDb } from "../../helpers/reset-db.ts";
-import { seedBudget, seedClient, seedMaterial, seedOrganization } from "../../helpers/seed.ts";
+import {
+  seedBudget,
+  seedClient,
+  seedMaterial,
+  seedOperation,
+  seedOrganization,
+} from "../../helpers/seed.ts";
 
 let db: Db;
 
@@ -90,5 +102,74 @@ describe("createQuotation", () => {
         createQuotation(tx, org.id, { clientId: client.id, budgetIds: [budget.id] }),
       ),
     ).rejects.toThrow(/Presupuesto no encontrado/);
+  });
+
+  it("freezes operations with their current name and the budget's hourly rate", async () => {
+    const org = await seedOrganization(db);
+    const client = await seedClient(db, org.id);
+    const budget = await seedBudget(db, org.id, { hourlyRate: "25.00" });
+    const op = await seedOperation(db, org.id, { name: "Bordado" });
+    await db
+      .insert(budgetOperation)
+      .values({ budgetId: budget.id, operationId: op.id, durationMinutes: 90 });
+
+    await db.transaction((tx) =>
+      createQuotation(tx, org.id, { clientId: client.id, budgetIds: [budget.id] }),
+    );
+
+    const [frozen] = await db.select().from(quotationOperation);
+    expect(frozen.frozenName).toBe("Bordado");
+    expect(frozen.frozenHourlyRate).toBe("25.00");
+    expect(frozen.durationMinutes).toBe(90);
+  });
+
+  it("rejects when a budget references an operation outside the organization's catalog", async () => {
+    const org = await seedOrganization(db);
+    const otherOrg = await seedOrganization(db);
+    const client = await seedClient(db, org.id);
+    const budget = await seedBudget(db, org.id);
+    const otherOrgOp = await seedOperation(db, otherOrg.id);
+    await db
+      .insert(budgetOperation)
+      .values({ budgetId: budget.id, operationId: otherOrgOp.id, durationMinutes: 30 });
+
+    await expect(
+      db.transaction((tx) =>
+        createQuotation(tx, org.id, { clientId: client.id, budgetIds: [budget.id] }),
+      ),
+    ).rejects.toThrow(/operación que ya no existe/);
+  });
+});
+
+describe("loadQuotationLines", () => {
+  it("returns each line with its budget info, frozen materials, and frozen operations", async () => {
+    const org = await seedOrganization(db);
+    const client = await seedClient(db, org.id);
+    const budget = await seedBudget(db, org.id, { name: "Traje", hourlyRate: "10.00" });
+    const mat = await seedMaterial(db, org.id, { currentPrice: "5.00" });
+    const op = await seedOperation(db, org.id);
+    await db
+      .insert(budgetMaterial)
+      .values({ budgetId: budget.id, materialId: mat.id, quantity: "3" });
+    await db
+      .insert(budgetOperation)
+      .values({ budgetId: budget.id, operationId: op.id, durationMinutes: 120 });
+
+    const quotation = await db.transaction((tx) =>
+      createQuotation(tx, org.id, { clientId: client.id, budgetIds: [budget.id] }),
+    );
+
+    const lines = await loadQuotationLines(db, quotation.id);
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0].budgetName).toBe("Traje");
+    expect(lines[0].materials).toHaveLength(1);
+    expect(Number(lines[0].materials[0].amount)).toBe(15);
+    expect(lines[0].operations).toHaveLength(1);
+    expect(Number(lines[0].operations[0].amount)).toBe(20);
+  });
+
+  it("returns an empty array for a quotation with no lines", async () => {
+    expect(await loadQuotationLines(db, "00000000-0000-0000-0000-000000000000")).toEqual([]);
   });
 });

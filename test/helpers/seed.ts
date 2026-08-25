@@ -1,5 +1,15 @@
 import type { Db } from "#/db/client";
-import { budget, client, material, member, order, organization, user } from "#/db/schema";
+import {
+  budget,
+  client,
+  material,
+  member,
+  operation,
+  order,
+  organization,
+  quotation,
+  user,
+} from "#/db/schema";
 
 function randomId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`;
@@ -103,6 +113,41 @@ export async function seedBudget(
       slug: overrides?.slug ?? randomId("budget"),
       name: "Test Budget",
       hourlyRate: "20.00",
+      ...overrides,
+    })
+    .returning();
+  return row;
+}
+
+export async function seedQuotation(
+  db: Db,
+  organizationId: string,
+  clientId: string,
+  overrides?: Partial<typeof quotation.$inferInsert>,
+) {
+  const [row] = await db
+    .insert(quotation)
+    .values({
+      organizationId,
+      clientId,
+      clientTitle: "Test Client",
+      slug: overrides?.slug ?? randomId("quotation"),
+      ...overrides,
+    })
+    .returning();
+  return row;
+}
+
+export async function seedOperation(
+  db: Db,
+  organizationId: string,
+  overrides?: Partial<typeof operation.$inferInsert>,
+) {
+  const [row] = await db
+    .insert(operation)
+    .values({
+      organizationId,
+      name: "Test Operation",
       ...overrides,
     })
     .returning();
