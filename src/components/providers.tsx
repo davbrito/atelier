@@ -20,6 +20,7 @@ export function Providers({ children }: { children: ReactNode }) {
       socialProviders={["google"]}
       emailAndPassword={{ requireEmailVerification: false }}
       avatar={avatarConfig}
+      basePaths={{ settings: "/app/settings" }}
       navigate={navigate}
       plugins={[passkeyPlugin(), organizationPlugin(), oneTapPlugin(), adminPlugin()]}
       Link={({ href, ...props }) => <Link to={href} {...props} />}

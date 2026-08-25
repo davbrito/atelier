@@ -9,7 +9,7 @@ const validSettingsPaths = [
   ...Object.values(organizationPlugin().viewPaths.settings),
 ];
 
-export const Route = createFileRoute("/_app/settings/$path")({
+export const Route = createFileRoute("/_app/app/settings/$path")({
   params: {
     parse: ({ path }) => {
       if (!validSettingsPaths.includes(path)) return false;
