@@ -144,7 +144,8 @@ export default function transformer(file: FileInfo, api: API, _options?: Options
       // emit a duplicate property.
       if (optionsArg) {
         for (const prop of optionsArg.properties) {
-          const key = j.ObjectProperty.check(prop) && j.Identifier.check(prop.key) ? prop.key.name : null;
+          const key =
+            j.ObjectProperty.check(prop) && j.Identifier.check(prop.key) ? prop.key.name : null;
           const existingIndex = key
             ? properties.findIndex(
                 (p) => j.ObjectProperty.check(p) && j.Identifier.check(p.key) && p.key.name === key,

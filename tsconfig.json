@@ -6,7 +6,8 @@
     "jsx": "react-jsx",
     "module": "ESNext",
     "paths": {
-      "#/*": ["./src/*"]
+      "#/*": ["./src/*"],
+      "#test/*": ["./test/*"]
     },
     "lib": ["ES2025", "DOM", "DOM.Iterable"],
     "types": ["./worker-configuration.d.ts", "node", "vite/client"],
