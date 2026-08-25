@@ -1,7 +1,7 @@
 import { eq, sum } from "drizzle-orm";
 import type { Db } from "#/db/client";
 import { budget, garment, order, orderPayment, quotationLine } from "#/db/schema";
-import { generateSequentialCode } from "#/lib/server/codes";
+import { generateSequentialCode } from "#/server/application/codes";
 
 /** Total amount paid so far for an order, across all its payments. */
 export async function getOrderPaidAmount(db: Db, orderId: string): Promise<number> {

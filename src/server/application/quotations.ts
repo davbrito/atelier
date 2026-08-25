@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import type { Db } from "#/db/client";
 import * as schema from "#/db/schema";
-import { generateSequentialCode } from "#/lib/server/codes";
+import { generateSequentialCode } from "#/server/application/codes";
 
 export async function loadQuotationLines(db: Db, quotationId: string) {
   const lines = await db

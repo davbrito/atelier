@@ -22,7 +22,7 @@ import {
   quotationOperation,
 } from "#/db/schema";
 import { DEFAULT_GARMENT_STAGES } from "#/lib/constants/garment-stages";
-import { generateSequentialCode } from "#/lib/server/codes";
+import { generateSequentialCode } from "#/server/application/codes";
 
 // Unlike the app runtime (Cloudflare Workers via Hyperdrive), a plain Node
 // script must explicitly connect the pg Client before issuing queries.

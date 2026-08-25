@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
 import type { Db } from "../../../src/db/client.ts";
-import { generateSequentialCode } from "../../../src/lib/server/codes.ts";
+import { generateSequentialCode } from "../../../src/server/application/codes.ts";
 import { createTestDb } from "../../helpers/create-test-db.ts";
 import { resetDb } from "../../helpers/reset-db.ts";
 import { seedOrganization } from "../../helpers/seed.ts";

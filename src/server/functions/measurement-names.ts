@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { organizationMiddleware } from "../auth/functions";
-import { cacheMeasurementNames, readNames } from "./measurement-names-cache";
+import { organizationMiddleware } from "#/lib/auth/functions";
+import { cacheMeasurementNames, readNames } from "../application/measurement-names";
 
 export const listMeasurementNames = createServerFn({ method: "GET" })
   .middleware([organizationMiddleware])

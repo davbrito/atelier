@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authMiddleware, validateSession } from "#/lib/auth/functions";
-import { canAccessImage } from "#/lib/server/image-access";
 import { handleAccessUpload } from "#/lib/uploads";
+import { canAccessImage } from "#/server/application/image-access";
 
 export const Route = createFileRoute("/uploads/$")({
   server: {

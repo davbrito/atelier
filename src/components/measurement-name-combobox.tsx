@@ -8,7 +8,7 @@ import {
   AutocompleteItem,
   AutocompleteList,
 } from "#/components/ui/autocomplete";
-import { listMeasurementNames } from "#/lib/server/measurement-names";
+import { listMeasurementNames } from "#/server/functions/measurement-names";
 
 type MeasurementNameComboboxProps = {
   value: string;

@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
 import type { Db } from "#/db/client";
-import { canAccessImage } from "#/lib/server/image-access";
+import { canAccessImage } from "#/server/application/image-access";
 import { createTestDb } from "../../helpers/create-test-db.ts";
 import { resetDb } from "../../helpers/reset-db.ts";
 import { seedMaterial, seedMember, seedOrganization, seedUser } from "../../helpers/seed.ts";

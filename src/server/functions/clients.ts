@@ -3,7 +3,7 @@ import { and, asc, count, eq, ilike } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
 import { organizationMiddleware } from "#/lib/auth/functions";
-import { cacheMeasurementNames } from "#/lib/server/measurement-names-cache";
+import { cacheMeasurementNames } from "#/server/application/measurement-names";
 import {
   createClient as createClientUseCase,
   deleteClient as deleteClientUseCase,
