@@ -1,10 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, count, eq, getColumns, ilike, sql } from "drizzle-orm";
 import * as z from "zod";
-import { material, materialInventoryMovement, materialPriceHistory } from "#/db/schema";
-import { organizationMiddleware } from "../auth/functions";
-import { MAX_IMAGE_SIZE, storageMiddleware } from "../storage";
-import { storageUrl } from "../utils";
+import { material, materialInventoryMovement } from "#/db/schema";
+import { organizationMiddleware } from "#/lib/auth/functions";
+import { MAX_IMAGE_SIZE, storageMiddleware } from "#/lib/storage";
+import { storageUrl } from "#/lib/utils";
+import {
+  createMaterial as createMaterialUseCase,
+  deleteMaterial as deleteMaterialUseCase,
+  updateMaterial as updateMaterialUseCase,
+} from "../application/materials";
 
 export const listMaterials = createServerFn({ method: "GET" })
   .validator(
@@ -16,7 +21,6 @@ export const listMaterials = createServerFn({ method: "GET" })
   )
   .middleware([organizationMiddleware])
   .handler(async ({ data: { page, pageSize, search }, context: { activeOrganizationId, db } }) => {
-    console.log("listing materials");
     const stockSq = db
       .select({
         materialId: materialInventoryMovement.materialId,
@@ -98,28 +102,9 @@ export const createMaterial = createServerFn({ method: "POST" })
   )
   .middleware([organizationMiddleware, storageMiddleware])
   .handler(async ({ data, context: { activeOrganizationId, db, createEntityPresignedUrl } }) => {
-    const newMaterial = await db.transaction(async (tx) => {
-      const [created] = await tx
-        .insert(material)
-        .values({
-          organizationId: activeOrganizationId,
-          name: data.name,
-          unit: data.unit,
-          currentPrice: data.currentPrice,
-          color: data.color || null,
-          colorName: data.colorName || null,
-        })
-        .returning();
-
-      // Seed the history with the initial price so the timeline is complete
-      // from creation (each row = the price value from that moment on).
-      await tx.insert(materialPriceHistory).values({
-        materialId: created.id,
-        price: data.currentPrice,
-      });
-
-      return created;
-    });
+    const newMaterial = await db.transaction((tx) =>
+      createMaterialUseCase(tx, activeOrganizationId, data),
+    );
 
     if (data.imageContentType && data.imageSize) {
       const presigned = await createEntityPresignedUrl(
@@ -164,45 +149,15 @@ export const updateMaterial = createServerFn({ method: "POST" })
       data,
       context: { activeOrganizationId, db, createEntityPresignedUrl, removeItemSafe },
     }) => {
-      const { id, imageContentType, imageSize, deleteImage, ...updateData } = data;
+      const { id, imageContentType, imageSize, ...updateData } = data;
 
-      const { updated, existingImage } = await db.transaction(async (tx) => {
-        const [existing] = await tx
-          .select({ currentPrice: material.currentPrice, image: material.image })
-          .from(material)
-          .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)));
-
-        if (!existing) throw new Error("Material no encontrado");
-
-        const [updated] = await tx
-          .update(material)
-          .set({
-            ...updateData,
-            color: updateData.color || null,
-            colorName: updateData.colorName || null,
-            image: deleteImage ? null : undefined,
-          })
-          .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)))
-          .returning();
-
-        // Record the new price when it actually changed. Compare numerically so
-        // "10.00" and "10" aren't considered different, and skip inputs that
-        // couldn't be parsed as a price.
-        const prevPriceNum = Number(existing.currentPrice);
-        const newPriceNum = Number(updateData.currentPrice);
-        if (Number.isFinite(newPriceNum) && newPriceNum !== prevPriceNum) {
-          await tx.insert(materialPriceHistory).values({
-            materialId: id,
-            price: updateData.currentPrice,
-          });
-        }
-
-        return { updated, existingImage: existing.image };
-      });
+      const { updated, existingImage } = await db.transaction((tx) =>
+        updateMaterialUseCase(tx, activeOrganizationId, id, updateData),
+      );
 
       // Delete image from storage after successful DB update. Best-effort:
       // a stale or corrupt previous object must not surface as an update failure.
-      if (deleteImage && existingImage) {
+      if (updateData.deleteImage && existingImage) {
         await removeItemSafe(existingImage);
       }
 
@@ -231,12 +186,7 @@ export const deleteMaterial = createServerFn({ method: "POST" })
     // Delete the DB row first and only then the storage object, best-effort:
     // if the DB delete fails, no reference is left dangling; if the storage
     // delete fails, it's just an unreferenced (harmless) orphan object.
-    const [deleted] = await db
-      .delete(material)
-      .where(and(eq(material.id, id), eq(material.organizationId, activeOrganizationId)))
-      .returning({ image: material.image });
-
-    if (!deleted) throw new Error("Material no encontrado");
+    const deleted = await deleteMaterialUseCase(db, activeOrganizationId, id);
 
     if (deleted.image) {
       await removeItemSafe(deleted.image);

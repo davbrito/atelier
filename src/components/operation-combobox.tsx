@@ -26,7 +26,7 @@ import * as StyledField from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { toast } from "#/components/ui/toast.tsx";
 import { operationByIdQueryOptions } from "#/lib/query-options";
-import { createOperation, listOperations } from "#/lib/server/operations";
+import { createOperation, listOperations } from "#/server/functions/operations";
 
 type RawOperation = {
   id: string;

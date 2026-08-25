@@ -16,9 +16,9 @@ import {
 import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { budgetByIdQueryOptions, queryKeys } from "#/lib/query-options";
-import { budgetFormSchema, updateBudget } from "#/lib/server/budgets";
-import { uploadEntityImage } from "#/lib/server/images";
 import { cn } from "#/lib/utils";
+import { budgetFormSchema, updateBudget } from "#/server/functions/budgets";
+import { uploadEntityImage } from "#/server/functions/images";
 
 type BudgetEditSheetProps = {
   budgetId: string | null;

@@ -51,7 +51,7 @@ import {
   type listGarmentStages,
   reorderGarmentStages,
   seedDefaultGarmentStages,
-} from "#/lib/server/garment-stages";
+} from "#/server/functions/garment-stages";
 
 export const Route = createFileRoute("/_app/app/_workspace/orders/stages")({
   component: OrderStagesPage,

@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, asc, eq, ilike } from "drizzle-orm";
 import * as z from "zod";
 import { operation } from "#/db/schema";
-import { organizationMiddleware } from "../auth/functions";
+import { organizationMiddleware } from "#/lib/auth/functions";
+import { updateOperation as updateOperationUseCase } from "../application/operations";
 
 export const listOperations = createServerFn({ method: "GET" })
   .validator(
@@ -72,18 +73,9 @@ export const updateOperation = createServerFn({ method: "POST" })
       defaultDurationMinutes: z.number().optional(),
     }),
   )
-  .handler(async ({ data, context: { activeOrganizationId, db } }) => {
-    const { id, ...updateData } = data;
-    const [updated] = await db
-      .update(operation)
-      .set(updateData)
-      .where(and(eq(operation.id, id), eq(operation.organizationId, activeOrganizationId)))
-      .returning();
-
-    if (!updated) throw new Error("Operación no encontrada");
-
-    return updated;
-  });
+  .handler(async ({ data, context: { activeOrganizationId, db } }) =>
+    updateOperationUseCase(db, activeOrganizationId, data),
+  );
 
 export const deleteOperation = createServerFn({ method: "POST" })
   .middleware([organizationMiddleware])

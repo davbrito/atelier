@@ -17,7 +17,7 @@ import {
   InputGroupText,
 } from "#/components/ui/input-group";
 import { materialsListQueryOptions } from "#/lib/query-options";
-import type { budgetFormSchema } from "#/lib/server/budgets";
+import type { budgetFormSchema } from "#/server/functions/budgets";
 
 type BudgetFormValues = z.infer<typeof budgetFormSchema>;
 

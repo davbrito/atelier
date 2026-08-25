@@ -30,7 +30,7 @@ import {
 } from "#/components/ui/table";
 import { toast } from "#/components/ui/toast.tsx";
 import { clientsListQueryOptions } from "#/lib/query-options";
-import { deleteClient } from "#/lib/server/clients";
+import { deleteClient } from "#/server/functions/clients";
 
 const PAGE_SIZE = 20;
 

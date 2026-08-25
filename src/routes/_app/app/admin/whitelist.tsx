@@ -21,7 +21,7 @@ import { Input } from "#/components/ui/input";
 import { Item, ItemActions, ItemContent, ItemMedia, ItemTitle } from "#/components/ui/item";
 import { toast } from "#/components/ui/toast.tsx";
 import { queryKeys, whitelistEmailsQueryOptions } from "#/lib/query-options";
-import { addWhitelistedEmail, removeWhitelistedEmail } from "#/lib/server/whitelist";
+import { addWhitelistedEmail, removeWhitelistedEmail } from "#/server/functions/whitelist";
 
 export const Route = createFileRoute("/_app/app/admin/whitelist")({
   component: WhitelistPage,

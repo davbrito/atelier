@@ -35,11 +35,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { materialInventoryQueryOptions, queryKeys } from "#/lib/query-options";
-import { setEntityImage } from "#/lib/server/images";
-import { registerMovement } from "#/lib/server/inventory";
-import { createMaterial, type getMaterialById, updateMaterial } from "#/lib/server/materials";
 import { UNIT_OPTIONS, type Unit, unitSchema } from "#/lib/units";
 import { cn } from "#/lib/utils";
+import { setEntityImage } from "#/server/functions/images";
+import { registerMovement } from "#/server/functions/inventory";
+import { createMaterial, type getMaterialById, updateMaterial } from "#/server/functions/materials";
 
 type Material = Awaited<ReturnType<typeof getMaterialById>>;
 

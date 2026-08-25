@@ -1,12 +1,15 @@
-import slugify from "@sindresorhus/slugify";
 import { createServerFn } from "@tanstack/react-start";
-import { generateRandomString } from "better-auth/crypto";
 import { and, asc, eq, getColumns, ilike, sql } from "drizzle-orm";
 import * as z from "zod";
 import * as schema from "#/db/schema";
-import { organizationMiddleware } from "../auth/functions";
-import { MAX_IMAGE_SIZE, storageMiddleware } from "../storage";
-import { storageUrl } from "../utils";
+import { organizationMiddleware } from "#/lib/auth/functions";
+import { MAX_IMAGE_SIZE, storageMiddleware } from "#/lib/storage";
+import { storageUrl } from "#/lib/utils";
+import {
+  createBudget as createBudgetUseCase,
+  deleteBudget as deleteBudgetUseCase,
+  updateBudget as updateBudgetUseCase,
+} from "../application/budgets";
 
 // ── Types ────────────────────────────────────────────────
 
@@ -162,50 +165,9 @@ export const createBudget = createServerFn({ method: "POST" })
   .validator(budgetFormSchema)
   .middleware([organizationMiddleware, storageMiddleware])
   .handler(async ({ data, context: { activeOrganizationId, db, createEntityPresignedUrl } }) => {
-    const newBudget = await db.transaction(async (tx) => {
-      const nameSlug = slugify(data.name);
-      let slug = nameSlug;
-      while (
-        await tx.$count(
-          tx.select().from(schema.budget).where(eq(schema.budget.slug, slug)).limit(1),
-        )
-      ) {
-        slug = `${nameSlug}_${generateRandomString(4)}`;
-      }
-
-      const [budget] = await tx
-        .insert(schema.budget)
-        .values({
-          organizationId: activeOrganizationId,
-          slug,
-          name: data.name,
-          description: data.description ?? null,
-          hourlyRate: data.hourlyRate,
-        })
-        .returning();
-
-      if (data.materials.length > 0) {
-        await tx.insert(schema.budgetMaterial).values(
-          data.materials.map((m) => ({
-            budgetId: budget.id,
-            materialId: m.materialId,
-            quantity: m.quantity,
-          })),
-        );
-      }
-
-      if (data.operations.length > 0) {
-        await tx.insert(schema.budgetOperation).values(
-          data.operations.map((o) => ({
-            budgetId: budget.id,
-            operationId: o.operationId,
-            durationMinutes: o.durationMinutes,
-          })),
-        );
-      }
-
-      return budget;
-    });
+    const newBudget = await db.transaction((tx) =>
+      createBudgetUseCase(tx, activeOrganizationId, data),
+    );
 
     // Generate presigned URL after commit so the entity ID is final
     if (data.imageContentType && data.imageSize) {
@@ -233,73 +195,9 @@ export const updateBudget = createServerFn({ method: "POST" })
       data: { id, data },
       context: { activeOrganizationId, db, removeItemSafe, createEntityPresignedUrl },
     }) => {
-      const [existing] = await db
-        .select({ image: schema.budget.image, slug: schema.budget.slug })
-        .from(schema.budget)
-        .where(
-          and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)),
-        );
-
-      if (!existing) {
-        throw new Error("Presupuesto no encontrado");
-      }
-
-      const updated = await db.transaction(async (tx) => {
-        // Regenerate the slug from the (possibly new) name, dedup against
-        // other budgets — the current one is allowed to keep its own slug.
-        // Without this, renaming to a name that collides with another budget
-        // would break with a UNIQUE constraint violation.
-        const nameSlug = slugify(data.name);
-        let slug = nameSlug;
-        while (
-          slug !== existing.slug &&
-          (await tx.$count(
-            tx.select().from(schema.budget).where(eq(schema.budget.slug, slug)).limit(1),
-          ))
-        ) {
-          slug = `${nameSlug}_${generateRandomString(4)}`;
-        }
-
-        await tx
-          .update(schema.budget)
-          .set({
-            slug,
-            name: data.name,
-            description: data.description ?? null,
-            hourlyRate: data.hourlyRate,
-            image: data.deleteImage ? null : existing.image,
-          })
-          .where(
-            and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)),
-          );
-
-        // Replace materials
-        await tx.delete(schema.budgetMaterial).where(eq(schema.budgetMaterial.budgetId, id));
-        if (data.materials.length > 0) {
-          await tx.insert(schema.budgetMaterial).values(
-            data.materials.map((m) => ({
-              budgetId: id,
-              materialId: m.materialId,
-              quantity: m.quantity,
-            })),
-          );
-        }
-
-        // Replace operations
-        await tx.delete(schema.budgetOperation).where(eq(schema.budgetOperation.budgetId, id));
-        if (data.operations.length > 0) {
-          await tx.insert(schema.budgetOperation).values(
-            data.operations.map((o) => ({
-              budgetId: id,
-              operationId: o.operationId,
-              durationMinutes: o.durationMinutes,
-            })),
-          );
-        }
-
-        const [row] = await tx.select().from(schema.budget).where(eq(schema.budget.id, id));
-        return row;
-      });
+      const { updated, existingImage } = await db.transaction((tx) =>
+        updateBudgetUseCase(tx, activeOrganizationId, id, data),
+      );
 
       // Delete old image from storage after successful DB update. Best-effort:
       // a stale or corrupt previous object must not surface as an update failure.
@@ -307,8 +205,8 @@ export const updateBudget = createServerFn({ method: "POST" })
       // up by setEntityImage once the new upload is actually committed —
       // deleting it here would leave a broken reference if the client's
       // upload PUT never lands.
-      if (existing?.image && data.deleteImage) {
-        await removeItemSafe(existing.image);
+      if (existingImage && data.deleteImage) {
+        await removeItemSafe(existingImage);
       }
 
       if (data.imageContentType && data.imageSize) {
@@ -336,12 +234,7 @@ export const deleteBudget = createServerFn({ method: "POST" })
     // Delete the DB row first and only then the storage object, best-effort:
     // if the DB delete fails, no reference is left dangling; if the storage
     // delete fails, it's just an unreferenced (harmless) orphan object.
-    const [deleted] = await db
-      .delete(schema.budget)
-      .where(and(eq(schema.budget.id, id), eq(schema.budget.organizationId, activeOrganizationId)))
-      .returning({ image: schema.budget.image });
-
-    if (!deleted) throw new Error("Presupuesto no encontrado");
+    const deleted = await deleteBudgetUseCase(db, activeOrganizationId, id);
 
     if (deleted.image) {
       await removeItemSafe(deleted.image);

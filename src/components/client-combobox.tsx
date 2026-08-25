@@ -13,7 +13,7 @@ import {
   ComboboxList,
 } from "#/components/ui/combobox";
 import { clientByIdQueryOptions } from "#/lib/query-options";
-import { listClients } from "#/lib/server/clients";
+import { listClients } from "#/server/functions/clients";
 
 type ClientComboboxProps = {
   value: string;

@@ -26,8 +26,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Dialog, DialogContent } from "#/components/ui/dialog";
 import { toast } from "#/components/ui/toast.tsx";
 import { materialByIdQueryOptions } from "#/lib/query-options";
-import { deleteMaterial } from "#/lib/server/materials";
 import { UNIT_OPTIONS } from "#/lib/units";
+import { deleteMaterial } from "#/server/functions/materials";
 
 export const Route = createFileRoute("/_app/app/_workspace/materials/$id")({
   component: MaterialDetailPage,

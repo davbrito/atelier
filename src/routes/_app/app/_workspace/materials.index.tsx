@@ -28,8 +28,8 @@ import {
 } from "#/components/ui/table";
 import { toast } from "#/components/ui/toast.tsx";
 import { materialsListQueryOptions } from "#/lib/query-options";
-import { deleteMaterial, type listMaterials } from "#/lib/server/materials";
 import { UNIT_OPTIONS } from "#/lib/units";
+import { deleteMaterial, type listMaterials } from "#/server/functions/materials";
 
 const PAGE_SIZE = 20;
 

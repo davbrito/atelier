@@ -16,9 +16,9 @@ import {
 } from "#/components/ui/sheet";
 import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
-import { budgetFormSchema, createBudget } from "#/lib/server/budgets";
-import { uploadEntityImage } from "#/lib/server/images";
 import { cn } from "#/lib/utils";
+import { budgetFormSchema, createBudget } from "#/server/functions/budgets";
+import { uploadEntityImage } from "#/server/functions/images";
 import { BudgetFormFields } from "./budget-form-fields";
 
 type BudgetCreateSheetProps = {

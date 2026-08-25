@@ -20,8 +20,8 @@ import { Switch } from "#/components/ui/switch";
 import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { queryKeys } from "#/lib/query-options";
-import { createGarmentStage, updateGarmentStage } from "#/lib/server/garment-stages";
 import { cn } from "#/lib/utils";
+import { createGarmentStage, updateGarmentStage } from "#/server/functions/garment-stages";
 
 type GarmentStageRow = {
   id: string;

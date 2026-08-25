@@ -2,6 +2,8 @@ import type { Db } from "#/db/client";
 import {
   budget,
   client,
+  garment,
+  garmentStage,
   material,
   member,
   operation,
@@ -148,6 +150,38 @@ export async function seedOperation(
     .values({
       organizationId,
       name: "Test Operation",
+      ...overrides,
+    })
+    .returning();
+  return row;
+}
+
+export async function seedGarmentStage(
+  db: Db,
+  organizationId: string,
+  overrides?: Partial<typeof garmentStage.$inferInsert>,
+) {
+  const [row] = await db
+    .insert(garmentStage)
+    .values({
+      organizationId,
+      name: "Test Stage",
+      ...overrides,
+    })
+    .returning();
+  return row;
+}
+
+export async function seedGarment(
+  db: Db,
+  orderId: string,
+  overrides?: Partial<typeof garment.$inferInsert>,
+) {
+  const [row] = await db
+    .insert(garment)
+    .values({
+      orderId,
+      name: "Test Garment",
       ...overrides,
     })
     .returning();

@@ -1,21 +1,21 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
+import { getBudgetById, getBudgetBySlug, listBudgets } from "#/server/functions/budgets";
+import { getClientById, listClients } from "#/server/functions/clients";
+import { getDashboardCounts, getRecentQuotations } from "#/server/functions/dashboard";
+import { listGarmentStages } from "#/server/functions/garment-stages";
+import { listKanbanGarments } from "#/server/functions/garments";
+import { getMaterialInventory } from "#/server/functions/inventory";
+import { getMaterialById, listMaterials } from "#/server/functions/materials";
+import { getOperationById, listOperations } from "#/server/functions/operations";
 import {
   getOrder,
   type ListOrderOptions,
   listKanbanOrders,
   listOrders,
 } from "#/server/functions/orders";
+import { getUserOrganizationCount } from "#/server/functions/organizations";
 import { getQuotation, getQuotationBySlug, listQuotations } from "#/server/functions/quotations";
-import { getBudgetById, getBudgetBySlug, listBudgets } from "./server/budgets";
-import { getClientById, listClients } from "./server/clients";
-import { getDashboardCounts, getRecentQuotations } from "./server/dashboard";
-import { listGarmentStages } from "./server/garment-stages";
-import { listKanbanGarments } from "./server/garments";
-import { getMaterialInventory } from "./server/inventory";
-import { getMaterialById, listMaterials } from "./server/materials";
-import { getOperationById, listOperations } from "./server/operations";
-import { getUserOrganizationCount } from "./server/organizations";
-import { listWhitelistedEmails } from "./server/whitelist";
+import { listWhitelistedEmails } from "#/server/functions/whitelist";
 
 export const queryKeys = {
   budgets: ["budgets"],

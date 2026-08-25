@@ -20,7 +20,7 @@ import {
   queryKeys,
 } from "#/lib/query-options";
 import { optimisticUpdate } from "#/lib/query-utils";
-import { type listKanbanGarments, moveGarmentStage } from "#/lib/server/garments";
+import { type listKanbanGarments, moveGarmentStage } from "#/server/functions/garments";
 import { updateOrderPriority } from "#/server/functions/orders";
 
 type KanbanGarmentsData = Awaited<ReturnType<typeof listKanbanGarments>>;

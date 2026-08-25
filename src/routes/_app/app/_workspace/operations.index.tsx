@@ -42,13 +42,13 @@ import {
 import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { operationsListQueryOptions } from "#/lib/query-options";
+import { cn } from "#/lib/utils";
 import {
   createOperation,
   deleteOperation,
   type listOperations,
   updateOperation,
-} from "#/lib/server/operations";
-import { cn } from "#/lib/utils";
+} from "#/server/functions/operations";
 
 const PAGE_SIZE = 20;
 

@@ -47,7 +47,7 @@ import { toast } from "#/components/ui/toast.tsx";
 import { PAYMENT_TYPES, paymentTypeLabel } from "#/lib/constants/payment-types";
 import { formatMoney, LOCALE } from "#/lib/format";
 import { queryKeys } from "#/lib/query-options";
-import { uploadEntityImage } from "#/lib/server/images";
+import { uploadEntityImage } from "#/server/functions/images";
 import {
   createOrderPayment,
   createOrderPaymentSchema,

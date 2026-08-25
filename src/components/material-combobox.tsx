@@ -34,8 +34,8 @@ import {
 } from "#/components/ui/select";
 import { toast } from "#/components/ui/toast.tsx";
 import { materialByIdQueryOptions } from "#/lib/query-options";
-import { createMaterial, listMaterials } from "#/lib/server/materials";
 import { UNIT_OPTIONS, type Unit } from "#/lib/units";
+import { createMaterial, listMaterials } from "#/server/functions/materials";
 
 type RawMaterial = {
   id: string;

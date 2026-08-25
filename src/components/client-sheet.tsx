@@ -29,8 +29,8 @@ import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { STANDARD_MEASUREMENT_NAMES } from "#/lib/constants/measurements";
 import { queryKeys } from "#/lib/query-options";
-import { createClient, type getClientById, updateClient } from "#/lib/server/clients";
 import { cn } from "#/lib/utils";
+import { createClient, type getClientById, updateClient } from "#/server/functions/clients";
 
 type ClientSheetProps = {
   open: boolean;

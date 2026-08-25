@@ -28,7 +28,7 @@ import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { toast } from "#/components/ui/toast.tsx";
 import { clientByIdQueryOptions } from "#/lib/query-options";
-import { deleteClient } from "#/lib/server/clients";
+import { deleteClient } from "#/server/functions/clients";
 
 export const Route = createFileRoute("/_app/app/_workspace/clients/$id")({
   component: ClientDetailPage,

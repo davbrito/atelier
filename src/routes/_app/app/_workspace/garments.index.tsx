@@ -22,7 +22,7 @@ import { Card, CardAction, CardContent, CardHeader, CardTitle } from "#/componen
 import { Input } from "#/components/ui/input";
 import { toast } from "#/components/ui/toast.tsx";
 import { budgetsInfiniteListQueryOptions } from "#/lib/query-options";
-import { deleteBudget } from "#/lib/server/budgets";
+import { deleteBudget } from "#/server/functions/budgets";
 
 const MotionCardTitle = motion.create(CardTitle);
 

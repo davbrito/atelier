@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, eq } from "drizzle-orm";
 import * as z from "zod";
+import { organizationMiddleware } from "#/lib/auth/functions";
 import { ENTITY_TYPES, type EntityType, entityTypesTableMap } from "#/lib/entity-images";
-import { organizationMiddleware } from "../auth/functions";
-import { storageMiddleware } from "../storage";
+import { storageMiddleware } from "#/lib/storage";
 
 /**
  * After a client uploads an image directly to S3 via a pre-signed URL,
