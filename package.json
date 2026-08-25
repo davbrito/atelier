@@ -83,7 +83,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.10",
     "@cloudflare/vite-plugin": "^1.53.1",
-    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "@cloudflare/vitest-plugin": "^1.0.0",
     "@faker-js/faker": "^10.6.0",
     "@tailwindcss/typography": "^0.5.20",
     "@tanstack/devtools-vite": "latest",
