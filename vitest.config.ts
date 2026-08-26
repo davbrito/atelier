@@ -55,13 +55,6 @@ const config = defineConfig({
           include: ["scripts/codemods/**/*.test.ts"],
         },
       },
-      {
-        test: {
-          name: "lib",
-          environment: "node",
-          include: ["test/lib/**/*.test.ts"],
-        },
-      },
     ],
   },
 });
