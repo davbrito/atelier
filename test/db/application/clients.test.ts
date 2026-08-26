@@ -2,11 +2,11 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { clientMeasurement } from "#/db/schema";
 import { createClient, deleteClient, updateClient } from "#/server/application/clients";
-import { test } from "../../helpers/fixtures.ts";
+import { it } from "../../helpers/fixtures.ts";
 import { seedClient, seedOrganization } from "../../helpers/seed.ts";
 
 describe("createClient", () => {
-  test("creates the client with its measurements", async ({ db }) => {
+  it("creates the client with its measurements", async ({ db }) => {
     const org = await seedOrganization(db);
 
     const client = await db.transaction((tx) =>
@@ -27,7 +27,7 @@ describe("createClient", () => {
 });
 
 describe("updateClient", () => {
-  test("replaces the client's measurements", async ({ db }) => {
+  it("replaces the client's measurements", async ({ db }) => {
     const org = await seedOrganization(db);
     const client = await db.transaction((tx) =>
       createClient(tx, org.id, {
@@ -52,7 +52,7 @@ describe("updateClient", () => {
     expect(measurements[0].name).toBe("Cadera");
   });
 
-  test("rejects when the client doesn't belong to the organization", async ({ db }) => {
+  it("rejects when the client doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const client = await seedClient(db, otherOrg.id);
@@ -64,7 +64,7 @@ describe("updateClient", () => {
 });
 
 describe("deleteClient", () => {
-  test("rejects when the client doesn't belong to the organization", async ({ db }) => {
+  it("rejects when the client doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const client = await seedClient(db, otherOrg.id);

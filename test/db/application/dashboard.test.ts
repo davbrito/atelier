@@ -1,6 +1,6 @@
 import { describe, expect } from "vitest";
 import { getDashboardCounts } from "#/server/application/dashboard";
-import { test } from "../../helpers/fixtures.ts";
+import { it } from "../../helpers/fixtures.ts";
 import {
   seedBudget,
   seedClient,
@@ -10,7 +10,7 @@ import {
 } from "../../helpers/seed.ts";
 
 describe("getDashboardCounts", () => {
-  test("counts each entity type scoped to the organization", async ({ db }) => {
+  it("counts each entity type scoped to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
 

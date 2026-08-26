@@ -2,11 +2,11 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { garment as garmentTable, order } from "#/db/schema";
 import { moveGarmentStage } from "#/server/application/garments";
-import { test } from "../../helpers/fixtures.ts";
+import { it } from "../../helpers/fixtures.ts";
 import { seedGarment, seedGarmentStage, seedOrder, seedOrganization } from "../../helpers/seed.ts";
 
 describe("moveGarmentStage", () => {
-  test("moves the garment to the given stage", async ({ db }) => {
+  it("moves the garment to the given stage", async ({ db }) => {
     const org = await seedOrganization(db);
     const stage = await seedGarmentStage(db, org.id);
     const newOrder = await seedOrder(db, org.id, { status: "pending" });
@@ -23,7 +23,7 @@ describe("moveGarmentStage", () => {
     expect(updatedGarment.stageId).toBe(stage.id);
   });
 
-  test("moves a pending order to in_progress on its first garment move", async ({ db }) => {
+  it("moves a pending order to in_progress on its first garment move", async ({ db }) => {
     const org = await seedOrganization(db);
     const stage = await seedGarmentStage(db, org.id, { isFinalStage: false });
     const newOrder = await seedOrder(db, org.id, { status: "pending" });
@@ -37,7 +37,7 @@ describe("moveGarmentStage", () => {
     expect(updatedOrder.status).toBe("in_progress");
   });
 
-  test("moves an in_progress order to ready once every garment reaches a final stage", async ({
+  it("moves an in_progress order to ready once every garment reaches a final stage", async ({
     db,
   }) => {
     const org = await seedOrganization(db);
@@ -54,7 +54,7 @@ describe("moveGarmentStage", () => {
     expect(updatedOrder.status).toBe("ready");
   });
 
-  test("keeps an in_progress order in_progress while some garment isn't in a final stage", async ({
+  it("keeps an in_progress order in_progress while some garment isn't in a final stage", async ({
     db,
   }) => {
     const org = await seedOrganization(db);
@@ -72,7 +72,7 @@ describe("moveGarmentStage", () => {
     expect(updatedOrder.status).toBe("in_progress");
   });
 
-  test("rejects when the garment doesn't belong to the organization", async ({ db }) => {
+  it("rejects when the garment doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const newOrder = await seedOrder(db, otherOrg.id);
@@ -83,7 +83,7 @@ describe("moveGarmentStage", () => {
     ).rejects.toThrow(/Prenda no encontrada/);
   });
 
-  test("rejects when the target stage doesn't belong to the organization", async ({ db }) => {
+  it("rejects when the target stage doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const foreignStage = await seedGarmentStage(db, otherOrg.id);

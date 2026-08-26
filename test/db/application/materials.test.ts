@@ -2,11 +2,11 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { materialPriceHistory } from "#/db/schema";
 import { createMaterial, deleteMaterial, updateMaterial } from "#/server/application/materials";
-import { test } from "../../helpers/fixtures.ts";
+import { it } from "../../helpers/fixtures.ts";
 import { seedMaterial, seedOrganization } from "../../helpers/seed.ts";
 
 describe("createMaterial", () => {
-  test("seeds the price history with the initial price", async ({ db }) => {
+  it("seeds the price history with the initial price", async ({ db }) => {
     const org = await seedOrganization(db);
 
     const created = await db.transaction((tx) =>
@@ -23,7 +23,7 @@ describe("createMaterial", () => {
 });
 
 describe("updateMaterial", () => {
-  test("records a new price-history row only when the price actually changes", async ({ db }) => {
+  it("records a new price-history row only when the price actually changes", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id, { currentPrice: "10.00" });
 
@@ -42,7 +42,7 @@ describe("updateMaterial", () => {
     expect(history[0].price).toBe("15.00");
   });
 
-  test("rejects when the material doesn't belong to the organization", async ({ db }) => {
+  it("rejects when the material doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const mat = await seedMaterial(db, otherOrg.id);
@@ -56,7 +56,7 @@ describe("updateMaterial", () => {
 });
 
 describe("deleteMaterial", () => {
-  test("rejects when the material doesn't belong to the organization", async ({ db }) => {
+  it("rejects when the material doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const mat = await seedMaterial(db, otherOrg.id);

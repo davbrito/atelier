@@ -3,11 +3,11 @@ import { Client } from "pg";
 import { describe, expect, inject } from "vitest";
 import { relations } from "#/db/relations";
 import { createOrderPayment } from "#/server/application/order-payments";
-import { test } from "../../helpers/fixtures.ts";
+import { it } from "../../helpers/fixtures.ts";
 import { seedOrder, seedOrganization } from "../../helpers/seed.ts";
 
 describe("createOrderPayment", () => {
-  test("inserts a payment within the order's balance", async ({ db }) => {
+  it("inserts a payment within the order's balance", async ({ db }) => {
     const org = await seedOrganization(db);
     const order = await seedOrder(db, org.id, { totalAmount: "100.00" });
 
@@ -23,7 +23,7 @@ describe("createOrderPayment", () => {
     expect(payment.orderId).toBe(order.id);
   });
 
-  test("rejects a payment that exceeds the remaining balance", async ({ db }) => {
+  it("rejects a payment that exceeds the remaining balance", async ({ db }) => {
     const org = await seedOrganization(db);
     const order = await seedOrder(db, org.id, { totalAmount: "100.00" });
 
@@ -38,7 +38,7 @@ describe("createOrderPayment", () => {
     ).rejects.toThrow(/excede el saldo pendiente/);
   });
 
-  test("rejects a payment for an order in a different organization", async ({ db }) => {
+  it("rejects a payment for an order in a different organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const order = await seedOrder(db, org.id, { totalAmount: "100.00" });
@@ -54,7 +54,7 @@ describe("createOrderPayment", () => {
     ).rejects.toThrow(/Pedido no encontrado/);
   });
 
-  test("serializes concurrent payments so they can't jointly overpay the order", async ({ db }) => {
+  it("serializes concurrent payments so they can't jointly overpay the order", async ({ db }) => {
     const org = await seedOrganization(db);
     const order = await seedOrder(db, org.id, { totalAmount: "100.00" });
 

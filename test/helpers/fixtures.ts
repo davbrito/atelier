@@ -14,3 +14,7 @@ export const test = baseTest
   .extend("cleanDb", { auto: true }, async ({ db }, { onCleanup }) => {
     onCleanup(() => resetDb(db));
   });
+
+// Also exported as `it` so files can just swap the import instead of
+// renaming every `it(...)` call to `test(...)`.
+export const it = test;

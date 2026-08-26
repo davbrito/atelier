@@ -4,11 +4,11 @@ import {
   listWhitelistedEmails,
   removeWhitelistedEmail,
 } from "#/server/application/whitelist";
-import { test } from "../../helpers/fixtures.ts";
+import { it } from "../../helpers/fixtures.ts";
 import { seedUser } from "../../helpers/seed.ts";
 
 describe("whitelist", () => {
-  test("adds and lists emails alphabetically", async ({ db }) => {
+  it("adds and lists emails alphabetically", async ({ db }) => {
     const admin = await seedUser(db);
 
     await addWhitelistedEmail(db, "zoe@example.com", admin.id);
@@ -19,7 +19,7 @@ describe("whitelist", () => {
     expect(emails[0].addedById).toBe(admin.id);
   });
 
-  test("removes an email", async ({ db }) => {
+  it("removes an email", async ({ db }) => {
     const admin = await seedUser(db);
     await addWhitelistedEmail(db, "ana@example.com", admin.id);
     const [entry] = await listWhitelistedEmails(db);

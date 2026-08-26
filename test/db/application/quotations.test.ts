@@ -8,7 +8,7 @@ import {
   quotationOperation,
 } from "#/db/schema";
 import { createQuotation, loadQuotationLines } from "#/server/application/quotations";
-import { test } from "../../helpers/fixtures.ts";
+import { it } from "../../helpers/fixtures.ts";
 import {
   seedBudget,
   seedClient,
@@ -18,9 +18,7 @@ import {
 } from "../../helpers/seed.ts";
 
 describe("createQuotation", () => {
-  test("creates a line per budget and freezes the client name and material price", async ({
-    db,
-  }) => {
+  it("creates a line per budget and freezes the client name and material price", async ({ db }) => {
     const org = await seedOrganization(db);
     const client = await seedClient(db, org.id, { name: "Ana Pérez" });
     const budget = await seedBudget(db, org.id);
@@ -42,7 +40,7 @@ describe("createQuotation", () => {
     expect(frozenMaterials[0].frozenName).toBe(mat.name);
   });
 
-  test("keeps frozen prices unchanged if the budget's material price changes afterward", async ({
+  it("keeps frozen prices unchanged if the budget's material price changes afterward", async ({
     db,
   }) => {
     const org = await seedOrganization(db);
@@ -63,7 +61,7 @@ describe("createQuotation", () => {
     expect(frozen.frozenPrice).toBe("15.00");
   });
 
-  test("rejects when a budget references a material outside the organization's catalog", async ({
+  it("rejects when a budget references a material outside the organization's catalog", async ({
     db,
   }) => {
     const org = await seedOrganization(db);
@@ -85,7 +83,7 @@ describe("createQuotation", () => {
     ).rejects.toThrow(/material que ya no existe/);
   });
 
-  test("rejects when the budget doesn't belong to the organization", async ({ db }) => {
+  it("rejects when the budget doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const client = await seedClient(db, org.id);
@@ -98,9 +96,7 @@ describe("createQuotation", () => {
     ).rejects.toThrow(/Presupuesto no encontrado/);
   });
 
-  test("freezes operations with their current name and the budget's hourly rate", async ({
-    db,
-  }) => {
+  it("freezes operations with their current name and the budget's hourly rate", async ({ db }) => {
     const org = await seedOrganization(db);
     const client = await seedClient(db, org.id);
     const budget = await seedBudget(db, org.id, { hourlyRate: "25.00" });
@@ -119,7 +115,7 @@ describe("createQuotation", () => {
     expect(frozen.durationMinutes).toBe(90);
   });
 
-  test("rejects when a budget references an operation outside the organization's catalog", async ({
+  it("rejects when a budget references an operation outside the organization's catalog", async ({
     db,
   }) => {
     const org = await seedOrganization(db);
@@ -140,7 +136,7 @@ describe("createQuotation", () => {
 });
 
 describe("loadQuotationLines", () => {
-  test("returns each line with its budget info, frozen materials, and frozen operations", async ({
+  it("returns each line with its budget info, frozen materials, and frozen operations", async ({
     db,
   }) => {
     const org = await seedOrganization(db);
@@ -169,7 +165,7 @@ describe("loadQuotationLines", () => {
     expect(Number(lines[0].operations[0].amount)).toBe(20);
   });
 
-  test("returns an empty array for a quotation with no lines", async ({ db }) => {
+  it("returns an empty array for a quotation with no lines", async ({ db }) => {
     expect(await loadQuotationLines(db, "00000000-0000-0000-0000-000000000000")).toEqual([]);
   });
 });

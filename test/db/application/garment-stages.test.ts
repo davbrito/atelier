@@ -8,11 +8,11 @@ import {
   seedDefaultGarmentStages,
   updateGarmentStage,
 } from "#/server/application/garment-stages";
-import { test } from "../../helpers/fixtures.ts";
+import { it } from "../../helpers/fixtures.ts";
 import { seedGarmentStage, seedOrganization } from "../../helpers/seed.ts";
 
 describe("createGarmentStage", () => {
-  test("appends new stages at the end of the position order", async ({ db }) => {
+  it("appends new stages at the end of the position order", async ({ db }) => {
     const org = await seedOrganization(db);
 
     const first = await db.transaction((tx) => createGarmentStage(tx, org.id, { name: "Corte" }));
@@ -26,7 +26,7 @@ describe("createGarmentStage", () => {
 });
 
 describe("updateGarmentStage", () => {
-  test("updates the stage's fields", async ({ db }) => {
+  it("updates the stage's fields", async ({ db }) => {
     const org = await seedOrganization(db);
     const stage = await seedGarmentStage(db, org.id, { name: "Corte" });
 
@@ -42,7 +42,7 @@ describe("updateGarmentStage", () => {
     expect(updated.isFinalStage).toBe(true);
   });
 
-  test("rejects when the stage doesn't belong to the organization", async ({ db }) => {
+  it("rejects when the stage doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const stage = await seedGarmentStage(db, otherOrg.id);
@@ -54,7 +54,7 @@ describe("updateGarmentStage", () => {
 });
 
 describe("deleteGarmentStage", () => {
-  test("deletes the stage", async ({ db }) => {
+  it("deletes the stage", async ({ db }) => {
     const org = await seedOrganization(db);
     const stage = await seedGarmentStage(db, org.id);
 
@@ -64,7 +64,7 @@ describe("deleteGarmentStage", () => {
     expect(remaining).toHaveLength(0);
   });
 
-  test("rejects when the stage doesn't belong to the organization", async ({ db }) => {
+  it("rejects when the stage doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const stage = await seedGarmentStage(db, otherOrg.id);
@@ -74,7 +74,7 @@ describe("deleteGarmentStage", () => {
 });
 
 describe("reorderGarmentStages", () => {
-  test("applies the given order as positions", async ({ db }) => {
+  it("applies the given order as positions", async ({ db }) => {
     const org = await seedOrganization(db);
     const a = await seedGarmentStage(db, org.id, { name: "A", position: 0 });
     const b = await seedGarmentStage(db, org.id, { name: "B", position: 1 });
@@ -90,7 +90,7 @@ describe("reorderGarmentStages", () => {
     expect(stages.map((s) => s.id)).toEqual([b.id, a.id]);
   });
 
-  test("rejects when a stage id doesn't belong to the organization", async ({ db }) => {
+  it("rejects when a stage id doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const a = await seedGarmentStage(db, org.id);
@@ -103,7 +103,7 @@ describe("reorderGarmentStages", () => {
 });
 
 describe("seedDefaultGarmentStages", () => {
-  test("inserts the default stages when the organization has none", async ({ db }) => {
+  it("inserts the default stages when the organization has none", async ({ db }) => {
     const org = await seedOrganization(db);
 
     await db.transaction((tx) => seedDefaultGarmentStages(tx, org.id));
@@ -116,7 +116,7 @@ describe("seedDefaultGarmentStages", () => {
     expect(stages.every((s) => s.isSystemDefault)).toBe(true);
   });
 
-  test("is a no-op when the organization already has stages", async ({ db }) => {
+  it("is a no-op when the organization already has stages", async ({ db }) => {
     const org = await seedOrganization(db);
     await seedGarmentStage(db, org.id, { name: "Custom" });
 

@@ -8,18 +8,18 @@ import {
   getMaterialInventory,
   registerMovement,
 } from "#/server/application/inventory";
-import { test } from "../../helpers/fixtures.ts";
+import { it } from "../../helpers/fixtures.ts";
 import { seedMaterial, seedOrganization, seedUser } from "../../helpers/seed.ts";
 
 describe("getCurrentStock", () => {
-  test("returns 0 when there are no movements", async ({ db }) => {
+  it("returns 0 when there are no movements", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
 
     expect(await getCurrentStock(db, mat.id, org.id)).toBe("0");
   });
 
-  test("sums entries and subtracts exits", async ({ db }) => {
+  it("sums entries and subtracts exits", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
 
@@ -32,7 +32,7 @@ describe("getCurrentStock", () => {
     expect(await getCurrentStock(db, mat.id, org.id)).toBe("8.5000");
   });
 
-  test("only counts movements for the given material and organization", async ({ db }) => {
+  it("only counts movements for the given material and organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
@@ -50,7 +50,7 @@ describe("getCurrentStock", () => {
 });
 
 describe("getMaterialInventory", () => {
-  test("returns current stock and recent movements for the material", async ({ db }) => {
+  it("returns current stock and recent movements for the material", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
     const user = await seedUser(db);
@@ -69,7 +69,7 @@ describe("getMaterialInventory", () => {
     expect(result.movements[0].createdByName).toBe(user.name);
   });
 
-  test("rejects when the material doesn't belong to the organization", async ({ db }) => {
+  it("rejects when the material doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const mat = await seedMaterial(db, otherOrg.id);
@@ -81,7 +81,7 @@ describe("getMaterialInventory", () => {
 });
 
 describe("registerMovement", () => {
-  test("records an entry as a positive delta", async ({ db }) => {
+  it("records an entry as a positive delta", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
     const user = await seedUser(db);
@@ -98,7 +98,7 @@ describe("registerMovement", () => {
     expect(await getCurrentStock(db, mat.id, org.id)).toBe("5.0000");
   });
 
-  test("records an exit as a negative delta", async ({ db }) => {
+  it("records an exit as a negative delta", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
     const user = await seedUser(db);
@@ -121,9 +121,7 @@ describe("registerMovement", () => {
     expect(await getCurrentStock(db, mat.id, org.id)).toBe("7.0000");
   });
 
-  test("computes an adjustment as the delta needed to reach the target quantity", async ({
-    db,
-  }) => {
+  it("computes an adjustment as the delta needed to reach the target quantity", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
     const user = await seedUser(db);
@@ -146,7 +144,7 @@ describe("registerMovement", () => {
     expect(await getCurrentStock(db, mat.id, org.id)).toBe("6.0000");
   });
 
-  test("rejects when the material doesn't belong to the organization", async ({ db }) => {
+  it("rejects when the material doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const mat = await seedMaterial(db, otherOrg.id);
@@ -163,7 +161,7 @@ describe("registerMovement", () => {
     ).rejects.toThrow(/Material no encontrado/);
   });
 
-  test("serializes concurrent adjustments via the advisory lock", async ({ db }) => {
+  it("serializes concurrent adjustments via the advisory lock", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
     const user = await seedUser(db);

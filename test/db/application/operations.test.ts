@@ -1,10 +1,10 @@
 import { describe, expect } from "vitest";
 import { updateOperation } from "#/server/application/operations";
-import { test } from "../../helpers/fixtures.ts";
+import { it } from "../../helpers/fixtures.ts";
 import { seedOperation, seedOrganization } from "../../helpers/seed.ts";
 
 describe("updateOperation", () => {
-  test("updates the operation's fields", async ({ db }) => {
+  it("updates the operation's fields", async ({ db }) => {
     const org = await seedOrganization(db);
     const op = await seedOperation(db, org.id, { name: "Bordado" });
 
@@ -18,7 +18,7 @@ describe("updateOperation", () => {
     expect(updated.defaultDurationMinutes).toBe(45);
   });
 
-  test("rejects when the operation doesn't belong to the organization", async ({ db }) => {
+  it("rejects when the operation doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const op = await seedOperation(db, otherOrg.id);

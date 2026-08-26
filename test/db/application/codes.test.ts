@@ -1,10 +1,10 @@
 import { describe, expect } from "vitest";
 import { generateSequentialCode } from "../../../src/server/application/codes.ts";
-import { test } from "../../helpers/fixtures.ts";
+import { it } from "../../helpers/fixtures.ts";
 import { seedOrganization } from "../../helpers/seed.ts";
 
 describe("generateSequentialCode", () => {
-  test("increments sequentially for the same organization and prefix", async ({ db }) => {
+  it("increments sequentially for the same organization and prefix", async ({ db }) => {
     const org = await seedOrganization(db);
 
     const first = await generateSequentialCode(db, org.id, "PED2026-05-");
@@ -16,7 +16,7 @@ describe("generateSequentialCode", () => {
     expect(third).toBe("PED2026-05-0003");
   });
 
-  test("keeps independent counters per prefix", async ({ db }) => {
+  it("keeps independent counters per prefix", async ({ db }) => {
     const org = await seedOrganization(db);
 
     const order = await generateSequentialCode(db, org.id, "PED2026-05-");
@@ -26,7 +26,7 @@ describe("generateSequentialCode", () => {
     expect(quotation).toBe("COT2026-05-0001");
   });
 
-  test("keeps independent counters per organization", async ({ db }) => {
+  it("keeps independent counters per organization", async ({ db }) => {
     const orgA = await seedOrganization(db);
     const orgB = await seedOrganization(db);
 
@@ -39,7 +39,7 @@ describe("generateSequentialCode", () => {
     expect(codeA2).toBe("PED2026-05-0002");
   });
 
-  test("zero-pads according to padLength and overflows naturally past it", async ({ db }) => {
+  it("zero-pads according to padLength and overflows naturally past it", async ({ db }) => {
     const org = await seedOrganization(db);
 
     for (let i = 0; i < 9; i++) {
