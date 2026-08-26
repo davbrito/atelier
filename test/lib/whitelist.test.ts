@@ -1,10 +1,5 @@
-import { drizzle } from "drizzle-orm/node-postgres";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { relations } from "#/db/relations";
-
-function mockDb() {
-  return drizzle.mock({ relations });
-}
+import { mockDb } from "../helpers/mock-db";
 
 // `envWhitelistEmails` is computed once at module load from
 // `process.env.WHITELISTED_EMAILS`, so each case needs a fresh module
