@@ -9,12 +9,12 @@ import { resetDb } from "./reset-db.ts";
  * `auto: true` `cleanDb` fixture, mirroring the old `afterEach`). Add more
  * fixtures here as they come up, via `.extend(...)`.
  */
-export const test = baseTest
+const test = baseTest
   .extend("db", { scope: "file" }, async () => createTestDb(inject("postgresConnectionString")))
   .extend("cleanDb", { auto: true }, async ({ db }, { onCleanup }) => {
     onCleanup(() => resetDb(db));
   });
 
-// Also exported as `it` so files can just swap the import instead of
-// renaming every `it(...)` call to `test(...)`.
-export const it = test;
+// Exported as `it` so files can just swap the import instead of renaming
+// every `it(...)` call to `test(...)`.
+export { test as it };
