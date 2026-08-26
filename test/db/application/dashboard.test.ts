@@ -1,6 +1,6 @@
 import { describe, expect } from "vitest";
 import { getDashboardCounts } from "#/server/application/dashboard";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import {
   seedBudget,
   seedClient,

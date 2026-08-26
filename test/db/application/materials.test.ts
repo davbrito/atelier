@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { materialPriceHistory } from "#/db/schema";
 import { createMaterial, deleteMaterial, updateMaterial } from "#/server/application/materials";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import { seedMaterial, seedOrganization } from "../../helpers/seed.ts";
 
 describe("createMaterial", () => {

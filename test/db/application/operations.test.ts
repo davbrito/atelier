@@ -1,6 +1,6 @@
 import { describe, expect } from "vitest";
 import { updateOperation } from "#/server/application/operations";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import { seedOperation, seedOrganization } from "../../helpers/seed.ts";
 
 describe("updateOperation", () => {

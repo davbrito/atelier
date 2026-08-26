@@ -4,7 +4,7 @@ import {
   listWhitelistedEmails,
   removeWhitelistedEmail,
 } from "#/server/application/whitelist";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import { seedUser } from "../../helpers/seed.ts";
 
 describe("whitelist", () => {

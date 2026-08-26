@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { budgetMaterial } from "#/db/schema";
 import { createBudget, deleteBudget, updateBudget } from "#/server/application/budgets";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import { seedBudget, seedMaterial, seedOrganization } from "../../helpers/seed.ts";
 
 describe("createBudget", () => {

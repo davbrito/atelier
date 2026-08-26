@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { garment as garmentTable, order } from "#/db/schema";
 import { moveGarmentStage } from "#/server/application/garments";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import { seedGarment, seedGarmentStage, seedOrder, seedOrganization } from "../../helpers/seed.ts";
 
 describe("moveGarmentStage", () => {

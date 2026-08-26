@@ -1,6 +1,6 @@
 import { describe, expect } from "vitest";
 import { getUserOrganizationCount } from "#/server/application/organizations";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import { seedMember, seedOrganization, seedUser } from "../../helpers/seed.ts";
 
 describe("getUserOrganizationCount", () => {

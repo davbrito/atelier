@@ -8,7 +8,7 @@ import {
   getMaterialInventory,
   registerMovement,
 } from "#/server/application/inventory";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import { seedMaterial, seedOrganization, seedUser } from "../../helpers/seed.ts";
 
 describe("getCurrentStock", () => {

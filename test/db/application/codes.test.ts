@@ -1,6 +1,6 @@
 import { describe, expect } from "vitest";
 import { generateSequentialCode } from "../../../src/server/application/codes.ts";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import { seedOrganization } from "../../helpers/seed.ts";
 
 describe("generateSequentialCode", () => {

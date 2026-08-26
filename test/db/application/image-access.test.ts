@@ -1,6 +1,6 @@
 import { describe, expect } from "vitest";
 import { canAccessImage } from "#/server/application/image-access";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import { seedMaterial, seedMember, seedOrganization, seedUser } from "../../helpers/seed.ts";
 
 describe("canAccessImage", () => {

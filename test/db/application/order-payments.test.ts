@@ -3,7 +3,7 @@ import { Client } from "pg";
 import { describe, expect, inject } from "vitest";
 import { relations } from "#/db/relations";
 import { createOrderPayment } from "#/server/application/order-payments";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import { seedOrder, seedOrganization } from "../../helpers/seed.ts";
 
 describe("createOrderPayment", () => {

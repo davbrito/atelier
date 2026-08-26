@@ -8,7 +8,7 @@ import {
   seedDefaultGarmentStages,
   updateGarmentStage,
 } from "#/server/application/garment-stages";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import { seedGarmentStage, seedOrganization } from "../../helpers/seed.ts";
 
 describe("createGarmentStage", () => {

@@ -3,10 +3,11 @@ import { createTestDb } from "./create-test-db.ts";
 import { resetDb } from "./reset-db.ts";
 
 /**
- * `test` extended with a `db` fixture: one connection per test file (via
- * `scope: "file"`, mirroring the old `beforeAll`), truncated after every
- * test automatically (via the `auto: true` `cleanDb` fixture, mirroring the
- * old `afterEach`).
+ * Shared `test` extended with fixtures for test/db/application/**. Currently
+ * just `db`: one connection per test file (via `scope: "file"`, mirroring
+ * the old `beforeAll`), truncated after every test automatically (via the
+ * `auto: true` `cleanDb` fixture, mirroring the old `afterEach`). Add more
+ * fixtures here as they come up, via `.extend(...)`.
  */
 export const test = baseTest
   .extend("db", { scope: "file" }, async () => createTestDb(inject("postgresConnectionString")))

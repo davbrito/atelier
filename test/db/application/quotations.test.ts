@@ -8,7 +8,7 @@ import {
   quotationOperation,
 } from "#/db/schema";
 import { createQuotation, loadQuotationLines } from "#/server/application/quotations";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import {
   seedBudget,
   seedClient,

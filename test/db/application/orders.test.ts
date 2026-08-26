@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { codeCounter, garment, order, orderPayment, quotationLine } from "#/db/schema";
 import { createOrder, getOrderPaidAmount } from "#/server/application/orders";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import {
   seedBudget,
   seedClient,

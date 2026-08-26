@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { clientMeasurement } from "#/db/schema";
 import { createClient, deleteClient, updateClient } from "#/server/application/clients";
-import { test } from "../../helpers/db-fixture.ts";
+import { test } from "../../helpers/fixtures.ts";
 import { seedClient, seedOrganization } from "../../helpers/seed.ts";
 
 describe("createClient", () => {
