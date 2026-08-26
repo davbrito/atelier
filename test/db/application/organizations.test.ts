@@ -1,27 +1,15 @@
-import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
-import type { Db } from "#/db/client";
+import { describe, expect } from "vitest";
 import { getUserOrganizationCount } from "#/server/application/organizations";
-import { createTestDb } from "../../helpers/create-test-db.ts";
-import { resetDb } from "../../helpers/reset-db.ts";
+import { test } from "../../helpers/db-fixture.ts";
 import { seedMember, seedOrganization, seedUser } from "../../helpers/seed.ts";
 
-let db: Db;
-
-beforeAll(async () => {
-  db = await createTestDb(inject("postgresConnectionString"));
-});
-
-afterEach(async () => {
-  await resetDb(db);
-});
-
 describe("getUserOrganizationCount", () => {
-  it("returns 0 for a user with no memberships", async () => {
+  test("returns 0 for a user with no memberships", async ({ db }) => {
     const user = await seedUser(db);
     expect(await getUserOrganizationCount(db, user.id)).toBe(0);
   });
 
-  it("counts memberships across organizations", async () => {
+  test("counts memberships across organizations", async ({ db }) => {
     const user = await seedUser(db);
     const orgA = await seedOrganization(db);
     const orgB = await seedOrganization(db);
@@ -31,7 +19,7 @@ describe("getUserOrganizationCount", () => {
     expect(await getUserOrganizationCount(db, user.id)).toBe(2);
   });
 
-  it("doesn't count another user's memberships", async () => {
+  test("doesn't count another user's memberships", async ({ db }) => {
     const user = await seedUser(db);
     const otherUser = await seedUser(db);
     const org = await seedOrganization(db);

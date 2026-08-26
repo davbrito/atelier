@@ -1,25 +1,13 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
-import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
-import type { Db } from "#/db/client";
+import { describe, expect, inject } from "vitest";
 import { relations } from "#/db/relations";
 import { createOrderPayment } from "#/server/application/order-payments";
-import { createTestDb } from "../../helpers/create-test-db.ts";
-import { resetDb } from "../../helpers/reset-db.ts";
+import { test } from "../../helpers/db-fixture.ts";
 import { seedOrder, seedOrganization } from "../../helpers/seed.ts";
 
-let db: Db;
-
-beforeAll(async () => {
-  db = await createTestDb(inject("postgresConnectionString"));
-});
-
-afterEach(async () => {
-  await resetDb(db);
-});
-
 describe("createOrderPayment", () => {
-  it("inserts a payment within the order's balance", async () => {
+  test("inserts a payment within the order's balance", async ({ db }) => {
     const org = await seedOrganization(db);
     const order = await seedOrder(db, org.id, { totalAmount: "100.00" });
 
@@ -35,7 +23,7 @@ describe("createOrderPayment", () => {
     expect(payment.orderId).toBe(order.id);
   });
 
-  it("rejects a payment that exceeds the remaining balance", async () => {
+  test("rejects a payment that exceeds the remaining balance", async ({ db }) => {
     const org = await seedOrganization(db);
     const order = await seedOrder(db, org.id, { totalAmount: "100.00" });
 
@@ -50,7 +38,7 @@ describe("createOrderPayment", () => {
     ).rejects.toThrow(/excede el saldo pendiente/);
   });
 
-  it("rejects a payment for an order in a different organization", async () => {
+  test("rejects a payment for an order in a different organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const order = await seedOrder(db, org.id, { totalAmount: "100.00" });
@@ -66,7 +54,7 @@ describe("createOrderPayment", () => {
     ).rejects.toThrow(/Pedido no encontrado/);
   });
 
-  it("serializes concurrent payments so they can't jointly overpay the order", async () => {
+  test("serializes concurrent payments so they can't jointly overpay the order", async ({ db }) => {
     const org = await seedOrganization(db);
     const order = await seedOrder(db, org.id, { totalAmount: "100.00" });
 

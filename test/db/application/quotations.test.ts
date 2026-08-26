@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
-import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
-import type { Db } from "#/db/client";
+import { describe, expect } from "vitest";
 import {
   budgetMaterial,
   budgetOperation,
@@ -9,8 +8,7 @@ import {
   quotationOperation,
 } from "#/db/schema";
 import { createQuotation, loadQuotationLines } from "#/server/application/quotations";
-import { createTestDb } from "../../helpers/create-test-db.ts";
-import { resetDb } from "../../helpers/reset-db.ts";
+import { test } from "../../helpers/db-fixture.ts";
 import {
   seedBudget,
   seedClient,
@@ -19,18 +17,10 @@ import {
   seedOrganization,
 } from "../../helpers/seed.ts";
 
-let db: Db;
-
-beforeAll(async () => {
-  db = await createTestDb(inject("postgresConnectionString"));
-});
-
-afterEach(async () => {
-  await resetDb(db);
-});
-
 describe("createQuotation", () => {
-  it("creates a line per budget and freezes the client name and material price", async () => {
+  test("creates a line per budget and freezes the client name and material price", async ({
+    db,
+  }) => {
     const org = await seedOrganization(db);
     const client = await seedClient(db, org.id, { name: "Ana Pérez" });
     const budget = await seedBudget(db, org.id);
@@ -52,7 +42,9 @@ describe("createQuotation", () => {
     expect(frozenMaterials[0].frozenName).toBe(mat.name);
   });
 
-  it("keeps frozen prices unchanged if the budget's material price changes afterward", async () => {
+  test("keeps frozen prices unchanged if the budget's material price changes afterward", async ({
+    db,
+  }) => {
     const org = await seedOrganization(db);
     const client = await seedClient(db, org.id);
     const budget = await seedBudget(db, org.id);
@@ -71,7 +63,9 @@ describe("createQuotation", () => {
     expect(frozen.frozenPrice).toBe("15.00");
   });
 
-  it("rejects when a budget references a material outside the organization's catalog", async () => {
+  test("rejects when a budget references a material outside the organization's catalog", async ({
+    db,
+  }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const client = await seedClient(db, org.id);
@@ -91,7 +85,7 @@ describe("createQuotation", () => {
     ).rejects.toThrow(/material que ya no existe/);
   });
 
-  it("rejects when the budget doesn't belong to the organization", async () => {
+  test("rejects when the budget doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const client = await seedClient(db, org.id);
@@ -104,7 +98,9 @@ describe("createQuotation", () => {
     ).rejects.toThrow(/Presupuesto no encontrado/);
   });
 
-  it("freezes operations with their current name and the budget's hourly rate", async () => {
+  test("freezes operations with their current name and the budget's hourly rate", async ({
+    db,
+  }) => {
     const org = await seedOrganization(db);
     const client = await seedClient(db, org.id);
     const budget = await seedBudget(db, org.id, { hourlyRate: "25.00" });
@@ -123,7 +119,9 @@ describe("createQuotation", () => {
     expect(frozen.durationMinutes).toBe(90);
   });
 
-  it("rejects when a budget references an operation outside the organization's catalog", async () => {
+  test("rejects when a budget references an operation outside the organization's catalog", async ({
+    db,
+  }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const client = await seedClient(db, org.id);
@@ -142,7 +140,9 @@ describe("createQuotation", () => {
 });
 
 describe("loadQuotationLines", () => {
-  it("returns each line with its budget info, frozen materials, and frozen operations", async () => {
+  test("returns each line with its budget info, frozen materials, and frozen operations", async ({
+    db,
+  }) => {
     const org = await seedOrganization(db);
     const client = await seedClient(db, org.id);
     const budget = await seedBudget(db, org.id, { name: "Traje", hourlyRate: "10.00" });
@@ -169,7 +169,7 @@ describe("loadQuotationLines", () => {
     expect(Number(lines[0].operations[0].amount)).toBe(20);
   });
 
-  it("returns an empty array for a quotation with no lines", async () => {
+  test("returns an empty array for a quotation with no lines", async ({ db }) => {
     expect(await loadQuotationLines(db, "00000000-0000-0000-0000-000000000000")).toEqual([]);
   });
 });

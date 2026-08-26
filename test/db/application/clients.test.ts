@@ -1,24 +1,12 @@
 import { eq } from "drizzle-orm";
-import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
-import type { Db } from "#/db/client";
+import { describe, expect } from "vitest";
 import { clientMeasurement } from "#/db/schema";
 import { createClient, deleteClient, updateClient } from "#/server/application/clients";
-import { createTestDb } from "../../helpers/create-test-db.ts";
-import { resetDb } from "../../helpers/reset-db.ts";
+import { test } from "../../helpers/db-fixture.ts";
 import { seedClient, seedOrganization } from "../../helpers/seed.ts";
 
-let db: Db;
-
-beforeAll(async () => {
-  db = await createTestDb(inject("postgresConnectionString"));
-});
-
-afterEach(async () => {
-  await resetDb(db);
-});
-
 describe("createClient", () => {
-  it("creates the client with its measurements", async () => {
+  test("creates the client with its measurements", async ({ db }) => {
     const org = await seedOrganization(db);
 
     const client = await db.transaction((tx) =>
@@ -39,7 +27,7 @@ describe("createClient", () => {
 });
 
 describe("updateClient", () => {
-  it("replaces the client's measurements", async () => {
+  test("replaces the client's measurements", async ({ db }) => {
     const org = await seedOrganization(db);
     const client = await db.transaction((tx) =>
       createClient(tx, org.id, {
@@ -64,7 +52,7 @@ describe("updateClient", () => {
     expect(measurements[0].name).toBe("Cadera");
   });
 
-  it("rejects when the client doesn't belong to the organization", async () => {
+  test("rejects when the client doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const client = await seedClient(db, otherOrg.id);
@@ -76,7 +64,7 @@ describe("updateClient", () => {
 });
 
 describe("deleteClient", () => {
-  it("rejects when the client doesn't belong to the organization", async () => {
+  test("rejects when the client doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const client = await seedClient(db, otherOrg.id);

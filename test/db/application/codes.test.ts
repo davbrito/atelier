@@ -1,22 +1,10 @@
-import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
-import type { Db } from "../../../src/db/client.ts";
+import { describe, expect } from "vitest";
 import { generateSequentialCode } from "../../../src/server/application/codes.ts";
-import { createTestDb } from "../../helpers/create-test-db.ts";
-import { resetDb } from "../../helpers/reset-db.ts";
+import { test } from "../../helpers/db-fixture.ts";
 import { seedOrganization } from "../../helpers/seed.ts";
 
-let db: Db;
-
-beforeAll(async () => {
-  db = await createTestDb(inject("postgresConnectionString"));
-});
-
-afterEach(async () => {
-  await resetDb(db);
-});
-
 describe("generateSequentialCode", () => {
-  it("increments sequentially for the same organization and prefix", async () => {
+  test("increments sequentially for the same organization and prefix", async ({ db }) => {
     const org = await seedOrganization(db);
 
     const first = await generateSequentialCode(db, org.id, "PED2026-05-");
@@ -28,7 +16,7 @@ describe("generateSequentialCode", () => {
     expect(third).toBe("PED2026-05-0003");
   });
 
-  it("keeps independent counters per prefix", async () => {
+  test("keeps independent counters per prefix", async ({ db }) => {
     const org = await seedOrganization(db);
 
     const order = await generateSequentialCode(db, org.id, "PED2026-05-");
@@ -38,7 +26,7 @@ describe("generateSequentialCode", () => {
     expect(quotation).toBe("COT2026-05-0001");
   });
 
-  it("keeps independent counters per organization", async () => {
+  test("keeps independent counters per organization", async ({ db }) => {
     const orgA = await seedOrganization(db);
     const orgB = await seedOrganization(db);
 
@@ -51,7 +39,7 @@ describe("generateSequentialCode", () => {
     expect(codeA2).toBe("PED2026-05-0002");
   });
 
-  it("zero-pads according to padLength and overflows naturally past it", async () => {
+  test("zero-pads according to padLength and overflows naturally past it", async ({ db }) => {
     const org = await seedOrganization(db);
 
     for (let i = 0; i < 9; i++) {

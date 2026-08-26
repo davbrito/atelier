@@ -1,24 +1,12 @@
 import { eq } from "drizzle-orm";
-import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
-import type { Db } from "#/db/client";
+import { describe, expect } from "vitest";
 import { materialPriceHistory } from "#/db/schema";
 import { createMaterial, deleteMaterial, updateMaterial } from "#/server/application/materials";
-import { createTestDb } from "../../helpers/create-test-db.ts";
-import { resetDb } from "../../helpers/reset-db.ts";
+import { test } from "../../helpers/db-fixture.ts";
 import { seedMaterial, seedOrganization } from "../../helpers/seed.ts";
 
-let db: Db;
-
-beforeAll(async () => {
-  db = await createTestDb(inject("postgresConnectionString"));
-});
-
-afterEach(async () => {
-  await resetDb(db);
-});
-
 describe("createMaterial", () => {
-  it("seeds the price history with the initial price", async () => {
+  test("seeds the price history with the initial price", async ({ db }) => {
     const org = await seedOrganization(db);
 
     const created = await db.transaction((tx) =>
@@ -35,7 +23,7 @@ describe("createMaterial", () => {
 });
 
 describe("updateMaterial", () => {
-  it("records a new price-history row only when the price actually changes", async () => {
+  test("records a new price-history row only when the price actually changes", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id, { currentPrice: "10.00" });
 
@@ -54,7 +42,7 @@ describe("updateMaterial", () => {
     expect(history[0].price).toBe("15.00");
   });
 
-  it("rejects when the material doesn't belong to the organization", async () => {
+  test("rejects when the material doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const mat = await seedMaterial(db, otherOrg.id);
@@ -68,7 +56,7 @@ describe("updateMaterial", () => {
 });
 
 describe("deleteMaterial", () => {
-  it("rejects when the material doesn't belong to the organization", async () => {
+  test("rejects when the material doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const mat = await seedMaterial(db, otherOrg.id);
