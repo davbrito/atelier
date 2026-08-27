@@ -34,7 +34,8 @@ async function withMaintenanceClient<T>(
  * via `.extend(...)`.
  */
 const test = baseTest
-  .extend("db", { scope: "file" }, async (_ctx, { onCleanup }) => {
+  // biome-ignore lint/correctness/noEmptyPattern: vitest's fixture parser requires a literal destructuring pattern here, even an unused one
+  .extend("db", { scope: "file" }, async ({}, { onCleanup }) => {
     const connectionString = inject("postgresConnectionString");
     const database = `test_${randomUUID().replaceAll("-", "")}`;
 
