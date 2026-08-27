@@ -42,10 +42,9 @@ const config = defineConfig({
           environment: "node",
           include: ["test/db/**/*.test.ts"],
           globalSetup: ["./test/setup.ts"],
-          // Test files share one Postgres container and truncate all tables
-          // between tests (see test/helpers/reset-db.ts) — running files in
-          // parallel lets one file's truncate wipe another's in-flight rows.
-          fileParallelism: false,
+          // Each test file clones its own database from the migrated
+          // template (see test/helpers/fixtures.ts), so files no longer
+          // share state and can safely run in parallel.
         },
       },
       {
