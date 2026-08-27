@@ -6,12 +6,26 @@ import { createTestDb } from "./create-test-db.ts";
 import { TEMPLATE_DATABASE } from "./db-template.ts";
 import { resetDb } from "./reset-db.ts";
 
-/** Logs `label` with a timestamp before/after running `fn`, to debug where time goes in CI. */
-async function timed<T>(label: string, fn: () => Promise<T>): Promise<T> {
+/**
+ * Logs `label` with a timestamp before/after running `fn`, to debug where
+ * time goes in CI, and enforces a hard timeout — vitest's own
+ * hookTimeout/teardownTimeout don't seem to cover fixture `onCleanup`
+ * callbacks (a hang there ran well past teardownTimeout with no error),
+ * so this throws on its own instead of relying on that.
+ */
+async function timed<T>(label: string, fn: () => Promise<T>, timeoutMs = 10_000): Promise<T> {
   const start = Date.now();
   console.log(`[fixtures] ${label}: start`);
   try {
-    const result = await fn();
+    const result = await Promise.race([
+      fn(),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`[fixtures] ${label}: timed out after ${timeoutMs}ms`)),
+          timeoutMs,
+        ),
+      ),
+    ]);
     console.log(`[fixtures] ${label}: done (${Date.now() - start}ms)`);
     return result;
   } catch (error) {
@@ -87,7 +101,7 @@ const test = baseTest
   .extend("db", { scope: "file" }, async ({ databaseUrl }, { onCleanup }) => {
     const database = new URL(databaseUrl).pathname.slice(1);
     const db = await timed(`connect db client (${database})`, () => createTestDb(databaseUrl));
-    onCleanup(() => db.$client.end());
+    onCleanup(() => timed(`end db client (${database})`, () => db.$client.end()));
     return db;
   })
   .extend("cleanDb", { auto: true }, async ({ db, task }, { onCleanup }) => {
