@@ -14,5 +14,9 @@ import { relations } from "../../src/db/relations";
 export async function createTestDb(connectionString: string) {
   const db = drizzle({ connection: connectionString, relations });
   await db.$client.connect();
+  // Fail fast instead of hanging if a query (e.g. resetDb's TRUNCATE) ever
+  // has to wait on a lock — a leaked/orphaned transaction should surface as
+  // a clear Postgres error, not a stuck CI job.
+  await db.$client.query("set lock_timeout = '10s'");
   return db;
 }

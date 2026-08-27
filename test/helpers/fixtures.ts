@@ -15,6 +15,10 @@ async function withMaintenanceClient<T>(
   // which every Postgres server has.
   const client = new Client({ connectionString: withDatabase(connectionString, "postgres") });
   await client.connect();
+  // Same reasoning as createTestDb: fail fast on a lock wait instead of
+  // hanging (CREATE/DROP DATABASE are catalog-level operations Postgres
+  // serializes, so this is the operation most likely to ever contend).
+  await client.query("set lock_timeout = '10s'");
   try {
     return await fn(client);
   } finally {
@@ -27,9 +31,14 @@ async function withMaintenanceClient<T>(
  * - `databaseUrl`: each test file clones its own uniquely-named database
  *   from the migrated template (see test/setup.ts and
  *   test/helpers/db-template.ts, `scope: "file"`, mirroring the old
- *   `beforeAll`) instead of every file sharing one database — that's what
- *   lets these files run in parallel. Dropped again once the file's tests
- *   finish. Request this directly (instead of `inject("postgresConnectionString")`)
+ *   `beforeAll`) instead of every file sharing one database. This was meant
+ *   to let files run in parallel, but CREATE/DROP DATABASE are catalog-level
+ *   operations Postgres serializes — with ~15-20 files concurrently issuing
+ *   them, CI hung, so vitest.config.ts's "db" project currently pins
+ *   `fileParallelism: false`. The per-file isolation is still worth keeping
+ *   even sequential (a clean database per file instead of one shared,
+ *   truncated database). Dropped again once the file's tests finish.
+ *   Request this directly (instead of `inject("postgresConnectionString")`)
  *   for any extra raw `pg.Client` connections a test needs (e.g. for
  *   concurrency tests) — they must point at the same cloned database as `db`.
  * - `db`: a Drizzle client connected to `databaseUrl`, closed before
