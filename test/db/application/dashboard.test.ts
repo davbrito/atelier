@@ -1,28 +1,16 @@
-import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
-import type { Db } from "#/db/client";
+import { describe, expect } from "vitest";
 import { getDashboardCounts } from "#/server/application/dashboard";
-import { createTestDb } from "../../helpers/create-test-db.ts";
-import { resetDb } from "../../helpers/reset-db.ts";
+import { it } from "#test/helpers/fixtures.ts";
 import {
   seedBudget,
   seedClient,
   seedMaterial,
   seedOperation,
   seedOrganization,
-} from "../../helpers/seed.ts";
-
-let db: Db;
-
-beforeAll(async () => {
-  db = await createTestDb(inject("postgresConnectionString"));
-});
-
-afterEach(async () => {
-  await resetDb(db);
-});
+} from "#test/helpers/seed.ts";
 
 describe("getDashboardCounts", () => {
-  it("counts each entity type scoped to the organization", async () => {
+  it("counts each entity type scoped to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
 

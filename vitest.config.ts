@@ -42,10 +42,21 @@ const config = defineConfig({
           environment: "node",
           include: ["test/db/**/*.test.ts"],
           globalSetup: ["./test/setup.ts"],
-          // Test files share one Postgres container and truncate all tables
-          // between tests (see test/helpers/reset-db.ts) — running files in
-          // parallel lets one file's truncate wipe another's in-flight rows.
-          fileParallelism: false,
+          // Each test file clones its own database from the migrated
+          // template (see test/helpers/fixtures.ts), so files no longer
+          // share state and can run in parallel. (An earlier fix here
+          // disabled fileParallelism suspecting CREATE/DROP DATABASE
+          // catalog-lock contention — the real cause turned out to be a
+          // connection leak in the db fixture unrelated to parallelism, now
+          // fixed, so parallelism is back on.)
+          // Explicit, generous but bounded: fail loudly with a stack trace
+          // instead of running indefinitely if something unexpected blocks
+          // again. (teardownTimeout isn't a valid per-project option here —
+          // fixture onCleanup timeouts are handled by fixtures.ts's own
+          // timed() helper instead, which is what actually caught the real
+          // hang; vitest's hookTimeout/teardownTimeout didn't.)
+          testTimeout: 15_000,
+          hookTimeout: 15_000,
         },
       },
       {

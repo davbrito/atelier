@@ -1,7 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
-import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
-import type { Db } from "#/db/client";
+import { describe, expect } from "vitest";
 import { relations } from "#/db/relations";
 import { materialInventoryMovement } from "#/db/schema";
 import {
@@ -9,29 +8,18 @@ import {
   getMaterialInventory,
   registerMovement,
 } from "#/server/application/inventory";
-import { createTestDb } from "../../helpers/create-test-db.ts";
-import { resetDb } from "../../helpers/reset-db.ts";
-import { seedMaterial, seedOrganization, seedUser } from "../../helpers/seed.ts";
-
-let db: Db;
-
-beforeAll(async () => {
-  db = await createTestDb(inject("postgresConnectionString"));
-});
-
-afterEach(async () => {
-  await resetDb(db);
-});
+import { it } from "#test/helpers/fixtures.ts";
+import { seedMaterial, seedOrganization, seedUser } from "#test/helpers/seed.ts";
 
 describe("getCurrentStock", () => {
-  it("returns 0 when there are no movements", async () => {
+  it("returns 0 when there are no movements", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
 
     expect(await getCurrentStock(db, mat.id, org.id)).toBe("0");
   });
 
-  it("sums entries and subtracts exits", async () => {
+  it("sums entries and subtracts exits", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
 
@@ -44,7 +32,7 @@ describe("getCurrentStock", () => {
     expect(await getCurrentStock(db, mat.id, org.id)).toBe("8.5000");
   });
 
-  it("only counts movements for the given material and organization", async () => {
+  it("only counts movements for the given material and organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
@@ -62,7 +50,7 @@ describe("getCurrentStock", () => {
 });
 
 describe("getMaterialInventory", () => {
-  it("returns current stock and recent movements for the material", async () => {
+  it("returns current stock and recent movements for the material", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
     const user = await seedUser(db);
@@ -81,7 +69,7 @@ describe("getMaterialInventory", () => {
     expect(result.movements[0].createdByName).toBe(user.name);
   });
 
-  it("rejects when the material doesn't belong to the organization", async () => {
+  it("rejects when the material doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const mat = await seedMaterial(db, otherOrg.id);
@@ -93,7 +81,7 @@ describe("getMaterialInventory", () => {
 });
 
 describe("registerMovement", () => {
-  it("records an entry as a positive delta", async () => {
+  it("records an entry as a positive delta", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
     const user = await seedUser(db);
@@ -110,7 +98,7 @@ describe("registerMovement", () => {
     expect(await getCurrentStock(db, mat.id, org.id)).toBe("5.0000");
   });
 
-  it("records an exit as a negative delta", async () => {
+  it("records an exit as a negative delta", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
     const user = await seedUser(db);
@@ -133,7 +121,7 @@ describe("registerMovement", () => {
     expect(await getCurrentStock(db, mat.id, org.id)).toBe("7.0000");
   });
 
-  it("computes an adjustment as the delta needed to reach the target quantity", async () => {
+  it("computes an adjustment as the delta needed to reach the target quantity", async ({ db }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
     const user = await seedUser(db);
@@ -156,7 +144,7 @@ describe("registerMovement", () => {
     expect(await getCurrentStock(db, mat.id, org.id)).toBe("6.0000");
   });
 
-  it("rejects when the material doesn't belong to the organization", async () => {
+  it("rejects when the material doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const mat = await seedMaterial(db, otherOrg.id);
@@ -173,7 +161,7 @@ describe("registerMovement", () => {
     ).rejects.toThrow(/Material no encontrado/);
   });
 
-  it("serializes concurrent adjustments via the advisory lock", async () => {
+  it("serializes concurrent adjustments via the advisory lock", async ({ db, databaseUrl }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
     const user = await seedUser(db);
@@ -185,7 +173,7 @@ describe("registerMovement", () => {
       }),
     );
 
-    const connectionString = inject("postgresConnectionString");
+    const connectionString = databaseUrl;
     const clientA = new Client({ connectionString });
     const clientB = new Client({ connectionString });
     await Promise.all([clientA.connect(), clientB.connect()]);

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import type { Db } from "../../src/db/client";
+import type { Db } from "#/db/client";
 
 /**
  * Truncates every table in the `public` schema, cascading to dependents.

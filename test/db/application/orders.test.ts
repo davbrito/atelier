@@ -1,30 +1,20 @@
 import { eq } from "drizzle-orm";
-import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
-import type { Db } from "#/db/client";
+import { describe, expect } from "vitest";
 import { codeCounter, garment, order, orderPayment, quotationLine } from "#/db/schema";
 import { createOrder, getOrderPaidAmount } from "#/server/application/orders";
-import { createTestDb } from "../../helpers/create-test-db.ts";
-import { resetDb } from "../../helpers/reset-db.ts";
+import { it } from "#test/helpers/fixtures.ts";
 import {
   seedBudget,
   seedClient,
   seedOrder,
   seedOrganization,
   seedQuotation,
-} from "../../helpers/seed.ts";
-
-let db: Db;
-
-beforeAll(async () => {
-  db = await createTestDb(inject("postgresConnectionString"));
-});
-
-afterEach(async () => {
-  await resetDb(db);
-});
+} from "#test/helpers/seed.ts";
 
 describe("createOrder", () => {
-  it("creates the order and one garment per requested item, with a generated code", async () => {
+  it("creates the order and one garment per requested item, with a generated code", async ({
+    db,
+  }) => {
     const org = await seedOrganization(db);
     const client = await seedClient(db, org.id);
     const budget = await seedBudget(db, org.id, { name: "Vestido de gala" });
@@ -46,7 +36,7 @@ describe("createOrder", () => {
     expect(garments[0].quantity).toBe(2);
   });
 
-  it("rejects when the client doesn't belong to the organization", async () => {
+  it("rejects when the client doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const client = await seedClient(db, otherOrg.id);
@@ -63,7 +53,9 @@ describe("createOrder", () => {
     ).rejects.toThrow(/Cliente no encontrado/);
   });
 
-  it("rolls back the whole transaction — including the code counter bump — when a garment references an unknown budget", async () => {
+  it("rolls back the whole transaction — including the code counter bump — when a garment references an unknown budget", async ({
+    db,
+  }) => {
     const org = await seedOrganization(db);
     const client = await seedClient(db, org.id);
 
@@ -89,7 +81,9 @@ describe("createOrder", () => {
     expect(counters).toHaveLength(0);
   });
 
-  it("links the garment to a valid quotation line and ignores one from another quotation", async () => {
+  it("links the garment to a valid quotation line and ignores one from another quotation", async ({
+    db,
+  }) => {
     const org = await seedOrganization(db);
     const client = await seedClient(db, org.id);
     const budget = await seedBudget(db, org.id);
@@ -128,7 +122,7 @@ describe("createOrder", () => {
     expect(garments.some((g) => g.quotationLineId === null)).toBe(true);
   });
 
-  it("rejects when the given quotation doesn't belong to the organization", async () => {
+  it("rejects when the given quotation doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const client = await seedClient(db, org.id);
@@ -150,14 +144,14 @@ describe("createOrder", () => {
 });
 
 describe("getOrderPaidAmount", () => {
-  it("returns 0 when the order has no payments", async () => {
+  it("returns 0 when the order has no payments", async ({ db }) => {
     const org = await seedOrganization(db);
     const newOrder = await seedOrder(db, org.id, { totalAmount: "100.00" });
 
     expect(await getOrderPaidAmount(db, newOrder.id)).toBe(0);
   });
 
-  it("sums all payments for the order", async () => {
+  it("sums all payments for the order", async ({ db }) => {
     const org = await seedOrganization(db);
     const newOrder = await seedOrder(db, org.id, { totalAmount: "100.00" });
 

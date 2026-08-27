@@ -1,22 +1,10 @@
-import { afterEach, beforeAll, describe, expect, inject, it } from "vitest";
-import type { Db } from "#/db/client";
+import { describe, expect } from "vitest";
 import { updateOperation } from "#/server/application/operations";
-import { createTestDb } from "../../helpers/create-test-db.ts";
-import { resetDb } from "../../helpers/reset-db.ts";
-import { seedOperation, seedOrganization } from "../../helpers/seed.ts";
-
-let db: Db;
-
-beforeAll(async () => {
-  db = await createTestDb(inject("postgresConnectionString"));
-});
-
-afterEach(async () => {
-  await resetDb(db);
-});
+import { it } from "#test/helpers/fixtures.ts";
+import { seedOperation, seedOrganization } from "#test/helpers/seed.ts";
 
 describe("updateOperation", () => {
-  it("updates the operation's fields", async () => {
+  it("updates the operation's fields", async ({ db }) => {
     const org = await seedOrganization(db);
     const op = await seedOperation(db, org.id, { name: "Bordado" });
 
@@ -30,7 +18,7 @@ describe("updateOperation", () => {
     expect(updated.defaultDurationMinutes).toBe(45);
   });
 
-  it("rejects when the operation doesn't belong to the organization", async () => {
+  it("rejects when the operation doesn't belong to the organization", async ({ db }) => {
     const org = await seedOrganization(db);
     const otherOrg = await seedOrganization(db);
     const op = await seedOperation(db, otherOrg.id);
