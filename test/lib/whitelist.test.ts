@@ -18,20 +18,21 @@ describe("isWhitelistedEmail env-var bootstrap", () => {
     vi.resetModules();
   });
 
-  it("matches env entries case-insensitively and trims whitespace", async () => {
+  // Combined into one case (rather than one `it` per assertion) because
+  // each fresh env value needs `vi.resetModules()` + a re-import to pick it
+  // up, and under the Workers pool that's genuinely expensive (~2s), not
+  // just a Node module-cache bust — so this file keeps reimports to the
+  // minimum distinct env values actually needed (two).
+  it("matches env entries case-insensitively, trims whitespace, and never touches the db", async () => {
     vi.stubEnv("WHITELISTED_EMAILS", " Admin@Example.com , other@example.com");
     const { isWhitelistedEmail } = await import("#/lib/whitelist");
 
+    // The db stub is `{}` — if any of these resolved by falling through to
+    // the database lookup instead of short-circuiting on the env match,
+    // calling into it would throw and fail this test.
     await expect(isWhitelistedEmail(db, "admin@example.com")).resolves.toBe(true);
     await expect(isWhitelistedEmail(db, "ADMIN@EXAMPLE.COM")).resolves.toBe(true);
     await expect(isWhitelistedEmail(db, "  admin@example.com  ")).resolves.toBe(true);
-  });
-
-  it("takes precedence over the database lookup", async () => {
-    vi.stubEnv("WHITELISTED_EMAILS", "admin@example.com");
-    const { isWhitelistedEmail } = await import("#/lib/whitelist");
-
-    await expect(isWhitelistedEmail(db, "admin@example.com")).resolves.toBe(true);
   });
 
   it("returns false for non-string input without touching the db", async () => {
