@@ -15,10 +15,6 @@ async function withMaintenanceClient<T>(
   // which every Postgres server has.
   const client = new Client({ connectionString: withDatabase(connectionString, "postgres") });
   await client.connect();
-  // Same reasoning as createTestDb: fail fast on a lock wait instead of
-  // hanging (CREATE/DROP DATABASE are catalog-level operations Postgres
-  // serializes, so this is the operation most likely to ever contend).
-  await client.query("set lock_timeout = '10s'");
   try {
     return await fn(client);
   } finally {

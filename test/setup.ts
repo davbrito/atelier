@@ -12,7 +12,13 @@ declare module "vitest" {
 }
 
 async function setupTestPostgres({ provide }: TestProject): Promise<AsyncDisposable> {
-  const container = await new PostgreSqlContainer("postgres:18-alpine").start();
+  // lock_timeout as a server-wide default (rather than `SET` per connection)
+  // covers every connection uniformly, including ones this file doesn't
+  // control directly (e.g. the testcontainers library's own internal psql
+  // calls for snapshot()) — fail fast on any lock wait instead of hanging.
+  const container = await new PostgreSqlContainer("postgres:18-alpine")
+    .withCommand(["postgres", "-c", "lock_timeout=10000"])
+    .start();
   const connectionString = container.getConnectionUri();
 
   const migrationClient = new Client({ connectionString });
