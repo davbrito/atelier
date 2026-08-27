@@ -44,7 +44,13 @@ const config = defineConfig({
           globalSetup: ["./test/setup.ts"],
           // Each test file clones its own database from the migrated
           // template (see test/helpers/fixtures.ts), so files no longer
-          // share state and can safely run in parallel.
+          // share state. That was meant to let them run in parallel, but
+          // ~15-20 files concurrently issuing CREATE/DROP DATABASE against
+          // the same Postgres instance hung CI (those are catalog-level
+          // operations Postgres serializes — this needs a client-side
+          // guard limiting concurrent CREATE/DROP DATABASE calls before
+          // parallelism is safe to turn back on; not done yet).
+          fileParallelism: false,
         },
       },
       {
