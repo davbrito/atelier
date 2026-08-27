@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
-import { describe, expect, inject } from "vitest";
+import { describe, expect } from "vitest";
 import { relations } from "#/db/relations";
 import { materialInventoryMovement } from "#/db/schema";
 import {
@@ -161,7 +161,7 @@ describe("registerMovement", () => {
     ).rejects.toThrow(/Material no encontrado/);
   });
 
-  it("serializes concurrent adjustments via the advisory lock", async ({ db }) => {
+  it("serializes concurrent adjustments via the advisory lock", async ({ db, databaseUrl }) => {
     const org = await seedOrganization(db);
     const mat = await seedMaterial(db, org.id);
     const user = await seedUser(db);
@@ -173,7 +173,7 @@ describe("registerMovement", () => {
       }),
     );
 
-    const connectionString = inject("postgresConnectionString");
+    const connectionString = databaseUrl;
     const clientA = new Client({ connectionString });
     const clientB = new Client({ connectionString });
     await Promise.all([clientA.connect(), clientB.connect()]);

@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
-import { describe, expect, inject } from "vitest";
+import { describe, expect } from "vitest";
 import { relations } from "#/db/relations";
 import { createOrderPayment } from "#/server/application/order-payments";
 import { it } from "../../helpers/fixtures.ts";
@@ -54,13 +54,16 @@ describe("createOrderPayment", () => {
     ).rejects.toThrow(/Pedido no encontrado/);
   });
 
-  it("serializes concurrent payments so they can't jointly overpay the order", async ({ db }) => {
+  it("serializes concurrent payments so they can't jointly overpay the order", async ({
+    db,
+    databaseUrl,
+  }) => {
     const org = await seedOrganization(db);
     const order = await seedOrder(db, org.id, { totalAmount: "100.00" });
 
     // A single pg.Client can't run two transactions at once, so real
     // concurrency needs two independent connections to the same database.
-    const connectionString = inject("postgresConnectionString");
+    const connectionString = databaseUrl;
     const clientA = new Client({ connectionString });
     const clientB = new Client({ connectionString });
     await Promise.all([clientA.connect(), clientB.connect()]);

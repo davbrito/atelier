@@ -1,5 +1,4 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import type { Db } from "../../src/db/client";
 import { relations } from "../../src/db/relations";
 
 /**
@@ -7,8 +6,12 @@ import { relations } from "../../src/db/relations";
  * production where Hyperdrive's proxy handles the connection lifecycle, but
  * a plain node `pg.Client` needs an explicit `.connect()` before any query
  * will resolve. This connects first so tests don't hang.
+ *
+ * No explicit return type annotation: callers need `$client` to close the
+ * connection before dropping its database (see test/helpers/fixtures.ts),
+ * which the narrower `Db` type from src/db/client.ts doesn't expose.
  */
-export async function createTestDb(connectionString: string): Promise<Db> {
+export async function createTestDb(connectionString: string) {
   const db = drizzle({ connection: connectionString, relations });
   await db.$client.connect();
   return db;

@@ -23,19 +23,27 @@ async function withMaintenanceClient<T>(
 }
 
 /**
- * Shared `test` extended with fixtures for test/db/application/**. Currently
- * just `db`: each test file clones its own uniquely-named database from the
- * migrated template (see test/setup.ts and test/helpers/db-template.ts,
- * `scope: "file"`, mirroring the old `beforeAll`) instead of every file
- * sharing one database — that's what lets these files run in parallel. Each
- * test within a file still shares that one cloned database, truncated after
- * every test automatically (via the `auto: true` `cleanDb` fixture,
- * mirroring the old `afterEach`). Add more fixtures here as they come up,
- * via `.extend(...)`.
+ * Shared `test` extended with fixtures for test/db/application/**. Currently:
+ * - `databaseUrl`: each test file clones its own uniquely-named database
+ *   from the migrated template (see test/setup.ts and
+ *   test/helpers/db-template.ts, `scope: "file"`, mirroring the old
+ *   `beforeAll`) instead of every file sharing one database — that's what
+ *   lets these files run in parallel. Dropped again once the file's tests
+ *   finish. Request this directly (instead of `inject("postgresConnectionString")`)
+ *   for any extra raw `pg.Client` connections a test needs (e.g. for
+ *   concurrency tests) — they must point at the same cloned database as `db`.
+ * - `db`: a Drizzle client connected to `databaseUrl`, closed before
+ *   `databaseUrl`'s cleanup drops the database (fixture cleanup runs in
+ *   reverse dependency order, so this happens automatically). Each test
+ *   within a file shares that one connection, truncated after every test
+ *   automatically (via the `auto: true` `cleanDb` fixture, mirroring the old
+ *   `afterEach`).
+ *
+ * Add more fixtures here as they come up, via `.extend(...)`.
  */
 const test = baseTest
   // biome-ignore lint/correctness/noEmptyPattern: vitest's fixture parser requires a literal destructuring pattern here, even an unused one
-  .extend("db", { scope: "file" }, async ({}, { onCleanup }) => {
+  .extend("databaseUrl", { scope: "file" }, async ({}, { onCleanup }) => {
     const connectionString = inject("postgresConnectionString");
     const database = `test_${randomUUID().replaceAll("-", "")}`;
 
@@ -48,7 +56,12 @@ const test = baseTest
       );
     });
 
-    return createTestDb(withDatabase(connectionString, database));
+    return withDatabase(connectionString, database);
+  })
+  .extend("db", { scope: "file" }, async ({ databaseUrl }, { onCleanup }) => {
+    const db = await createTestDb(databaseUrl);
+    onCleanup(() => db.$client.end());
+    return db;
   })
   .extend("cleanDb", { auto: true }, async ({ db }, { onCleanup }) => {
     onCleanup(() => resetDb(db));
