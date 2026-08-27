@@ -2,8 +2,8 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { clientMeasurement } from "#/db/schema";
 import { createClient, deleteClient, updateClient } from "#/server/application/clients";
-import { it } from "../../helpers/fixtures.ts";
-import { seedClient, seedOrganization } from "../../helpers/seed.ts";
+import { it } from "#test/helpers/fixtures.ts";
+import { seedClient, seedOrganization } from "#test/helpers/seed.ts";
 
 describe("createClient", () => {
   it("creates the client with its measurements", async ({ db }) => {

@@ -8,8 +8,8 @@ import {
   seedDefaultGarmentStages,
   updateGarmentStage,
 } from "#/server/application/garment-stages";
-import { it } from "../../helpers/fixtures.ts";
-import { seedGarmentStage, seedOrganization } from "../../helpers/seed.ts";
+import { it } from "#test/helpers/fixtures.ts";
+import { seedGarmentStage, seedOrganization } from "#test/helpers/seed.ts";
 
 describe("createGarmentStage", () => {
   it("appends new stages at the end of the position order", async ({ db }) => {

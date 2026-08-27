@@ -4,8 +4,8 @@ import {
   listWhitelistedEmails,
   removeWhitelistedEmail,
 } from "#/server/application/whitelist";
-import { it } from "../../helpers/fixtures.ts";
-import { seedUser } from "../../helpers/seed.ts";
+import { it } from "#test/helpers/fixtures.ts";
+import { seedUser } from "#test/helpers/seed.ts";
 
 describe("whitelist", () => {
   it("adds and lists emails alphabetically", async ({ db }) => {

@@ -8,8 +8,8 @@ import {
   getMaterialInventory,
   registerMovement,
 } from "#/server/application/inventory";
-import { it } from "../../helpers/fixtures.ts";
-import { seedMaterial, seedOrganization, seedUser } from "../../helpers/seed.ts";
+import { it } from "#test/helpers/fixtures.ts";
+import { seedMaterial, seedOrganization, seedUser } from "#test/helpers/seed.ts";
 
 describe("getCurrentStock", () => {
   it("returns 0 when there are no movements", async ({ db }) => {

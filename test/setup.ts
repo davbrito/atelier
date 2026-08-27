@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Client } from "pg";
 import type { TestProject } from "vitest/node";
-import { TEMPLATE_DATABASE } from "./helpers/db-template.ts";
+import { TEMPLATE_DATABASE } from "#test/helpers/db-template.ts";
 
 declare module "vitest" {
   interface ProvidedContext {

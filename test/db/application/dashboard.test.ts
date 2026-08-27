@@ -1,13 +1,13 @@
 import { describe, expect } from "vitest";
 import { getDashboardCounts } from "#/server/application/dashboard";
-import { it } from "../../helpers/fixtures.ts";
+import { it } from "#test/helpers/fixtures.ts";
 import {
   seedBudget,
   seedClient,
   seedMaterial,
   seedOperation,
   seedOrganization,
-} from "../../helpers/seed.ts";
+} from "#test/helpers/seed.ts";
 
 describe("getDashboardCounts", () => {
   it("counts each entity type scoped to the organization", async ({ db }) => {

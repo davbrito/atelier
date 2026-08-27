@@ -1,7 +1,7 @@
 import { describe, expect } from "vitest";
 import { updateOperation } from "#/server/application/operations";
-import { it } from "../../helpers/fixtures.ts";
-import { seedOperation, seedOrganization } from "../../helpers/seed.ts";
+import { it } from "#test/helpers/fixtures.ts";
+import { seedOperation, seedOrganization } from "#test/helpers/seed.ts";
 
 describe("updateOperation", () => {
   it("updates the operation's fields", async ({ db }) => {

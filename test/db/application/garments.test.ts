@@ -2,8 +2,8 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { garment as garmentTable, order } from "#/db/schema";
 import { moveGarmentStage } from "#/server/application/garments";
-import { it } from "../../helpers/fixtures.ts";
-import { seedGarment, seedGarmentStage, seedOrder, seedOrganization } from "../../helpers/seed.ts";
+import { it } from "#test/helpers/fixtures.ts";
+import { seedGarment, seedGarmentStage, seedOrder, seedOrganization } from "#test/helpers/seed.ts";
 
 describe("moveGarmentStage", () => {
   it("moves the garment to the given stage", async ({ db }) => {

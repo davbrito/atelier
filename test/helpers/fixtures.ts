@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Client } from "pg";
 import { test as baseTest, inject } from "vitest";
-import { createDb } from "../../src/db/client.ts";
+import { createDb } from "#/db/client.ts";
 import { withDatabase } from "./connection-string.ts";
 import { TEMPLATE_DATABASE } from "./db-template.ts";
 import { resetDb } from "./reset-db.ts";

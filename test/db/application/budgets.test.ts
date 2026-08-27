@@ -2,8 +2,8 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { budgetMaterial } from "#/db/schema";
 import { createBudget, deleteBudget, updateBudget } from "#/server/application/budgets";
-import { it } from "../../helpers/fixtures.ts";
-import { seedBudget, seedMaterial, seedOrganization } from "../../helpers/seed.ts";
+import { it } from "#test/helpers/fixtures.ts";
+import { seedBudget, seedMaterial, seedOrganization } from "#test/helpers/seed.ts";
 
 describe("createBudget", () => {
   it("slugifies the name and inserts materials/operations", async ({ db }) => {

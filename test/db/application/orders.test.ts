@@ -2,14 +2,14 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { codeCounter, garment, order, orderPayment, quotationLine } from "#/db/schema";
 import { createOrder, getOrderPaidAmount } from "#/server/application/orders";
-import { it } from "../../helpers/fixtures.ts";
+import { it } from "#test/helpers/fixtures.ts";
 import {
   seedBudget,
   seedClient,
   seedOrder,
   seedOrganization,
   seedQuotation,
-} from "../../helpers/seed.ts";
+} from "#test/helpers/seed.ts";
 
 describe("createOrder", () => {
   it("creates the order and one garment per requested item, with a generated code", async ({

@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { beforeEach, describe, expect, it } from "vitest";
-import { cacheMeasurementNames } from "../../src/server/application/measurement-names.ts";
+import { cacheMeasurementNames } from "#/server/application/measurement-names.ts";
 
 const orgId = "org-measurement-names-test";
 

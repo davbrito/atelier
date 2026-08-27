@@ -2,8 +2,8 @@ import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { materialPriceHistory } from "#/db/schema";
 import { createMaterial, deleteMaterial, updateMaterial } from "#/server/application/materials";
-import { it } from "../../helpers/fixtures.ts";
-import { seedMaterial, seedOrganization } from "../../helpers/seed.ts";
+import { it } from "#test/helpers/fixtures.ts";
+import { seedMaterial, seedOrganization } from "#test/helpers/seed.ts";
 
 describe("createMaterial", () => {
   it("seeds the price history with the initial price", async ({ db }) => {

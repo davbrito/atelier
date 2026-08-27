@@ -1,7 +1,7 @@
 import { describe, expect } from "vitest";
-import { generateSequentialCode } from "../../../src/server/application/codes.ts";
-import { it } from "../../helpers/fixtures.ts";
-import { seedOrganization } from "../../helpers/seed.ts";
+import { generateSequentialCode } from "#/server/application/codes.ts";
+import { it } from "#test/helpers/fixtures.ts";
+import { seedOrganization } from "#test/helpers/seed.ts";
 
 describe("generateSequentialCode", () => {
   it("increments sequentially for the same organization and prefix", async ({ db }) => {

@@ -1,7 +1,7 @@
 import { describe, expect } from "vitest";
 import { canAccessImage } from "#/server/application/image-access";
-import { it } from "../../helpers/fixtures.ts";
-import { seedMaterial, seedMember, seedOrganization, seedUser } from "../../helpers/seed.ts";
+import { it } from "#test/helpers/fixtures.ts";
+import { seedMaterial, seedMember, seedOrganization, seedUser } from "#test/helpers/seed.ts";
 
 describe("canAccessImage", () => {
   it("always allows avatar keys, regardless of the user", async ({ db }) => {

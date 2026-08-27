@@ -3,8 +3,8 @@ import { Client } from "pg";
 import { describe, expect } from "vitest";
 import { relations } from "#/db/relations";
 import { createOrderPayment } from "#/server/application/order-payments";
-import { it } from "../../helpers/fixtures.ts";
-import { seedOrder, seedOrganization } from "../../helpers/seed.ts";
+import { it } from "#test/helpers/fixtures.ts";
+import { seedOrder, seedOrganization } from "#test/helpers/seed.ts";
 
 describe("createOrderPayment", () => {
   it("inserts a payment within the order's balance", async ({ db }) => {

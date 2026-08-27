@@ -1,7 +1,7 @@
 import { describe, expect } from "vitest";
 import { getUserOrganizationCount } from "#/server/application/organizations";
-import { it } from "../../helpers/fixtures.ts";
-import { seedMember, seedOrganization, seedUser } from "../../helpers/seed.ts";
+import { it } from "#test/helpers/fixtures.ts";
+import { seedMember, seedOrganization, seedUser } from "#test/helpers/seed.ts";
 
 describe("getUserOrganizationCount", () => {
   it("returns 0 for a user with no memberships", async ({ db }) => {

@@ -8,14 +8,14 @@ import {
   quotationOperation,
 } from "#/db/schema";
 import { createQuotation, loadQuotationLines } from "#/server/application/quotations";
-import { it } from "../../helpers/fixtures.ts";
+import { it } from "#test/helpers/fixtures.ts";
 import {
   seedBudget,
   seedClient,
   seedMaterial,
   seedOperation,
   seedOrganization,
-} from "../../helpers/seed.ts";
+} from "#test/helpers/seed.ts";
 
 describe("createQuotation", () => {
   it("creates a line per budget and freezes the client name and material price", async ({ db }) => {
