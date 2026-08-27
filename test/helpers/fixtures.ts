@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { Client } from "pg";
 import { test as baseTest, inject } from "vitest";
+import { createDb } from "../../src/db/client.ts";
 import { withDatabase } from "./connection-string.ts";
-import { createTestDb } from "./create-test-db.ts";
 import { TEMPLATE_DATABASE } from "./db-template.ts";
 import { resetDb } from "./reset-db.ts";
 
@@ -55,14 +55,10 @@ async function withMaintenanceClient<T>(
  * - `databaseUrl`: each test file clones its own uniquely-named database
  *   from the migrated template (see test/setup.ts and
  *   test/helpers/db-template.ts, `scope: "file"`, mirroring the old
- *   `beforeAll`) instead of every file sharing one database. This was meant
- *   to let files run in parallel, but CREATE/DROP DATABASE are catalog-level
- *   operations Postgres serializes — with ~15-20 files concurrently issuing
- *   them, CI hung, so vitest.config.ts's "db" project currently pins
- *   `fileParallelism: false`. The per-file isolation is still worth keeping
- *   even sequential (a clean database per file instead of one shared,
- *   truncated database). Dropped again once the file's tests finish.
- *   Request this directly (instead of `inject("postgresConnectionString")`)
+ *   `beforeAll`) instead of every file sharing one database — that's what
+ *   lets files run in parallel (see vitest.config.ts's "db" project).
+ *   Dropped again once the file's tests finish. Request this directly
+ *   (instead of `inject("postgresConnectionString")`)
  *   for any extra raw `pg.Client` connections a test needs (e.g. for
  *   concurrency tests) — they must point at the same cloned database as `db`.
  * - `db`: a Drizzle client connected to `databaseUrl`, closed before
@@ -100,7 +96,8 @@ const test = baseTest
   })
   .extend("db", { scope: "file" }, async ({ databaseUrl }, { onCleanup }) => {
     const database = new URL(databaseUrl).pathname.slice(1);
-    const db = await timed(`connect db client (${database})`, () => createTestDb(databaseUrl));
+    const db = createDb(databaseUrl);
+    await timed(`connect db client (${database})`, () => db.$client.connect());
     onCleanup(() => timed(`end db client (${database})`, () => db.$client.end()));
     return db;
   })

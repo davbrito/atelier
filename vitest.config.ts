@@ -44,19 +44,19 @@ const config = defineConfig({
           globalSetup: ["./test/setup.ts"],
           // Each test file clones its own database from the migrated
           // template (see test/helpers/fixtures.ts), so files no longer
-          // share state. That was meant to let them run in parallel, but
-          // ~15-20 files concurrently issuing CREATE/DROP DATABASE against
-          // the same Postgres instance hung CI (those are catalog-level
-          // operations Postgres serializes — this needs a client-side
-          // guard limiting concurrent CREATE/DROP DATABASE calls before
-          // parallelism is safe to turn back on; not done yet).
-          fileParallelism: false,
+          // share state and can run in parallel. (An earlier fix here
+          // disabled fileParallelism suspecting CREATE/DROP DATABASE
+          // catalog-lock contention — the real cause turned out to be a
+          // connection leak in the db fixture unrelated to parallelism, now
+          // fixed, so parallelism is back on.)
           // Explicit, generous but bounded: fail loudly with a stack trace
-          // pointing at the stuck fixture/hook instead of running
-          // indefinitely if something unexpected blocks again.
+          // instead of running indefinitely if something unexpected blocks
+          // again. (teardownTimeout isn't a valid per-project option here —
+          // fixture onCleanup timeouts are handled by fixtures.ts's own
+          // timed() helper instead, which is what actually caught the real
+          // hang; vitest's hookTimeout/teardownTimeout didn't.)
           testTimeout: 15_000,
           hookTimeout: 15_000,
-          teardownTimeout: 15_000,
         },
       },
       {
