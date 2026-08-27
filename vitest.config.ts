@@ -51,6 +51,12 @@ const config = defineConfig({
           // guard limiting concurrent CREATE/DROP DATABASE calls before
           // parallelism is safe to turn back on; not done yet).
           fileParallelism: false,
+          // Explicit, generous but bounded: fail loudly with a stack trace
+          // pointing at the stuck fixture/hook instead of running
+          // indefinitely if something unexpected blocks again.
+          testTimeout: 15_000,
+          hookTimeout: 15_000,
+          teardownTimeout: 15_000,
         },
       },
       {

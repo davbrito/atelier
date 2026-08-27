@@ -6,6 +6,20 @@ import { createTestDb } from "./create-test-db.ts";
 import { TEMPLATE_DATABASE } from "./db-template.ts";
 import { resetDb } from "./reset-db.ts";
 
+/** Logs `label` with a timestamp before/after running `fn`, to debug where time goes in CI. */
+async function timed<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  const start = Date.now();
+  console.log(`[fixtures] ${label}: start`);
+  try {
+    const result = await fn();
+    console.log(`[fixtures] ${label}: done (${Date.now() - start}ms)`);
+    return result;
+  } catch (error) {
+    console.log(`[fixtures] ${label}: failed (${Date.now() - start}ms)`);
+    throw error;
+  }
+}
+
 async function withMaintenanceClient<T>(
   connectionString: string,
   fn: (client: Client) => Promise<T>,
@@ -14,7 +28,7 @@ async function withMaintenanceClient<T>(
   // dropped, so this always connects to the "postgres" system database,
   // which every Postgres server has.
   const client = new Client({ connectionString: withDatabase(connectionString, "postgres") });
-  await client.connect();
+  await timed("maintenance client connect", () => client.connect());
   try {
     return await fn(client);
   } finally {
@@ -47,29 +61,37 @@ async function withMaintenanceClient<T>(
  * Add more fixtures here as they come up, via `.extend(...)`.
  */
 const test = baseTest
+  // `task` (which carries the file name) isn't available to `scope: "file"`
+  // fixtures — only to test-scoped ones like `cleanDb` below — so these two
+  // are labeled by the generated database name instead.
   // biome-ignore lint/correctness/noEmptyPattern: vitest's fixture parser requires a literal destructuring pattern here, even an unused one
   .extend("databaseUrl", { scope: "file" }, async ({}, { onCleanup }) => {
     const connectionString = inject("postgresConnectionString");
     const database = `test_${randomUUID().replaceAll("-", "")}`;
 
-    await withMaintenanceClient(connectionString, (client) =>
-      client.query(`CREATE DATABASE "${database}" TEMPLATE "${TEMPLATE_DATABASE}"`),
+    await timed(`CREATE DATABASE ${database}`, () =>
+      withMaintenanceClient(connectionString, (client) =>
+        client.query(`CREATE DATABASE "${database}" TEMPLATE "${TEMPLATE_DATABASE}"`),
+      ),
     );
     onCleanup(async () => {
-      await withMaintenanceClient(connectionString, (client) =>
-        client.query(`DROP DATABASE IF EXISTS "${database}" WITH (FORCE)`),
+      await timed(`DROP DATABASE ${database}`, () =>
+        withMaintenanceClient(connectionString, (client) =>
+          client.query(`DROP DATABASE IF EXISTS "${database}" WITH (FORCE)`),
+        ),
       );
     });
 
     return withDatabase(connectionString, database);
   })
   .extend("db", { scope: "file" }, async ({ databaseUrl }, { onCleanup }) => {
-    const db = await createTestDb(databaseUrl);
+    const database = new URL(databaseUrl).pathname.slice(1);
+    const db = await timed(`connect db client (${database})`, () => createTestDb(databaseUrl));
     onCleanup(() => db.$client.end());
     return db;
   })
-  .extend("cleanDb", { auto: true }, async ({ db }, { onCleanup }) => {
-    onCleanup(() => resetDb(db));
+  .extend("cleanDb", { auto: true }, async ({ db, task }, { onCleanup }) => {
+    onCleanup(() => timed(`${task.file.name}: resetDb after "${task.name}"`, () => resetDb(db)));
   });
 
 // Exported as `it` so files can just swap the import instead of renaming
