@@ -105,7 +105,7 @@
     "jscodeshift": "^17.4.0",
     "jsdom": "^30.0.1",
     "knip": "^6.33.0",
-    "oxc-transform-react": "^0.147.0",
+    "oxc-transform-react": "^0.145.0",
     "shadcn": "^4.19.0",
     "tsx": "^4.23.12",
     "typescript": "7.0.2",

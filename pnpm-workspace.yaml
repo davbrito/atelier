@@ -16,9 +16,9 @@ catalogs:
     drizzle-kit: 1.0.0-rc.4
 
   auth:
-    "@better-auth-ui/core": 1.7.14
-    "@better-auth-ui/react": 1.7.14
-    "@better-auth-ui/locales": 1.7.14
+    "@better-auth-ui/core": 1.7.16
+    "@better-auth-ui/react": 1.7.16
+    "@better-auth-ui/locales": 1.7.16
 
     "auth": 1.7.2
     "better-auth": 1.7.2
@@ -28,5 +28,3 @@ catalogs:
 
 overrides:
   drizzle-orm: catalog:drizzle
-  "@better-auth/kysely-adapter": 1.7.1
-  "@better-auth/api-key": 1.7.1
