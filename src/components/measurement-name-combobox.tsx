@@ -7,7 +7,7 @@ import {
   AutocompleteInput,
   AutocompleteItem,
   AutocompleteList,
-} from "#/components/ui/autocomplete";
+} from "#/components/autocomplete.tsx";
 import { listMeasurementNames } from "#/server/functions/measurement-names";
 
 type MeasurementNameComboboxProps = {

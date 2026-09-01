@@ -1,13 +1,12 @@
 import { Autocomplete as AutocompletePrimitive } from "@base-ui/react";
-
-import { cn } from "#/lib/utils.ts";
+import { ChevronDownIcon } from "lucide-react";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
 } from "#/components/ui/input-group.tsx";
-import { ChevronDownIcon } from "lucide-react";
+import { cn } from "#/lib/utils.ts";
 
 const Autocomplete = AutocompletePrimitive.Root;
 
@@ -83,7 +82,7 @@ function AutocompleteContent({
         <AutocompletePrimitive.Popup
           data-slot="autocomplete-content"
           className={cn(
-            "group/autocomplete-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-[calc(var(--anchor-width)+--spacing(7))] origin-(--transform-origin) overflow-hidden rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            "group/autocomplete-content data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 relative max-h-(--available-height) w-(--anchor-width) min-w-[calc(var(--anchor-width)+--spacing(7))] max-w-(--available-width) origin-(--transform-origin) overflow-hidden rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-closed:animate-out data-open:animate-in",
             className,
           )}
           {...props}
@@ -111,7 +110,7 @@ function AutocompleteItem({ className, children, ...props }: AutocompletePrimiti
     <AutocompletePrimitive.Item
       data-slot="autocomplete-item"
       className={cn(
-        "relative flex min-h-7 w-full cursor-default items-center gap-2 rounded-md px-2 py-1 text-xs/relaxed outline-hidden select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+        "relative flex min-h-7 w-full cursor-default select-none items-center gap-2 rounded-md px-2 py-1 text-xs/relaxed outline-hidden data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-50 not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground [&_svg:not([class*='size-'])]:size-3.5 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
       )}
       {...props}
@@ -135,7 +134,7 @@ function AutocompleteGroupLabel({ className, ...props }: AutocompletePrimitive.G
   return (
     <AutocompletePrimitive.GroupLabel
       data-slot="autocomplete-label"
-      className={cn("px-2 py-1.5 text-xs text-muted-foreground", className)}
+      className={cn("px-2 py-1.5 text-muted-foreground text-xs", className)}
       {...props}
     />
   );
@@ -150,7 +149,7 @@ function AutocompleteEmpty({ className, ...props }: AutocompletePrimitive.Empty.
     <AutocompletePrimitive.Empty
       data-slot="autocomplete-empty"
       className={cn(
-        "hidden w-full justify-center py-2 text-center text-xs/relaxed text-muted-foreground group-data-empty/autocomplete-content:flex",
+        "hidden w-full justify-center py-2 text-center text-muted-foreground text-xs/relaxed group-data-empty/autocomplete-content:flex",
         className,
       )}
       {...props}
@@ -160,13 +159,13 @@ function AutocompleteEmpty({ className, ...props }: AutocompletePrimitive.Empty.
 
 export {
   Autocomplete,
-  AutocompleteInput,
+  AutocompleteCollection,
   AutocompleteContent,
-  AutocompleteList,
-  AutocompleteItem,
+  AutocompleteEmpty,
   AutocompleteGroup,
   AutocompleteGroupLabel,
-  AutocompleteCollection,
-  AutocompleteEmpty,
+  AutocompleteInput,
+  AutocompleteItem,
+  AutocompleteList,
   AutocompleteTrigger,
 };
