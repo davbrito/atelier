@@ -1,0 +1,75 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      npm-security-patch:
+        applies-to: security-updates
+        update-types:
+          - "patch"
+        patterns:
+          - "*"
+      npm-security-minor:
+        applies-to: security-updates
+        update-types:
+          - "minor"
+        patterns:
+          - "*"
+      npm-security-major:
+        applies-to: security-updates
+        update-types:
+          - "major"
+        patterns:
+          - "*"
+      npm-patch:
+        applies-to: version-updates
+        update-types:
+          - "patch"
+        patterns:
+          - "*"
+      npm-minor:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+        patterns:
+          - "*"
+      npm-major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@tanstack/react-*"
+          - "@tanstack/router-*"
+          - "wrangler"
+          - "@cloudflare/*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
