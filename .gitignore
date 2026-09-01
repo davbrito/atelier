@@ -12,7 +12,6 @@ dist-ssr
 .output
 .vinxi
 __unconfig*
-routeTree.gen.ts
 
 .dev.vars*
 !.dev.vars.example
