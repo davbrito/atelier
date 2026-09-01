@@ -4,6 +4,8 @@ import {
   memberRoleLabels,
   mergeOrganizationRoleLabels,
   type OrganizationAuthClient,
+  type OrganizationRolesAuthClient,
+  type OrganizationTeamsAuthClient,
 } from "@better-auth-ui/core/plugins/organization";
 import { useAuth, useAuthPlugin, useSession } from "@better-auth-ui/react";
 import {
@@ -53,11 +55,11 @@ export function OrganizationMemberRow({
     organizationId: organization.id,
     permissions: { ac: ["read"] },
   });
-  const dynamicRoles = useListRoles(authClient, {
+  const dynamicRoles = useListRoles(authClient as OrganizationRolesAuthClient, {
     query: { organizationId: organization.id },
     enabled: dynamicAccessControl?.enabled === true && canReadRoles.data?.success === true,
   });
-  const memberTeams = useListUserTeams(authClient, {
+  const memberTeams = useListUserTeams(authClient as OrganizationTeamsAuthClient, {
     query: {
       organizationId: organization.id,
       userId: member.userId,

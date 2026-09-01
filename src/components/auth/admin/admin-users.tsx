@@ -77,6 +77,7 @@ import {
   FieldSet,
 } from "#/components/ui/field.tsx";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group.tsx";
+import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group.tsx";
 import {
   Select,
   SelectContent,
@@ -116,12 +117,17 @@ const formatDate = (value: Date | string | undefined | null) =>
 
 const asAdminRoles = (roles: string[]) => roles as ("user" | "admin")[];
 
-const parseAdminRoles = (role: string | undefined, fallback: string) => {
+const parseAdminRoles = (
+  role: string | undefined,
+  fallback: string,
+  allowMultipleRoles: boolean,
+) => {
   const roles = role
     ?.split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  return roles?.length ? roles : [fallback];
+  const resolved = roles?.length ? roles : [fallback];
+  return allowMultipleRoles ? resolved : resolved.slice(0, 1);
 };
 
 const getBanDurationSeconds = (value: string) => {
@@ -591,6 +597,10 @@ function CreateUserDialog({
   const [emailVerified, setEmailVerified] = useState(false);
   const [formError, setFormError] = useState<string>();
   const [roles, setRoles] = useState([config.defaultRole]);
+
+  useEffect(() => {
+    if (!config.allowMultipleRoles) setRoles((current) => current.slice(0, 1));
+  }, [config.allowMultipleRoles]);
   const canSetRole = useAdminPermission(auth.authClient, {
     user: ["set-role"],
   });
@@ -674,23 +684,34 @@ function CreateUserDialog({
             ) : canSetRole.data?.success ? (
               <FieldSet>
                 <FieldLegend variant="label">{config.localization.role}</FieldLegend>
-                <FieldGroup data-slot="checkbox-group">
-                  {config.roles.map((role) => (
-                    <Field key={role} orientation="horizontal">
-                      <Checkbox
-                        checked={roles.includes(role)}
-                        id={`admin-create-role-${role}`}
-                        onCheckedChange={(checked) => {
-                          const next = checked
-                            ? [...roles, role]
-                            : roles.filter((item) => item !== role);
-                          if (next.length) setRoles(next);
-                        }}
-                      />
-                      <FieldLabel htmlFor={`admin-create-role-${role}`}>{role}</FieldLabel>
-                    </Field>
-                  ))}
-                </FieldGroup>
+                {config.allowMultipleRoles ? (
+                  <FieldGroup data-slot="checkbox-group">
+                    {config.roles.map((role) => (
+                      <Field key={role} orientation="horizontal">
+                        <Checkbox
+                          checked={roles.includes(role)}
+                          id={`admin-create-role-${role}`}
+                          onCheckedChange={(checked) => {
+                            const next = checked
+                              ? [...roles, role]
+                              : roles.filter((item) => item !== role);
+                            if (next.length) setRoles(next);
+                          }}
+                        />
+                        <FieldLabel htmlFor={`admin-create-role-${role}`}>{role}</FieldLabel>
+                      </Field>
+                    ))}
+                  </FieldGroup>
+                ) : (
+                  <RadioGroup onValueChange={(role) => setRoles([role])} value={roles[0] ?? ""}>
+                    {config.roles.map((role) => (
+                      <Field key={role} orientation="horizontal">
+                        <RadioGroupItem id={`admin-create-role-${role}`} value={role} />
+                        <FieldLabel htmlFor={`admin-create-role-${role}`}>{role}</FieldLabel>
+                      </Field>
+                    ))}
+                  </RadioGroup>
+                )}
               </FieldSet>
             ) : null}
             <Field orientation="horizontal">
@@ -836,8 +857,15 @@ function UserInspector({
     setName(user?.name ?? "");
     setEmail(user?.email ?? "");
     setEmailVerified(user?.emailVerified ?? false);
-    setRoles(parseAdminRoles(user?.role, config.defaultRole));
-  }, [config.defaultRole, user?.email, user?.emailVerified, user?.name, user?.role]);
+    setRoles(parseAdminRoles(user?.role, config.defaultRole, config.allowMultipleRoles));
+  }, [
+    config.allowMultipleRoles,
+    config.defaultRole,
+    user?.email,
+    user?.emailVerified,
+    user?.name,
+    user?.role,
+  ]);
 
   useEffect(() => {
     if (profileUserId.current === user?.id) return;
@@ -978,6 +1006,7 @@ function UserInspector({
 
     try {
       await Promise.all(mutations);
+      onOpenChange(false);
     } catch {
       // Mutation errors are rendered next to the form.
     }
@@ -1112,27 +1141,47 @@ function UserInspector({
                         </Field>
                         <FieldSet>
                           <FieldLegend variant="label">{config.localization.role}</FieldLegend>
-                          <FieldGroup
-                            className="flex-row flex-wrap gap-4"
-                            data-slot="checkbox-group"
-                          >
-                            {config.roles.map((item) => (
-                              <Field key={item} orientation="horizontal">
-                                <Checkbox
-                                  checked={roles.includes(item)}
-                                  disabled={isSelf || !canSetRole.data?.success}
-                                  id={`admin-user-role-${item}`}
-                                  onCheckedChange={(checked) => {
-                                    const next = checked
-                                      ? [...roles, item]
-                                      : roles.filter((role) => role !== item);
-                                    if (next.length) setRoles(next);
-                                  }}
-                                />
-                                <FieldLabel htmlFor={`admin-user-role-${item}`}>{item}</FieldLabel>
-                              </Field>
-                            ))}
-                          </FieldGroup>
+                          {config.allowMultipleRoles ? (
+                            <FieldGroup
+                              className="flex-row flex-wrap gap-4"
+                              data-slot="checkbox-group"
+                            >
+                              {config.roles.map((item) => (
+                                <Field key={item} orientation="horizontal">
+                                  <Checkbox
+                                    checked={roles.includes(item)}
+                                    disabled={isSelf || !canSetRole.data?.success}
+                                    id={`admin-user-role-${item}`}
+                                    onCheckedChange={(checked) => {
+                                      const next = checked
+                                        ? [...roles, item]
+                                        : roles.filter((role) => role !== item);
+                                      if (next.length) setRoles(next);
+                                    }}
+                                  />
+                                  <FieldLabel htmlFor={`admin-user-role-${item}`}>
+                                    {item}
+                                  </FieldLabel>
+                                </Field>
+                              ))}
+                            </FieldGroup>
+                          ) : (
+                            <RadioGroup
+                              className="flex-row flex-wrap gap-4"
+                              disabled={isSelf || !canSetRole.data?.success}
+                              onValueChange={(role) => setRoles([role])}
+                              value={roles[0] ?? ""}
+                            >
+                              {config.roles.map((item) => (
+                                <Field key={item} orientation="horizontal">
+                                  <RadioGroupItem id={`admin-user-role-${item}`} value={item} />
+                                  <FieldLabel htmlFor={`admin-user-role-${item}`}>
+                                    {item}
+                                  </FieldLabel>
+                                </Field>
+                              ))}
+                            </RadioGroup>
+                          )}
                         </FieldSet>
                         {auth.additionalFields?.map((field) => {
                           const value = (user as unknown as Record<string, unknown>)[field.name];
