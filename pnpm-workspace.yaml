@@ -13,7 +13,7 @@ blockExoticSubdeps: false
 catalogs:
   drizzle:
     drizzle-orm: 1.0.0-rc.4
-    drizzle-kit: 1.0.0-rc.4
+    drizzle-kit: 1.0.0-rc.5-ab785fc
 
   auth:
     "@better-auth-ui/core": 1.7.16
