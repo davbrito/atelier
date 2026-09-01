@@ -30,4 +30,3 @@ overrides:
   drizzle-orm: catalog:drizzle
   "@better-auth/kysely-adapter": 1.7.1
   "@better-auth/api-key": 1.7.1
-  kysely: ^0.28.17 # https://github.com/better-auth/better-auth/issues/9901
