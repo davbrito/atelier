@@ -1,4 +1,8 @@
-import { findStandardMeasurement, normalizeMeasurementName } from "#/lib/constants/measurements";
+import {
+  findStandardMeasurement,
+  MEASUREMENT_GROUPS,
+  normalizeMeasurementName,
+} from "#/lib/constants/measurements";
 
 const FRONT_LENGTH = "talle delantero";
 const BACK_LENGTH = "talle trasero";
@@ -34,4 +38,19 @@ export function getDartDepths(measurements: { id: string; name: string; value: n
     depths.set(back.id, text);
   }
   return depths;
+}
+
+const OTHER_GROUP = "Otras medidas";
+
+/** Agrupa las medidas por sección, en el orden de los grupos; las no estándar van en "Otras medidas". */
+export function groupMeasurements<T extends { name: string }>(measurements: T[]) {
+  const sections = [...MEASUREMENT_GROUPS, OTHER_GROUP].map((title) => ({
+    title: title as string,
+    items: [] as T[],
+  }));
+  for (const m of measurements) {
+    const group = findStandardMeasurement(m.name)?.group ?? OTHER_GROUP;
+    sections.find((s) => s.title === group)?.items.push(m);
+  }
+  return sections.filter((s) => s.items.length > 0);
 }

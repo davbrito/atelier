@@ -27,7 +27,7 @@ import { Avatar, AvatarFallback } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { toast } from "#/components/ui/toast.tsx";
-import { getDartDepths, getPatternFraction } from "#/lib/measurement-derived";
+import { getDartDepths, getPatternFraction, groupMeasurements } from "#/lib/measurement-derived";
 import { clientByIdQueryOptions } from "#/lib/query-options";
 import { deleteClient } from "#/server/functions/clients";
 
@@ -60,6 +60,7 @@ function ClientDetailPage() {
 
   const { data: client } = useSuspenseQuery(clientByIdQueryOptions(id));
   const dartDepths = getDartDepths(client?.measurements ?? []);
+  const measurementSections = groupMeasurements(client?.measurements ?? []);
 
   const deleteMutation = useMutation({
     mutationFn: deleteFn,
@@ -180,36 +181,51 @@ function ClientDetailPage() {
         </CardHeader>
         <CardContent>
           {client.measurements.length > 0 ? (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-1.5">
-              {client.measurements.map((m) => {
-                const fraction = getPatternFraction(m.name, m.value);
-                const dart = dartDepths.get(m.id);
-                return (
-                  <div
-                    key={m.id}
-                    className="rounded-md border bg-muted/40 px-2 py-1.5 transition-colors hover:bg-muted/70"
-                  >
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                      {m.name}
-                    </p>
-                    <p className="font-semibold text-sm tabular-nums">
-                      {m.value}
-                      <span className="ml-1 font-normal text-[10px] text-muted-foreground">cm</span>
-                    </p>
-                    {fraction && (
-                      <p className="text-[10px] text-muted-foreground tabular-nums">
-                        {fraction.label}: {fraction.text} cm
-                      </p>
-                    )}
-                    {dart && (
-                      <p className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground tabular-nums ring-1 ring-border">
-                        <RulerIcon className="size-2.5" />
-                        Diferencia / Pinza: {dart} cm
-                      </p>
-                    )}
+            <div className="flex flex-col gap-6">
+              {measurementSections.map((section) => (
+                <section key={section.title} className="flex flex-col gap-2.5">
+                  <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    {section.title}
+                  </h3>
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-3">
+                    {section.items.map((m) => {
+                      const fraction = getPatternFraction(m.name, m.value);
+                      const dart = dartDepths.get(m.id);
+                      return (
+                        <div
+                          key={m.id}
+                          className="flex flex-col gap-1 rounded-lg border bg-muted/40 p-3 transition-colors hover:bg-muted/70"
+                        >
+                          <p className="text-muted-foreground text-xs uppercase tracking-wide">
+                            {m.name}
+                          </p>
+                          <p className="font-semibold text-lg tabular-nums leading-tight">
+                            {m.value}
+                            <span className="ml-1 font-normal text-muted-foreground text-xs">
+                              cm
+                            </span>
+                          </p>
+                          {(fraction || dart) && (
+                            <div className="mt-1 flex flex-wrap gap-1.5">
+                              {fraction && (
+                                <span className="rounded-full bg-background px-2 py-0.5 text-muted-foreground text-xs tabular-nums ring-1 ring-border">
+                                  {fraction.label}: {fraction.text} cm
+                                </span>
+                              )}
+                              {dart && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-0.5 text-muted-foreground text-xs tabular-nums ring-1 ring-border">
+                                  <RulerIcon className="size-3" />
+                                  Pinza: {dart} cm
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                </section>
+              ))}
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">Aún no hay medidas registradas.</p>
