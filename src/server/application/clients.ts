@@ -125,3 +125,62 @@ export async function deleteClient(db: Db, organizationId: string, id: string) {
     .delete(schema.client)
     .where(and(eq(schema.client.id, id), eq(schema.client.organizationId, organizationId)));
 }
+
+export type SetClientMeasurementInput = {
+  clientId: string;
+  /** Medida existente; sin id se crea una nueva. */
+  measurementId?: string;
+  name: string;
+  /** null o 0 elimina la medida. */
+  value: number | null;
+};
+
+/** Crea, actualiza o elimina una sola medida del cliente sin reenviar la ficha completa. */
+export async function setClientMeasurement(
+  tx: Db,
+  organizationId: string,
+  input: SetClientMeasurementInput,
+) {
+  const [existingClient] = await tx
+    .select({ id: schema.client.id })
+    .from(schema.client)
+    .where(
+      and(eq(schema.client.id, input.clientId), eq(schema.client.organizationId, organizationId)),
+    );
+
+  if (!existingClient) throw new Error("Cliente no encontrado");
+
+  const ofClient = (measurementId: string) =>
+    and(
+      eq(schema.clientMeasurement.id, measurementId),
+      eq(schema.clientMeasurement.clientId, input.clientId),
+    );
+  const shouldDelete = input.value === null || input.value === 0;
+
+  let measurement: typeof schema.clientMeasurement.$inferSelect | null = null;
+  if (input.measurementId) {
+    if (shouldDelete) {
+      await tx.delete(schema.clientMeasurement).where(ofClient(input.measurementId));
+    } else {
+      [measurement] = await tx
+        .update(schema.clientMeasurement)
+        .set({ value: input.value ?? 0 })
+        .where(ofClient(input.measurementId))
+        .returning();
+      if (!measurement) throw new Error("Medida no encontrada");
+    }
+  } else if (!shouldDelete) {
+    [measurement] = await tx
+      .insert(schema.clientMeasurement)
+      .values({ clientId: input.clientId, name: input.name, value: input.value ?? 0 })
+      .returning();
+  }
+
+  // La fecha de la ficha de taller es la de la última modificación del cliente.
+  await tx
+    .update(schema.client)
+    .set({ updatedAt: new Date() })
+    .where(eq(schema.client.id, input.clientId));
+
+  return measurement;
+}

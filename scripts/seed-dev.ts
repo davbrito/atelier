@@ -2,7 +2,7 @@ import "dotenv/config";
 import { faker } from "@faker-js/faker";
 import slugify from "@sindresorhus/slugify";
 import { Command } from "commander";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
 import { relations } from "#/db/relations";
@@ -11,6 +11,7 @@ import {
   budgetMaterial,
   budgetOperation,
   client,
+  clientMeasurement,
   garment,
   garmentStage,
   material,
@@ -22,6 +23,7 @@ import {
   quotationOperation,
 } from "#/db/schema";
 import { DEFAULT_GARMENT_STAGES } from "#/lib/constants/garment-stages";
+import { STANDARD_MEASUREMENTS } from "#/lib/constants/measurements";
 import { generateSequentialCode } from "#/server/application/codes";
 
 // Unlike the app runtime (Cloudflare Workers via Hyperdrive), a plain Node
@@ -64,6 +66,34 @@ const OPERATION_NAMES = [
   "Planchado final",
   "Colocación de cierre",
 ];
+
+// Rangos realistas en cm. Talle delantero y trasero no se solapan, así la
+// profundidad de pinza calculada siempre es >= 0 en los datos de prueba.
+const MEASUREMENT_RANGES: Record<(typeof STANDARD_MEASUREMENTS)[number]["name"], [number, number]> =
+  {
+    "Contorno cuello": [33, 40],
+    "Ancho espalda": [34, 42],
+    "Talle delantero": [40, 46],
+    "Talle trasero": [36, 40],
+    "Alto busto": [24, 29],
+    "Separación busto": [15, 20],
+    "Alto escote": [18, 23],
+    "Contorno tórax": [82, 96],
+    "Contorno busto": [86, 108],
+    "Contorno cintura": [62, 82],
+    "Contorno cadera": [90, 112],
+    "Alto cadera": [16, 22],
+    "Largo brazo": [54, 64],
+    "Largo manga": [44, 60],
+    "Largo camisa": [60, 76],
+    "Largo chaqueta": [62, 80],
+    "Contorno de brazo": [24, 34],
+    "Contorno de muñeca": [14, 18],
+    "Largo falda": [55, 95],
+    "Largo pantalón": [95, 110],
+    "Contorno rodilla": [34, 44],
+    "Contorno bota": [30, 40],
+  };
 
 const PRIORITIES = ["low", "medium", "high", "urgent"] as const;
 const STATUSES = ["pending", "in_progress", "ready", "delivered", "cancelled"] as const;
@@ -120,6 +150,37 @@ async function ensureClients(db: Db, organizationId: string) {
   }
 
   return clients;
+}
+
+/** Añade la ficha completa de medidas a los clientes que aún no tienen ninguna. */
+async function ensureClientMeasurements(db: Db, clients: (typeof client.$inferSelect)[]) {
+  const measured = await db
+    .select({ clientId: clientMeasurement.clientId })
+    .from(clientMeasurement)
+    .where(
+      inArray(
+        clientMeasurement.clientId,
+        clients.map((c) => c.id),
+      ),
+    );
+  const measuredIds = new Set(measured.map((m) => m.clientId));
+
+  const pending = clients.filter((c) => !measuredIds.has(c.id));
+  if (pending.length === 0) return;
+
+  console.log("Creando medidas corporales de prueba...");
+  await db.insert(clientMeasurement).values(
+    pending.flatMap((c) =>
+      STANDARD_MEASUREMENTS.map(({ name }) => {
+        const [min, max] = MEASUREMENT_RANGES[name];
+        return {
+          clientId: c.id,
+          name,
+          value: faker.number.float({ min, max, fractionDigits: 1 }),
+        };
+      }),
+    ),
+  );
 }
 
 async function ensureMaterials(db: Db, organizationId: string) {
@@ -370,6 +431,7 @@ async function main() {
 
   const stages = await ensureGarmentStages(db, organizationId);
   const clients = await ensureClients(db, organizationId);
+  await ensureClientMeasurements(db, clients);
   const materials = await ensureMaterials(db, organizationId);
   const operations = await ensureOperations(db, organizationId);
   const budgets = await ensureBudgets(db, organizationId, materials, operations);

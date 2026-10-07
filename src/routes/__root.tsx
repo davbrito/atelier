@@ -6,6 +6,7 @@ import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { PageInfo } from "#/data/info";
+import printCss from "../assets/css/print.css?url";
 import APP_INSTALL_SCRIPT from "../assets/js/install.js?raw";
 import THEME_INIT_SCRIPT from "../assets/js/theme.js?raw";
 import appCss from "../styles.css?url";
@@ -37,6 +38,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "stylesheet", href: printCss, media: "print" },
       { rel: "manifest", href: "/manifest.json" },
       {
         rel: "preload",

@@ -1,0 +1,36 @@
+/* ── Ficha técnica de taller (impresión) ── */
+@page {
+  size: portrait;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+    color: #000;
+    /* styles.css fija height: 100%; sumado al margen del body desborda a una 2ª página en blanco. */
+    height: auto;
+  }
+
+  /* Restablece el margen en el cuerpo del documento para que el contenido no se corte */
+  body {
+    margin: 1.6cm; /* Puedes ajustar este valor según tus necesidades */
+  }
+
+  /* Solo la ficha: el resto de la app (sidebar, toasts, diálogos) no se imprime. */
+  body:has(> [data-print-sheet]) > :not([data-print-sheet]) {
+    display: none;
+  }
+
+  [data-print-sheet] {
+    /* Cabe en Carta (279,4mm) con el margen de 1,6cm arriba y abajo: 279,4 − 32 ≈ 247mm. */
+    flex-direction: column;
+    width: 100%;
+    height: 245mm;
+    overflow: hidden;
+    break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

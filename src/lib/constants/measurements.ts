@@ -23,7 +23,7 @@ export const STANDARD_MEASUREMENTS = [
   { name: "Alto busto", group: "Torso" },
   { name: "Separación busto", group: "Torso", fraction: HALF },
   { name: "Alto escote", group: "Torso" },
-  { name: "Contorno tórax", group: "Torso" },
+  { name: "Contorno tórax", group: "Torso", fraction: QUARTER },
   { name: "Contorno busto", group: "Torso", fraction: QUARTER },
   { name: "Contorno cintura", group: "Torso", fraction: QUARTER },
   { name: "Contorno cadera", group: "Torso", fraction: QUARTER },

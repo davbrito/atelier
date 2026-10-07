@@ -29,6 +29,7 @@ import {
   TableRow,
 } from "#/components/ui/table";
 import { toast } from "#/components/ui/toast.tsx";
+import { getInitials } from "#/lib/format";
 import { clientsListQueryOptions } from "#/lib/query-options";
 import { deleteClient } from "#/server/functions/clients";
 
@@ -45,12 +46,6 @@ export const Route = createFileRoute("/_app/app/_workspace/clients/")({
   loader: ({ context: { queryClient }, deps: { page } }) =>
     void queryClient.prefetchQuery(clientsListQueryOptions({ page, pageSize: PAGE_SIZE })),
 });
-
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  const initials = parts.length > 1 ? [parts[0], parts.at(-1)] : [parts[0]];
-  return initials.map((p) => p?.[0]?.toUpperCase()).join("");
-}
 
 function ClientsPage() {
   const { page } = Route.useSearch();
