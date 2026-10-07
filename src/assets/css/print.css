@@ -1,0 +1,34 @@
+/* ── Ficha técnica de taller (impresión) ── */
+@page {
+  size: portrait;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  /* Restablece el margen en el cuerpo del documento para que el contenido no se corte */
+  body {
+    margin: 1.6cm; /* Puedes ajustar este valor según tus necesidades */
+  }
+
+  /* Solo la ficha: el resto de la app (sidebar, toasts, diálogos) no se imprime. */
+  body:has(> [data-print-sheet]) > :not([data-print-sheet]) {
+    display: none;
+  }
+
+  [data-print-sheet] {
+    /* Área útil común a Carta y A4 con márgenes de 10mm. */
+    flex-direction: column;
+    width: 100%;
+    height: 259mm;
+    overflow: hidden;
+    break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

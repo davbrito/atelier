@@ -3,16 +3,24 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeftIcon,
+  ImageDownIcon,
   MailIcon,
   PencilIcon,
+  PencilRulerIcon,
   PhoneIcon,
+  PrinterIcon,
   RulerIcon,
+  Share2Icon,
   StickyNoteIcon,
   Trash2Icon,
   UserIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useIsHydrated } from "#/components/auth/use-is-hydrated";
+import { BodyBlueprint } from "#/components/body-blueprint";
+import { ClientPrintSheet } from "#/components/client-print-sheet";
 import { ClientSheet } from "#/components/client-sheet";
+import { MeasurementCard } from "#/components/measurement-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,9 +34,21 @@ import {
 import { Avatar, AvatarFallback } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "#/components/ui/dialog";
+import { Spinner } from "#/components/ui/spinner";
+import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { toast } from "#/components/ui/toast.tsx";
-import { getDartDepths, getPatternFraction, groupMeasurements } from "#/lib/measurement-derived";
+import { useMediaQuery } from "#/hooks/use-media-query";
+import { type BlueprintView, findBlueprintAnnotation } from "#/lib/constants/blueprint";
+import { normalizeMeasurementName } from "#/lib/constants/measurements";
+import {
+  getDartDepths,
+  getDartDifference,
+  groupMeasurements,
+  withStandardSlots,
+} from "#/lib/measurement-derived";
 import { clientByIdQueryOptions } from "#/lib/query-options";
+import { canShareImages, shareOrDownloadPrintSheet } from "#/lib/sheet-image";
 import { deleteClient } from "#/server/functions/clients";
 
 export const Route = createFileRoute("/_app/app/_workspace/clients/$id")({
@@ -42,6 +62,16 @@ export const Route = createFileRoute("/_app/app/_workspace/clients/$id")({
     </div>
   ),
 });
+
+/** "María Guerra" → "maria-guerra" */
+function slugify(text: string) {
+  return text
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -57,10 +87,57 @@ function ClientDetailPage() {
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isBlueprintDialogOpen, setIsBlueprintDialogOpen] = useState(false);
+  const [blueprintView, setBlueprintView] = useState<BlueprintView>("front");
+  const [activeName, setActiveName] = useState<string | null>(null);
+  const [flashId, setFlashId] = useState<string | null>(null);
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   const { data: client } = useSuspenseQuery(clientByIdQueryOptions(id));
   const dartDepths = getDartDepths(client?.measurements ?? []);
-  const measurementSections = groupMeasurements(client?.measurements ?? []);
+  const dartText = getDartDifference(client?.measurements ?? [])?.text ?? null;
+  const measurementSections = groupMeasurements(withStandardSlots(client?.measurements ?? []));
+  const activeKey = activeName ? normalizeMeasurementName(activeName) : null;
+
+  const flashTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(flashTimeout.current), []);
+
+  /** Resalta una medida en el croquis y cambia a la vista (frente/espalda) donde está su cota. */
+  const highlightMeasurement = (name: string | null) => {
+    setActiveName(name);
+    const view = name ? findBlueprintAnnotation(name)?.view : undefined;
+    if (view) setBlueprintView(view);
+  };
+
+  /** Clic en una cota: lleva a la tarjeta de la medida, la destaca y deja su valor listo para editar. */
+  const focusMeasurementCard = (measurementId: string) => {
+    const reveal = () => {
+      const card = document.getElementById(`measurement-${measurementId}`);
+      card?.scrollIntoView({ behavior: "smooth", block: "center" });
+      card?.querySelector("input")?.focus({ preventScroll: true });
+      setFlashId(measurementId);
+      clearTimeout(flashTimeout.current);
+      flashTimeout.current = setTimeout(() => setFlashId(null), 1500);
+    };
+    if (isDesktop) {
+      reveal();
+    } else {
+      // En móvil el croquis está en un diálogo: se cierra y se espera a que devuelva el foco.
+      setIsBlueprintDialogOpen(false);
+      setTimeout(reveal, 250);
+    }
+  };
+
+  const isHydrated = useIsHydrated();
+  const canShare = isHydrated && canShareImages();
+  const imageMutation = useMutation({
+    mutationFn: (name: string) =>
+      shareOrDownloadPrintSheet({
+        fileName: `ficha-${slugify(name)}.png`,
+        title: `Ficha de taller · ${name}`,
+      }),
+    onError: () => toast.add({ type: "error", description: "No se pudo generar la imagen" }),
+  });
 
   const deleteMutation = useMutation({
     mutationFn: deleteFn,
@@ -118,7 +195,36 @@ function ClientDetailPage() {
             </p>
           </div>
         </div>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
+          {client.measurements.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              title="Imprimir o guardar como PDF"
+              onClick={() => window.print()}
+            >
+              <PrinterIcon className="mr-1 size-3" />
+              Imprimir ficha
+            </Button>
+          )}
+          {client.measurements.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={imageMutation.isPending}
+              title={canShare ? "Compartir la ficha como imagen" : "Descargar la ficha como imagen"}
+              onClick={() => imageMutation.mutate(client.name)}
+            >
+              {imageMutation.isPending ? (
+                <Spinner className="mr-1 size-3" />
+              ) : canShare ? (
+                <Share2Icon className="mr-1 size-3" />
+              ) : (
+                <ImageDownIcon className="mr-1 size-3" />
+              )}
+              {canShare ? "Compartir imagen" : "Guardar imagen"}
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setIsSheetOpen(true)}>
             <PencilIcon className="mr-1 size-3" />
             Editar
@@ -171,65 +277,57 @@ function ClientDetailPage() {
             <span className="flex items-center gap-2">
               <RulerIcon className="size-4 text-muted-foreground" />
               Medidas
+              {client.measurements.length > 0 && (
+                <span className="font-normal text-muted-foreground text-xs tabular-nums">
+                  {client.measurements.length}
+                </span>
+              )}
             </span>
-            {client.measurements.length > 0 && (
-              <span className="font-normal text-muted-foreground text-xs tabular-nums">
-                {client.measurements.length}
-              </span>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="lg:hidden"
+              onClick={() => setIsBlueprintDialogOpen(true)}
+            >
+              <PencilRulerIcon className="mr-1 size-3" />
+              Ver croquis
+            </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          {client.measurements.length > 0 ? (
-            <div className="flex flex-col gap-6">
-              {measurementSections.map((section) => (
-                <section key={section.title} className="flex flex-col gap-2.5">
-                  <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                    {section.title}
-                  </h3>
-                  <div className="grid grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-3">
-                    {section.items.map((m) => {
-                      const fraction = getPatternFraction(m.name, m.value);
-                      const dart = dartDepths.get(m.id);
-                      return (
-                        <div
-                          key={m.id}
-                          className="flex flex-col gap-1 rounded-lg border bg-muted/40 p-3 transition-colors hover:bg-muted/70"
-                        >
-                          <p className="text-muted-foreground text-xs uppercase tracking-wide">
-                            {m.name}
-                          </p>
-                          <p className="font-semibold text-lg tabular-nums leading-tight">
-                            {m.value}
-                            <span className="ml-1 font-normal text-muted-foreground text-xs">
-                              cm
-                            </span>
-                          </p>
-                          {(fraction || dart) && (
-                            <div className="mt-1 flex flex-wrap gap-1.5">
-                              {fraction && (
-                                <span className="rounded-full bg-background px-2 py-0.5 text-muted-foreground text-xs tabular-nums ring-1 ring-border">
-                                  {fraction.label}: {fraction.text} cm
-                                </span>
-                              )}
-                              {dart && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-0.5 text-muted-foreground text-xs tabular-nums ring-1 ring-border">
-                                  <RulerIcon className="size-3" />
-                                  Pinza: {dart} cm
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-sm">Aún no hay medidas registradas.</p>
-          )}
+        <CardContent className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)]">
+          <div className="flex flex-col gap-6">
+            {measurementSections.map((section) => (
+              <section key={section.title} className="flex flex-col gap-2.5">
+                <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                  {section.title}
+                </h3>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-3">
+                  {section.items.map((m) => (
+                    <MeasurementCard
+                      key={m.id ?? m.name}
+                      clientId={client.id}
+                      measurement={m}
+                      dart={m.id ? dartDepths.get(m.id) : undefined}
+                      isActive={normalizeMeasurementName(m.name) === activeKey}
+                      isFlashing={m.id !== null && flashId === m.id}
+                      onHighlight={highlightMeasurement}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+          <aside className="sticky top-6 hidden flex-col gap-3 rounded-lg border p-3 lg:flex">
+            <BlueprintPanel
+              measurements={client.measurements}
+              view={blueprintView}
+              onViewChange={setBlueprintView}
+              activeName={activeName}
+              onHover={setActiveName}
+              onSelect={focusMeasurementCard}
+              dartText={dartText}
+            />
+          </aside>
         </CardContent>
       </Card>
 
@@ -249,6 +347,25 @@ function ClientDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={isBlueprintDialogOpen && !isDesktop} onOpenChange={setIsBlueprintDialogOpen}>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Croquis de medidas</DialogTitle>
+          </DialogHeader>
+          <BlueprintPanel
+            measurements={client.measurements}
+            view={blueprintView}
+            onViewChange={setBlueprintView}
+            activeName={activeName}
+            onHover={setActiveName}
+            onSelect={focusMeasurementCard}
+            dartText={dartText}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <ClientPrintSheet client={client} />
 
       <ClientSheet open={isSheetOpen} onOpenChange={setIsSheetOpen} editingClient={client} />
 
@@ -274,5 +391,25 @@ function ClientDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+function BlueprintPanel({
+  view,
+  onViewChange,
+  ...props
+}: Omit<React.ComponentProps<typeof BodyBlueprint>, "variant" | "className"> & {
+  onViewChange: (view: BlueprintView) => void;
+}) {
+  return (
+    <>
+      <Tabs value={view} onValueChange={(value) => onViewChange(value as BlueprintView)}>
+        <TabsList className="w-full">
+          <TabsTrigger value="front">Frente</TabsTrigger>
+          <TabsTrigger value="back">Espalda</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <BodyBlueprint view={view} {...props} className="mx-auto max-h-[70vh]" />
+    </>
   );
 }

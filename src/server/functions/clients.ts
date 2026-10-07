@@ -7,6 +7,7 @@ import {
   deleteClient as deleteClientUseCase,
   getClientById as getClientByIdUseCase,
   listClients as listClientsUseCase,
+  setClientMeasurement as setClientMeasurementUseCase,
   updateClient as updateClientUseCase,
 } from "../application/clients";
 
@@ -81,6 +82,24 @@ export const updateClient = createServerFn({ method: "POST" })
     );
 
     return updated;
+  });
+
+export const setClientMeasurement = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      clientId: z.uuid(),
+      measurementId: z.uuid().optional(),
+      name: z.string().trim().min(1),
+      value: z.number().nonnegative().nullable(),
+    }),
+  )
+  .middleware([organizationMiddleware])
+  .handler(async ({ data, context: { activeOrganizationId, db, env } }) => {
+    const measurement = await db.transaction((tx) =>
+      setClientMeasurementUseCase(tx, activeOrganizationId, data),
+    );
+    if (measurement) await cacheMeasurementNames(env.KV, activeOrganizationId, [data.name]);
+    return measurement;
   });
 
 export const deleteClient = createServerFn({ method: "POST" })
