@@ -126,10 +126,11 @@ export function MeasurementCard({
           onKeyDown={onKeyDown}
           aria-describedby={`${inputId}-unit`}
           className={cn(
-            "-mx-1 w-16 min-w-0 rounded-md bg-transparent px-1 font-semibold text-lg tabular-nums leading-tight outline-none",
-            "hover:bg-background focus:bg-background focus:ring-1 focus:ring-ring",
+            // Mismo aspecto que <Input>: borde visible siempre, no solo al pasar el cursor.
+            "w-20 min-w-0 rounded-md border border-input bg-background px-2 py-0.5 font-semibold text-lg tabular-nums leading-tight outline-none transition-colors",
+            "hover:border-ring/60 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
             "placeholder:font-normal placeholder:text-muted-foreground/60",
-            isDirty && "bg-background ring-1 ring-primary/60",
+            isDirty && "border-primary/60 ring-2 ring-primary/20",
           )}
         />
         <span id={`${inputId}-unit`} className="text-muted-foreground text-xs">
