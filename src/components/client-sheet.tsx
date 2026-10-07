@@ -27,7 +27,7 @@ import {
 import { Textarea } from "#/components/ui/textarea";
 import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
-import { STANDARD_MEASUREMENT_NAMES } from "#/lib/constants/measurements";
+import { STANDARD_MEASUREMENTS } from "#/lib/constants/measurements";
 import { queryKeys } from "#/lib/query-options";
 import { cn } from "#/lib/utils";
 import { createClient, type getClientById, updateClient } from "#/server/functions/clients";
@@ -53,7 +53,7 @@ function buildInitialMeasurements(
 ): MeasurementFormValue[] {
   const byName = new Map((existing ?? []).map((m) => [m.name.trim().toLowerCase(), m]));
 
-  const standard: MeasurementFormValue[] = STANDARD_MEASUREMENT_NAMES.map((name) => {
+  const standard: MeasurementFormValue[] = STANDARD_MEASUREMENTS.map(({ name }) => {
     const match = byName.get(name.toLowerCase());
     byName.delete(name.toLowerCase());
     return { name: match?.name ?? name, value: match ? match.value : "" };
