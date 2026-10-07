@@ -4,7 +4,11 @@ import {
   BLUEPRINT_BACK_CROP_HEIGHT,
   findBlueprintAnnotation,
 } from "#/lib/constants/blueprint";
-import { STANDARD_MEASUREMENTS } from "#/lib/constants/measurements";
+import {
+  findStandardMeasurement,
+  normalizeMeasurementName,
+  STANDARD_MEASUREMENTS,
+} from "#/lib/constants/measurements";
 
 const BACK_VIEW = new Set([
   "Ancho espalda",
@@ -27,14 +31,20 @@ describe("BLUEPRINT_ANNOTATIONS", () => {
   });
 
   it("keeps labels on the same side far enough apart not to overlap", () => {
+    // Nombre + valor ocupan ~22 unidades; la línea de fracción o pinza añade ~8.
+    const labelHeight = (name: string) =>
+      findStandardMeasurement(name)?.fraction || /^talle /.test(normalizeMeasurementName(name))
+        ? 30
+        : 22;
     const columns = Map.groupBy(BLUEPRINT_ANNOTATIONS, (a) => `${a.view}-${a.label.side}`);
     for (const [column, annotations] of columns) {
-      const ys = annotations.map((a) => a.label.y).sort((a, b) => a - b);
-      for (let i = 1; i < ys.length; i++) {
+      const sorted = annotations.toSorted((a, b) => a.label.y - b.label.y);
+      for (let i = 1; i < sorted.length; i++) {
+        const [above, below] = [sorted[i - 1], sorted[i]];
         expect(
-          ys[i] - ys[i - 1],
-          `${column} labels at ${ys[i - 1]} and ${ys[i]}`,
-        ).toBeGreaterThanOrEqual(22);
+          below.label.y - above.label.y,
+          `${column}: ${above.name} / ${below.name}`,
+        ).toBeGreaterThanOrEqual(labelHeight(above.name));
       }
     }
   });

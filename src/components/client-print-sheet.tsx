@@ -4,6 +4,7 @@ import { useActiveOrganization } from "@better-auth-ui/react/plugins/organizatio
 import { createPortal } from "react-dom";
 import { useIsHydrated } from "#/components/auth/use-is-hydrated";
 import { BodyBlueprint } from "#/components/body-blueprint";
+import { shortClientId } from "#/lib/format";
 import {
   formatCm,
   getDartDifference,
@@ -53,7 +54,7 @@ function PrintSheet({ client }: Props) {
           <dt className="uppercase tracking-wide">Cliente</dt>
           <dd className="font-semibold">{client.name}</dd>
           <dt className="uppercase tracking-wide">ID</dt>
-          <dd className="font-mono">{client.id.slice(0, 8)}</dd>
+          <dd className="font-mono">{shortClientId(client)}</dd>
           <dt className="uppercase tracking-wide">Medidas al</dt>
           <dd>{issuedAt}</dd>
         </dl>
@@ -66,6 +67,7 @@ function PrintSheet({ client }: Props) {
               measurements={client.measurements}
               view="front"
               variant="print"
+              dartText={dart?.text}
               className="h-full"
             />
           </div>
@@ -74,6 +76,7 @@ function PrintSheet({ client }: Props) {
               measurements={client.measurements}
               view="back"
               variant="print"
+              dartText={dart?.text}
               className="h-full"
             />
           </div>

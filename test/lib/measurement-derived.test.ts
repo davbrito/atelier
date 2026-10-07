@@ -9,12 +9,12 @@ import {
 
 describe("getPatternFraction", () => {
   it("divides by the standard pattern fraction, rounded to one decimal", () => {
-    expect(getPatternFraction("Contorno busto", 114)).toEqual({ label: "1/4", text: "28.5" });
-    expect(getPatternFraction("Contorno cuello", 40)).toEqual({ label: "1/6", text: "6.7" });
+    expect(getPatternFraction("Contorno busto", 114)).toEqual({ label: "1/4", text: "28,5" });
+    expect(getPatternFraction("Contorno cuello", 40)).toEqual({ label: "1/6", text: "6,7" });
     expect(getPatternFraction("Contorno tórax", 100)).toEqual({ label: "1/4", text: "25" });
   });
 
-  it("omits the decimal on exact results", () => {
+  it("uses the locale's decimal separator and omits the decimal on exact results", () => {
     expect(getPatternFraction("Ancho espalda", 36)).toEqual({ label: "1/2", text: "18" });
   });
 

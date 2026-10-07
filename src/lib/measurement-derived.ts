@@ -4,6 +4,7 @@ import {
   normalizeMeasurementName,
   STANDARD_MEASUREMENTS,
 } from "#/lib/constants/measurements";
+import { LOCALE } from "#/lib/format";
 
 const FRONT_LENGTH = "talle delantero";
 const BACK_LENGTH = "talle trasero";
@@ -11,9 +12,9 @@ const BACK_LENGTH = "talle trasero";
 export const isUsable = (value: number | null | undefined): value is number =>
   typeof value === "number" && Number.isFinite(value) && value !== 0;
 
-/** 1 decimal redondeado; sin decimal si el resultado es exacto (18, no 18.0). */
+/** 1 decimal redondeado con el separador del locale (28,5); sin decimal si es exacto (18, no 18,0). */
 export function formatCm(value: number) {
-  return String(Math.round(value * 10) / 10);
+  return value.toLocaleString(LOCALE, { maximumFractionDigits: 1 });
 }
 
 /** Valor fraccionado de patronaje (ej. `{ label: "1/4", text: "28.5" }`), o null si no aplica. */

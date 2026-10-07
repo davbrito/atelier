@@ -11,8 +11,37 @@ export const BLUEPRINT_HEIGHT = 500;
 export const BLUEPRINT_BACK_CROP_HEIGHT = 335;
 
 const C = BLUEPRINT_WIDTH / 2;
-const LEFT_LABEL_X = 6;
-const RIGHT_LABEL_X = BLUEPRINT_WIDTH - 6;
+/** Texto de las etiquetas laterales, alineado a los bordes del dibujo. */
+export const LABEL_TEXT = {
+  left: { x: 6, textAnchor: "start" },
+  right: { x: BLUEPRINT_WIDTH - 6, textAnchor: "end" },
+} as const;
+
+/** Espacio entre el final de la línea de referencia y el texto de la etiqueta. */
+const LEADER_GAP = 3;
+
+/**
+ * Ancho aproximado (en unidades del viewBox) de una línea de texto en la fuente sans de la
+ * app; suficiente para acercar la línea de referencia al texto sin medir el DOM (también
+ * sirve en SSR e impresión).
+ */
+function estimateTextWidth(text: string, fontSize: number, bold = false) {
+  return text.length * fontSize * (bold ? 0.6 : 0.55);
+}
+
+/**
+ * x donde termina la línea de referencia: justo antes del texto más ancho de la etiqueta,
+ * para que se vea a qué cota pertenece.
+ */
+export function leaderEndX(
+  side: "left" | "right",
+  lines: { text: string; fontSize: number; bold?: boolean }[],
+) {
+  const width = Math.max(...lines.map((l) => estimateTextWidth(l.text, l.fontSize, l.bold)));
+  return side === "left"
+    ? LABEL_TEXT.left.x + width + LEADER_GAP
+    : LABEL_TEXT.right.x - width - LEADER_GAP;
+}
 
 export type BlueprintView = "front" | "back";
 
@@ -80,7 +109,7 @@ export const BLUEPRINT_ANNOTATIONS: BlueprintAnnotation[] = [
     y1: 138,
     x2: C + 18,
     y2: 138,
-    label: { side: "right", y: 136 },
+    label: { side: "right", y: 138 },
   },
   {
     name: "Contorno tórax",
@@ -113,7 +142,7 @@ export const BLUEPRINT_ANNOTATIONS: BlueprintAnnotation[] = [
     y1: 72,
     x2: C + 18,
     y2: 195,
-    label: { side: "right", y: 168 },
+    label: { side: "right", y: 170 },
   },
   {
     name: "Contorno cintura",
@@ -289,13 +318,6 @@ export const BLUEPRINT_ANNOTATIONS: BlueprintAnnotation[] = [
     label: { side: "right", y: 300 },
   },
 ];
-
-/** Posición x del texto de la etiqueta y su alineación. */
-export function labelAnchor(side: "left" | "right") {
-  return side === "left"
-    ? { x: LEFT_LABEL_X, textAnchor: "start" as const }
-    : { x: RIGHT_LABEL_X, textAnchor: "end" as const };
-}
 
 const ANNOTATION_BY_NORMALIZED_NAME = new Map(
   BLUEPRINT_ANNOTATIONS.map((annotation) => [

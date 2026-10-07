@@ -11,7 +11,8 @@ import {
   CENTER_X,
   findBlueprintAnnotation,
   HEAD_PATH,
-  labelAnchor,
+  LABEL_TEXT,
+  leaderEndX,
 } from "#/lib/constants/blueprint";
 import { normalizeMeasurementName } from "#/lib/constants/measurements";
 import { formatCm, getPatternFraction, isUsable } from "#/lib/measurement-derived";
@@ -34,8 +35,6 @@ type Props = {
 };
 
 const TICK = 4;
-/** Columna donde terminan las líneas de referencia de las etiquetas laterales. */
-const LEADER_X = { left: 64, right: BLUEPRINT_WIDTH - 64 };
 
 const VIEW_TITLES: Record<BlueprintView, string> = { front: "Frente", back: "Espalda" };
 
@@ -187,10 +186,21 @@ function Annotation({
   onSelect?: (measurementId: string) => void;
 }) {
   const { x1, y1, x2, y2, label } = annotation;
-  const anchor = labelAnchor(label.side);
-  const leaderEnd = { x: LEADER_X[label.side], y: label.y + 3 };
-  const leaderStart = closestPointOnSegment(annotation, leaderEnd);
+  const text = LABEL_TEXT[label.side];
   const value = `${formatCm(measurement.value)} cm`;
+  const fraction = getPatternFraction(measurement.name, measurement.value);
+  const dart = isTalleName(annotation.name) && dartText ? dartText : null;
+  /** Tercera línea de la etiqueta: fracción de patronaje o pinza. */
+  const detail = fraction ? `${fraction.label}: ${fraction.text}` : dart ? `Pinza: ${dart}` : null;
+  const leaderEnd = {
+    x: leaderEndX(label.side, [
+      { text: annotation.short, fontSize: 8.5 },
+      { text: value, fontSize: 9.5, bold: true },
+      ...(detail ? [{ text: detail, fontSize: 8 }] : []),
+    ]),
+    y: label.y + 3,
+  };
+  const leaderStart = closestPointOnSegment(annotation, leaderEnd);
 
   const color = isPrint ? "#000" : undefined;
   const strokeClass = isPrint
@@ -208,10 +218,10 @@ function Annotation({
         <>
           <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="transparent" strokeWidth={10} />
           <rect
-            x={label.side === "left" ? anchor.x - 2 : LEADER_X.right}
+            x={label.side === "left" ? 0 : leaderEnd.x}
             y={label.y - 9}
-            width={LEADER_X.left - anchor.x + 2}
-            height={22}
+            width={label.side === "left" ? leaderEnd.x : BLUEPRINT_WIDTH - leaderEnd.x}
+            height={detail ? 30 : 22}
             fill="transparent"
           />
         </>
@@ -241,25 +251,32 @@ function Annotation({
         ))}
       </g>
       <text
-        x={anchor.x}
+        x={text.x}
         y={label.y}
-        textAnchor={anchor.textAnchor}
+        textAnchor={text.textAnchor}
         className={textClass}
         fill={color}
         fontSize={8.5}
       >
         {annotation.short}
-        <tspan x={anchor.x} dy={10} fontSize={9.5} fontWeight={600}>
+        <tspan x={text.x} dy={10} fontSize={9.5} fontWeight={600}>
           {value}
         </tspan>
+        {detail && (
+          <tspan
+            x={text.x}
+            dy={9}
+            fontSize={8}
+            className={isPrint || isActive ? undefined : "fill-muted-foreground"}
+          >
+            {detail}
+          </tspan>
+        )}
       </text>
     </>
   );
 
   if (isPrint) return <g>{graphic}</g>;
-
-  const fraction = getPatternFraction(measurement.name, measurement.value);
-  const isTalle = /^talle/.test(normalizeMeasurementName(annotation.name));
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Enter" || event.key === " ") {
@@ -300,12 +317,15 @@ function Annotation({
             {fraction.label}: {fraction.text} cm
           </span>
         )}
-        {isTalle && dartText && (
-          <span className="tabular-nums opacity-80">Dif. / Pinza: {dartText} cm</span>
-        )}
+        {dart && <span className="tabular-nums opacity-80">Dif. / Pinza: {dart} cm</span>}
       </TooltipContent>
     </Tooltip>
   );
+}
+
+/** Talle delantero / trasero: llevan la diferencia de talles (pinza). */
+function isTalleName(name: string) {
+  return /^talle /.test(normalizeMeasurementName(name));
 }
 
 /** Topes perpendiculares en los extremos de la cota. */

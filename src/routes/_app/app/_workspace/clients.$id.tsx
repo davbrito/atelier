@@ -41,6 +41,7 @@ import { toast } from "#/components/ui/toast.tsx";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { type BlueprintView, findBlueprintAnnotation } from "#/lib/constants/blueprint";
 import { normalizeMeasurementName } from "#/lib/constants/measurements";
+import { getInitials } from "#/lib/format";
 import {
   getDartDepths,
   getDartDifference,
@@ -71,12 +72,6 @@ function slugify(text: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-}
-
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  const initials = parts.length > 1 ? [parts[0], parts.at(-1)] : [parts[0]];
-  return initials.map((p) => p?.[0]?.toUpperCase()).join("");
 }
 
 function ClientDetailPage() {
