@@ -119,8 +119,9 @@ export function ClientSheet({ open, onOpenChange, editingClient }: ClientSheetPr
 
   const updateMutation = useMutation({
     mutationFn: updateFn,
-    onSuccess: () => {
+    onSuccess: (_, { data: { id } }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.clients });
+      queryClient.invalidateQueries({ queryKey: queryKeys.client(id) });
       queryClient.invalidateQueries({ queryKey: ["measurement-names"] });
       toast.add({ type: "success", description: "Cliente actualizado" });
       onOpenChange(false);
