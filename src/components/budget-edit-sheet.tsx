@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { cn } from "cn";
 import { Loader2Icon } from "lucide-react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
@@ -16,7 +17,6 @@ import {
 import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { budgetByIdQueryOptions, queryKeys } from "#/lib/query-options";
-import { cn } from "#/lib/utils";
 import { budgetFormSchema, updateBudget } from "#/server/functions/budgets";
 import { uploadEntityImage } from "#/server/functions/images";
 

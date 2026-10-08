@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import type { KeyboardEvent } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
 import {
@@ -16,7 +17,6 @@ import {
 } from "#/lib/constants/blueprint";
 import { normalizeMeasurementName } from "#/lib/constants/measurements";
 import { formatCm, getPatternFraction, isUsable } from "#/lib/measurement-derived";
-import { cn } from "#/lib/utils";
 
 type Measurement = { id: string; name: string; value: number };
 

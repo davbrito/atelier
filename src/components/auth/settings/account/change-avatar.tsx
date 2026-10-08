@@ -13,7 +13,7 @@ import {
 } from "#/components/ui/dropdown-menu.tsx";
 import { Field, FieldLabel } from "#/components/ui/field.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 
 export type ChangeAvatarProps = {
   className?: string;
@@ -55,12 +55,11 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
         },
       );
     } catch (error) {
-      if (error instanceof Error) {
-        toast.add({
-          type: "error",
-          description: error.message,
-        });
-      }
+      console.error("[Better Auth UI] Image operation failed", error);
+      toast.add({
+        type: "error",
+        description: localization.errors.imageUploadFailed,
+      });
     }
 
     setIsUploading(false);

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { cn } from "cn";
 import { CheckIcon, RulerIcon, XIcon } from "lucide-react";
 import { type FormEvent, type KeyboardEvent, useId, useState } from "react";
 import { NumericFormat } from "react-number-format";
@@ -8,7 +9,6 @@ import { Spinner } from "#/components/ui/spinner";
 import { toast } from "#/components/ui/toast.tsx";
 import { getPatternFraction, type MeasurementSlot } from "#/lib/measurement-derived";
 import { queryKeys } from "#/lib/query-options";
-import { cn } from "#/lib/utils";
 import { setClientMeasurement } from "#/server/functions/clients";
 
 type Props = {

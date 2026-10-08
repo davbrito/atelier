@@ -3,6 +3,7 @@ import { Form } from "@base-ui/react/form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { cn } from "cn";
 import { Loader2Icon, PencilIcon, PlusIcon, ScissorsIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import * as z from "zod";
@@ -42,7 +43,6 @@ import {
 import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { operationsListQueryOptions } from "#/lib/query-options";
-import { cn } from "#/lib/utils";
 import {
   createOperation,
   deleteOperation,

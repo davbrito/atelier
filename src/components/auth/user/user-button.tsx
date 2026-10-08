@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { UserAvatar } from "./user-avatar";
 import { UserView } from "./user-view";
 

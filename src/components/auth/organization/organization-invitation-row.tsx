@@ -18,11 +18,20 @@ import { Button } from "#/components/ui/button.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { TableCell, TableRow } from "#/components/ui/table.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { OrganizationInvitationRowSkeleton } from "./organization-invitation-row-skeleton";
+import {
+  type OrganizationSelectableRow,
+  OrganizationTableSelectRow,
+} from "./organization-table-selection";
 
 export type OrganizationInvitationRowProps = {
   invitation: Invitation;
+  selectableRow?: OrganizationSelectableRow<Invitation>;
+  showCreatedAt?: boolean;
+  showEmail?: boolean;
+  showRole?: boolean;
+  showStatus?: boolean;
 };
 
 const statusBadgeClasses: Record<string, string> = {
@@ -32,7 +41,14 @@ const statusBadgeClasses: Record<string, string> = {
   canceled: "bg-muted text-muted-foreground",
 };
 
-export function OrganizationInvitationRow({ invitation }: OrganizationInvitationRowProps) {
+export function OrganizationInvitationRow({
+  invitation,
+  selectableRow,
+  showCreatedAt = true,
+  showEmail = true,
+  showRole = true,
+  showStatus = true,
+}: OrganizationInvitationRowProps) {
   const { authClient } = useAuth<OrganizationAuthClient>();
   const {
     modelFields: { invitation: invitationFields },
@@ -80,37 +96,49 @@ export function OrganizationInvitationRow({ invitation }: OrganizationInvitation
   const isPending = invitation.status === "pending";
 
   return (
-    <TableRow>
-      <TableCell>
-        <div className="flex flex-col gap-1">
-          <span className="font-medium text-sm">{invitation.email}</span>
-          {invitationFields.map((field) => {
-            const value = formatAdditionalFieldValue(
-              (invitation as unknown as Record<string, unknown>)[field.name],
-            );
-            return value ? (
-              <span className="text-xs text-muted-foreground" key={field.name}>
-                {field.label}: {value}
-              </span>
-            ) : null;
+    <TableRow data-state={selectableRow?.getIsSelected() ? "selected" : undefined}>
+      {selectableRow && (
+        <TableCell>
+          <OrganizationTableSelectRow localization={organizationLocalization} row={selectableRow} />
+        </TableCell>
+      )}
+
+      {showEmail && (
+        <TableCell>
+          <div className="flex flex-col gap-1">
+            <span className="font-medium text-sm">{invitation.email}</span>
+            {invitationFields.map((field) => {
+              const value = formatAdditionalFieldValue(
+                (invitation as unknown as Record<string, unknown>)[field.name],
+              );
+              return value ? (
+                <span className="text-xs text-muted-foreground" key={field.name}>
+                  {field.label}: {value}
+                </span>
+              ) : null;
+            })}
+          </div>
+        </TableCell>
+      )}
+
+      {showCreatedAt && (
+        <TableCell className="text-muted-foreground text-xs tabular-nums whitespace-nowrap">
+          {new Date(invitation.createdAt).toLocaleString(undefined, {
+            dateStyle: "short",
+            timeStyle: "short",
           })}
-        </div>
-      </TableCell>
+        </TableCell>
+      )}
 
-      <TableCell className="text-muted-foreground text-xs tabular-nums whitespace-nowrap">
-        {new Date(invitation.createdAt).toLocaleString(undefined, {
-          dateStyle: "short",
-          timeStyle: "short",
-        })}
-      </TableCell>
+      {showRole && <TableCell className="text-sm">{roleLabel}</TableCell>}
 
-      <TableCell className="text-sm">{roleLabel}</TableCell>
-
-      <TableCell className="text-sm">
-        <Badge variant="secondary" className={cn(statusBadgeClasses[invitation.status])}>
-          {String(statusLabel)}
-        </Badge>
-      </TableCell>
+      {showStatus && (
+        <TableCell className="text-sm">
+          <Badge variant="secondary" className={cn(statusBadgeClasses[invitation.status])}>
+            {String(statusLabel)}
+          </Badge>
+        </TableCell>
+      )}
 
       <TableCell className="text-end">
         <div className="flex justify-end gap-2">

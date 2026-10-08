@@ -29,7 +29,7 @@ declare module "@better-auth-ui/core" {
 }
 
 /**
- * Provides an authentication context by rendering an auth provider with the sonner toast handler injected, forwarding remaining configuration and rendering `children` inside it.
+ * Provides an authentication context by rendering an auth provider with the toast handler injected, forwarding remaining configuration and rendering `children` inside it.
  *
  * @param children - React nodes to render inside the authentication provider
  * @returns A React element that renders an authentication provider configured with the provided props and toast handler

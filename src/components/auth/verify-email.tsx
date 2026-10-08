@@ -6,7 +6,7 @@ import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card.tsx";
 import { FieldDescription } from "#/components/ui/field.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { OpenEmailButton } from "./open-email-button";
 import { useIsHydrated } from "./use-is-hydrated";
 

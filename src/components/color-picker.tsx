@@ -1,9 +1,9 @@
 import { Sketch } from "@uiw/react-color";
+import { cn } from "cn";
 import { useId } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
-import { cn } from "#/lib/utils";
 
 const HEX_COLOR_REGEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 

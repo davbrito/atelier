@@ -1,6 +1,7 @@
 import { Field } from "@base-ui/react/field";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { cn } from "cn";
 import { Loader2Icon, MinusIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
@@ -29,7 +30,6 @@ import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { STANDARD_MEASUREMENTS } from "#/lib/constants/measurements";
 import { queryKeys } from "#/lib/query-options";
-import { cn } from "#/lib/utils";
 import { createClient, type getClientById, updateClient } from "#/server/functions/clients";
 
 type ClientSheetProps = {

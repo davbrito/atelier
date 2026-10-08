@@ -9,7 +9,7 @@ import type { ComponentProps } from "react";
 
 import { Badge } from "#/components/ui/badge.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { OrganizationLogo, type OrganizationLogoSize } from "./organization-logo";
 import { OrganizationViewSkeleton } from "./organization-view-skeleton";
 

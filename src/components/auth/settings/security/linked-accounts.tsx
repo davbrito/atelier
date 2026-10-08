@@ -4,7 +4,7 @@ import { Fragment } from "react";
 import { Card, CardContent } from "#/components/ui/card.tsx";
 import { Item, ItemContent, ItemGroup, ItemMedia, ItemSeparator } from "#/components/ui/item.tsx";
 import { Skeleton } from "#/components/ui/skeleton.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { LinkedAccount } from "./linked-account";
 
 export type LinkedAccountsProps = {

@@ -18,7 +18,7 @@ import type { ComponentProps } from "react";
 
 import { Button } from "#/components/ui/button.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { LastUsedBadge } from "./last-login-method/last-used-badge";
 
 export type ProviderButtonProps = {

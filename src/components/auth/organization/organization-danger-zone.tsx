@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 
 import { Card, CardContent } from "#/components/ui/card.tsx";
 import { Separator } from "#/components/ui/separator.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { DeleteOrganization } from "./delete-organization";
 import { DeleteOrganizationSkeleton } from "./delete-organization-skeleton";
 import { LeaveOrganization } from "./leave-organization";

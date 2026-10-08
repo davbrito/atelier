@@ -15,7 +15,7 @@ import {
 } from "#/components/ui/dropdown-menu.tsx";
 import { Skeleton } from "#/components/ui/skeleton.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 
 export type TeamSwitcherProps = {
   organizationId: string;
