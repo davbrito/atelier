@@ -102,7 +102,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^5.0.3",
     "auth": "catalog:auth",
     "drizzle-kit": "catalog:drizzle",
     "jscodeshift": "^17.4.0",
@@ -113,7 +113,7 @@
     "tsx": "^4.23.15",
     "typescript": "7.0.2",
     "vite": "^8.3.3",
-    "vitest": "^4.1.11",
+    "vitest": "^5.0.3",
     "wrangler": "^4.148.0"
   },
   "packageManager": "pnpm@11.20.0+sha512.9a6f330a95b66446ea088faf1521405a8a01f07fde7124cc9958dfed52d4bb436737e65b08f85f37b46fcba375092558ac51262b816844b22f63406ed166bfee"
