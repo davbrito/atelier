@@ -16,7 +16,7 @@ import { Input } from "#/components/ui/input.tsx";
 import { Skeleton } from "#/components/ui/skeleton.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { AdditionalField } from "../additional-field";
 import { ChangeOrganizationLogo } from "./change-organization-logo";
 import { SlugField } from "./slug-field";

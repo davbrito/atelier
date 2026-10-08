@@ -17,7 +17,7 @@ import { useEffect, useMemo } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { OrganizationPeople } from "./organization-people";
 import { OrganizationRoles } from "./organization-roles";
 import { OrganizationSettings } from "./organization-settings";

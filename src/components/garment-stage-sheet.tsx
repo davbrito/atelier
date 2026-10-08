@@ -1,6 +1,7 @@
 import { Field } from "@base-ui/react/field";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { cn } from "cn";
 import { Loader2Icon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { ColorPicker } from "#/components/color-picker";
@@ -20,7 +21,6 @@ import { Switch } from "#/components/ui/switch";
 import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { queryKeys } from "#/lib/query-options";
-import { cn } from "#/lib/utils";
 import { createGarmentStage, updateGarmentStage } from "#/server/functions/garment-stages";
 
 type GarmentStageRow = {

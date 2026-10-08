@@ -20,7 +20,7 @@ import {
 import { Label } from "#/components/ui/label.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { OrganizationLogo } from "./organization-logo";
 
 export type ChangeOrganizationLogoProps = {

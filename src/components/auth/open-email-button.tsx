@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "#/components/ui/tooltip.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 
 export type OpenEmailButtonProps = {
   /** Email address used to detect the provider, e.g. from the verify-email flow. */

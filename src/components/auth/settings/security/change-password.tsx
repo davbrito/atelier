@@ -23,7 +23,7 @@ import {
 } from "#/components/ui/input-group.tsx";
 import { Skeleton } from "#/components/ui/skeleton.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { OpenEmailButton } from "../../open-email-button";
 import { PasswordStrengthMeter } from "../../password-strength-meter";
 

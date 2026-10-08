@@ -16,7 +16,7 @@ import { FieldDescription } from "#/components/ui/field.tsx";
 import { Skeleton } from "#/components/ui/skeleton.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { useIsHydrated } from "../use-is-hydrated";
 
 type UserInvitation = Invitation & { organizationName?: string };

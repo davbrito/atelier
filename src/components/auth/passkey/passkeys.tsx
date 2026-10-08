@@ -7,7 +7,7 @@ import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent } from "#/components/ui/card.tsx";
 import { ItemGroup, ItemSeparator } from "#/components/ui/item.tsx";
 import { passkeyPlugin } from "#/lib/auth/passkey-plugin.ts";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 
 import { AddPasskeyDialog } from "./add-passkey-dialog";
 import { Passkey } from "./passkey";

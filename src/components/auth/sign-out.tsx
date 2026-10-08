@@ -1,7 +1,7 @@
 import { useAuth, useSignOut } from "@better-auth-ui/react";
 import { useEffect, useRef } from "react";
 import { Spinner } from "#/components/ui/spinner.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 
 export type SignOutProps = {
   className?: string;

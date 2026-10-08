@@ -4,7 +4,7 @@ import { ShieldAlertIcon, UsersIcon } from "lucide-react";
 
 import { Button } from "#/components/ui/button.tsx";
 import { adminPlugin } from "#/lib/auth/admin-plugin.ts";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 
 import { AdminUsers } from "./admin-users";
 

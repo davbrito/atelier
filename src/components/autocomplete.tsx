@@ -1,4 +1,5 @@
 import { Autocomplete as AutocompletePrimitive } from "@base-ui/react";
+import { cn } from "cn";
 import { ChevronDownIcon } from "lucide-react";
 import {
   InputGroup,
@@ -6,7 +7,6 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "#/components/ui/input-group.tsx";
-import { cn } from "#/lib/utils.ts";
 
 const Autocomplete = AutocompletePrimitive.Root;
 

@@ -28,7 +28,7 @@ import {
 } from "#/components/ui/input-group.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { useSignInContinuation } from "#/lib/auth/use-sign-in-continuation.ts";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { LastUsedBadge } from "./last-login-method/last-used-badge";
 import { ProviderButtons, type SocialLayout } from "./provider-buttons";
 

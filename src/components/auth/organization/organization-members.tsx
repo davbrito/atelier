@@ -26,7 +26,7 @@ import {
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group.tsx";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "#/components/ui/table.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { InviteMemberDialog } from "./invite-member-dialog";
 import { OrganizationMemberRow } from "./organization-member-row";
 import { OrganizationMemberRowSkeleton } from "./organization-member-row-skeleton";

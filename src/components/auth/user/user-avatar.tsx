@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar.tsx";
 import { Skeleton } from "#/components/ui/skeleton.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 
 export type UserAvatarProps = {
   className?: string;

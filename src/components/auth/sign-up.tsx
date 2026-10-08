@@ -27,7 +27,7 @@ import {
   InputGroupInput,
 } from "#/components/ui/input-group.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { AdditionalField } from "./additional-field";
 import { PasswordStrengthMeter } from "./password-strength-meter";
 import { ProviderButtons, type SocialLayout } from "./provider-buttons";

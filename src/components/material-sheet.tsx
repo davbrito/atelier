@@ -1,6 +1,7 @@
 import { Field } from "@base-ui/react/field";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { cn } from "cn";
 import {
   ArrowDownToLineIcon,
   ArrowUpFromLineIcon,
@@ -36,7 +37,6 @@ import { toast } from "#/components/ui/toast.tsx";
 import { useIsMobile } from "#/hooks/use-mobile";
 import { materialInventoryQueryOptions, queryKeys } from "#/lib/query-options";
 import { UNIT_OPTIONS, type Unit, unitSchema } from "#/lib/units";
-import { cn } from "#/lib/utils";
 import { setEntityImage } from "#/server/functions/images";
 import { registerMovement } from "#/server/functions/inventory";
 import { createMaterial, type getMaterialById, updateMaterial } from "#/server/functions/materials";

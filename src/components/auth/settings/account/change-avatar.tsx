@@ -13,7 +13,7 @@ import {
 } from "#/components/ui/dropdown-menu.tsx";
 import { Field, FieldLabel } from "#/components/ui/field.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 
 export type ChangeAvatarProps = {
   className?: string;

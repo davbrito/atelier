@@ -27,7 +27,7 @@ import {
 } from "#/components/ui/item.tsx";
 import { Skeleton } from "#/components/ui/skeleton.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { FreshSessionPrompt } from "./fresh-session-prompt";
 
 export type LinkedAccountProps = {

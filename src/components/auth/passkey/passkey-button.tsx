@@ -9,7 +9,7 @@ import { useCallback, useMemo } from "react";
 import { Button } from "#/components/ui/button.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { passkeyPlugin } from "#/lib/auth/passkey-plugin.ts";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 
 export type PasskeyButtonProps = {
   /** @remarks `AuthView` */

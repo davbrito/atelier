@@ -18,7 +18,7 @@ import { Button } from "#/components/ui/button.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
 import { TableCell, TableRow } from "#/components/ui/table.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { OrganizationInvitationRowSkeleton } from "./organization-invitation-row-skeleton";
 
 export type OrganizationInvitationRowProps = {

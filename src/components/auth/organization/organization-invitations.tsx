@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "#/components/ui/table.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { InviteMemberDialog } from "./invite-member-dialog";
 import { OrganizationInvitationRow } from "./organization-invitation-row";
 import { OrganizationInvitationRowSkeleton } from "./organization-invitation-row-skeleton";

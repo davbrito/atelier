@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "#/components/ui/card.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 
 type AuthResultProps = {
   className?: string;

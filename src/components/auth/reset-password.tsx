@@ -20,7 +20,7 @@ import {
   InputGroupInput,
 } from "#/components/ui/input-group.tsx";
 import { Spinner } from "#/components/ui/spinner.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { PasswordStrengthMeter } from "./password-strength-meter";
 
 export type ResetPasswordProps = {

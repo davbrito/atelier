@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 
 import { Skeleton } from "#/components/ui/skeleton.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { OrganizationLogo, type OrganizationLogoSize } from "./organization-logo";
 
 export type OrganizationViewSkeletonProps = {

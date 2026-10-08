@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu.tsx";
 import { organizationPlugin } from "#/lib/auth/organization-plugin.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 import { UserView } from "../user/user-view";
 import { CreateOrganizationDialog } from "./create-organization-dialog";
 import { OrganizationView } from "./organization-view";

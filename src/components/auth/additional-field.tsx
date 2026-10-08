@@ -39,7 +39,7 @@ import {
 import { Slider } from "#/components/ui/slider.tsx";
 import { Switch } from "#/components/ui/switch.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
-import { cn } from "#/lib/utils.ts";
+import { cn } from "cn";
 
 export type AdditionalFieldProps = {
   name: string;
