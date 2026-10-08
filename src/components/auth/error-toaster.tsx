@@ -1,17 +1,19 @@
 import {
   authMutationKeys,
   authQueryKeys,
+  getAuthErrorCode,
+  getAuthErrorMessage,
   getAuthErrorPresentation,
   isPasswordCompromisedError,
-  isSessionNotFreshError,
 } from "@better-auth-ui/core";
 import { oneTapMutationKeys } from "@better-auth-ui/core/plugins/one-tap";
+import { useAuth } from "@better-auth-ui/react";
 import { matchMutation, matchQuery, useQueryClient } from "@tanstack/react-query";
-import type { BetterFetchError } from "better-auth/react";
 import { useEffect } from "react";
 import { toast } from "#/components/ui/toast.tsx";
 
 export function ErrorToaster() {
+  const { localization } = useAuth();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -23,15 +25,16 @@ export function ErrorToaster() {
 
       if (!matchQuery({ queryKey: authQueryKeys.all }, query)) return;
       if (getAuthErrorPresentation(query.meta) !== "toast") return;
-      if (isSessionNotFreshError(error)) return;
 
-      const err = error as BetterFetchError;
-      if (err?.error?.code === "EMAIL_NOT_VERIFIED") return;
-      if (err?.error)
+      if (getAuthErrorCode(error) === "EMAIL_NOT_VERIFIED") return;
+      const message = getAuthErrorMessage(error, localization);
+      if (message) {
+        console.error("[Better Auth UI]", error);
         toast.add({
           type: "error",
-          description: err.error.message,
+          description: message,
         });
+      }
     };
 
     const mutationCache = queryClient.getMutationCache();
@@ -44,29 +47,31 @@ export function ErrorToaster() {
         return;
       }
       if (getAuthErrorPresentation(mutation.meta) !== "toast") return;
-      if (isSessionNotFreshError(error)) return;
       // Every form that sets a new password renders this one against the
       // password field, so a toast would just repeat it.
       if (isPasswordCompromisedError(error)) return;
 
-      const err = error as BetterFetchError;
       if (
-        err.error?.code === "EMAIL_NOT_VERIFIED" &&
+        getAuthErrorCode(error) === "EMAIL_NOT_VERIFIED" &&
         !matchMutation({ mutationKey: oneTapMutationKeys.prompt }, mutation)
       ) {
         return;
       }
-      toast.add({
-        type: "error",
-        description: err.error?.message || err.message,
-      });
+      const message = getAuthErrorMessage(error, localization, mutation.options.mutationKey);
+      if (message) {
+        console.error("[Better Auth UI]", error);
+        toast.add({
+          type: "error",
+          description: message,
+        });
+      }
     };
 
     return () => {
       queryCache.config.onError = previousQueryOnError;
       mutationCache.config.onError = previousMutationOnError;
     };
-  }, [queryClient]);
+  }, [queryClient, localization]);
 
   return null;
 }

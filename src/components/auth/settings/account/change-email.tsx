@@ -1,15 +1,14 @@
-import { getViewURL } from "@better-auth-ui/core";
+import { getViewURL, validateEmailAddress } from "@better-auth-ui/core";
 import { useAuth, useChangeEmail, useSession } from "@better-auth-ui/react";
-import { type SyntheticEvent, useState } from "react";
+import { useEffect } from "react";
 import { toast } from "#/components/ui/toast.tsx";
 
-import { Button } from "#/components/ui/button.tsx";
 import { Card, CardContent, CardFooter } from "#/components/ui/card.tsx";
-import { Field, FieldError, FieldLabel } from "#/components/ui/field.tsx";
+import { Field, FieldLabel } from "#/components/ui/field.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Skeleton } from "#/components/ui/skeleton.tsx";
-import { Spinner } from "#/components/ui/spinner.tsx";
 import { cn } from "cn";
+import { isAuthFormFieldInvalid, useAuthForm } from "../../auth-form";
 
 export type ChangeEmailProps = {
   className?: string;
@@ -28,7 +27,7 @@ export function ChangeEmail({ className }: ChangeEmailProps) {
   const { authClient, basePaths, baseURL, localization, viewPaths } = useAuth();
   const { data: session } = useSession(authClient);
 
-  const { mutate: changeEmail, isPending } = useChangeEmail(authClient, {
+  const { mutateAsync: changeEmail, isPending } = useChangeEmail(authClient, {
     onSuccess: () =>
       toast.add({
         type: "success",
@@ -36,75 +35,80 @@ export function ChangeEmail({ className }: ChangeEmailProps) {
       }),
   });
 
-  const [fieldErrors, setFieldErrors] = useState<{
-    email?: string;
-  }>({});
+  const form = useAuthForm({
+    defaultValues: { email: "" },
+    onSubmit: async ({ value }) =>
+      await changeEmail({
+        callbackURL: getViewURL(baseURL, basePaths.settings, viewPaths.settings.account),
+        newEmail: value.email,
+      }),
+  });
 
-  function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    const formData = new FormData(e.currentTarget);
-    changeEmail({
-      newEmail: formData.get("email") as string,
-      callbackURL: getViewURL(baseURL, basePaths.settings, viewPaths.settings.account),
-    });
-  }
+  useEffect(() => {
+    if (session) form.reset({ email: session.user.email });
+  }, [form, session]);
 
   return (
     <div>
       <h2 className="text-sm font-semibold mb-3">{localization.settings.changeEmail}</h2>
 
-      <form onSubmit={handleSubmit}>
-        <Card className={cn(className)}>
-          <CardContent className="flex flex-col gap-6">
-            <Field data-invalid={!!fieldErrors.email}>
-              <FieldLabel htmlFor="email">{localization.auth.email}</FieldLabel>
+      <form.AppForm>
+        <form.AuthFormRoot>
+          <Card className={cn(className)}>
+            <CardContent className="flex flex-col gap-6">
+              <form.AppField
+                name="email"
+                validators={{
+                  onChange: ({ value }) =>
+                    validateEmailAddress(value, {
+                      invalidMessage: localization.auth.invalidEmail,
+                      requiredMessage: localization.auth.fieldRequired,
+                    }),
+                }}
+              >
+                {(field) => {
+                  const isInvalid = isAuthFormFieldInvalid(field.state.meta);
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor="email">{localization.auth.email}</FieldLabel>
+                      {session ? (
+                        <Input
+                          id="email"
+                          name={field.name}
+                          type="email"
+                          autoComplete="email"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(event) => field.handleChange(event.target.value)}
+                          placeholder={localization.auth.emailPlaceholder}
+                          disabled={isPending}
+                          required
+                          aria-invalid={isInvalid}
+                        />
+                      ) : (
+                        <Skeleton>
+                          <Input className="invisible" />
+                        </Skeleton>
+                      )}
+                      <field.AuthFormFieldError />
+                    </Field>
+                  );
+                }}
+              </form.AppField>
+            </CardContent>
 
-              {session ? (
-                <Input
-                  key={session?.user.email}
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  defaultValue={session?.user.email}
-                  placeholder={localization.auth.emailPlaceholder}
-                  disabled={isPending}
-                  required
-                  onChange={() => {
-                    setFieldErrors((prev) => ({
-                      ...prev,
-                      email: undefined,
-                    }));
-                  }}
-                  onInvalid={(e) => {
-                    e.preventDefault();
-                    setFieldErrors((prev) => ({
-                      ...prev,
-                      email: (e.target as HTMLInputElement).validationMessage,
-                    }));
-                  }}
-                  aria-invalid={!!fieldErrors.email}
-                />
-              ) : (
-                <Skeleton>
-                  <Input className="invisible" />
-                </Skeleton>
-              )}
-
-              <FieldError>{fieldErrors.email}</FieldError>
-            </Field>
-          </CardContent>
-
-          <CardFooter>
-            <Button type="submit" size="sm" disabled={isPending || !session}>
-              {isPending && <Spinner />}
-
-              {localization.settings.updateEmail}
-            </Button>
-          </CardFooter>
-        </Card>
-      </form>
+            <CardFooter>
+              <form.AuthFormSubmitButton
+                isPending={isPending}
+                size="sm"
+                disabled={isPending || !session}
+              >
+                {localization.settings.updateEmail}
+              </form.AuthFormSubmitButton>
+            </CardFooter>
+          </Card>
+        </form.AuthFormRoot>
+      </form.AppForm>
     </div>
   );
 }

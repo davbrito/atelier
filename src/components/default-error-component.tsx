@@ -1,16 +1,10 @@
-import { Link } from "@tanstack/react-router";
+import { type ErrorComponentProps, Link } from "@tanstack/react-router";
 import { OctagonXIcon, RotateCcwIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent } from "#/components/ui/card";
 
-type DefaultErrorComponentProps = {
-  error: Error;
-  info?: { componentStack: string };
-  reset: () => void;
-};
-
-export function DefaultErrorComponent({ error, info, reset }: DefaultErrorComponentProps) {
+export function DefaultErrorComponent({ error, info, reset }: ErrorComponentProps<any>) {
   const [showDetails, setShowDetails] = useState(import.meta.env.DEV);
 
   return (
@@ -27,8 +21,8 @@ export function DefaultErrorComponent({ error, info, reset }: DefaultErrorCompon
             </p>
           </div>
 
-          {error.message && (
-            <p className="w-full break-words rounded-md bg-muted px-3 py-2 text-left text-muted-foreground text-xs">
+          {error?.message && (
+            <p className="wrap-break-word w-full rounded-md bg-muted px-3 py-2 text-left text-muted-foreground text-xs">
               {error.message}
             </p>
           )}
